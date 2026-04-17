@@ -1,0 +1,36 @@
+CREATE DATABASE IF NOT EXISTS presupuestos_vidrio CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE presupuestos_vidrio;
+
+CREATE TABLE IF NOT EXISTS quotes (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    quote_number VARCHAR(40) NOT NULL UNIQUE,
+    created_at DATETIME NOT NULL,
+    client_name VARCHAR(150) NOT NULL,
+    client_email VARCHAR(150) DEFAULT NULL,
+    client_phone VARCHAR(50) DEFAULT NULL,
+    system_type VARCHAR(50) NOT NULL,
+    opening_type VARCHAR(50) DEFAULT NULL,
+    profile_color VARCHAR(80) DEFAULT NULL,
+    glass_type VARCHAR(120) DEFAULT NULL,
+    width_mm INT UNSIGNED NOT NULL,
+    height_mm INT UNSIGNED NOT NULL,
+    leaves TINYINT UNSIGNED NOT NULL,
+    quantity INT UNSIGNED NOT NULL DEFAULT 1,
+    aluminum_price_ml DECIMAL(10,2) NOT NULL,
+    glass_price_m2 DECIMAL(10,2) NOT NULL,
+    labor_cost DECIMAL(10,2) NOT NULL,
+    margin_pct DECIMAL(5,2) NOT NULL,
+    iva_pct DECIMAL(5,2) NOT NULL,
+    aluminum_ml DECIMAL(10,3) NOT NULL,
+    glass_m2 DECIMAL(10,3) NOT NULL,
+    subtotal DECIMAL(12,2) NOT NULL,
+    margin_amount DECIMAL(12,2) NOT NULL,
+    taxable_base DECIMAL(12,2) NOT NULL,
+    iva_amount DECIMAL(12,2) NOT NULL,
+    total DECIMAL(12,2) NOT NULL,
+    drawing_svg MEDIUMTEXT,
+    config_json JSON,
+    notes TEXT,
+    INDEX idx_created_at (created_at),
+    INDEX idx_client_name (client_name)
+) ENGINE=InnoDB;

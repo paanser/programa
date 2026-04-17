@@ -1,0 +1,9 @@
+<?php
+return [
+    'db_host' => 'localhost',
+    'db_port' => '3306',
+    'db_name' => 'presupuestos_vidrio',
+    'db_user' => 'tu_usuario',
+    'db_pass' => 'tu_password',
+    'iva_pct_default' => 21,
+];
