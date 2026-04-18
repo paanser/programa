@@ -652,20 +652,25 @@ if (form) {
                 || (isCasementFamily && index === getCasementHandleLeafIndex(quote));
 
             if (quote.systemType === 'fijo') {
+                const gx = leaf.x + 10, gy = leaf.y + 10, gw = leaf.width - 20, gh = leaf.height - 20;
                 leavesMarkup += `
                     <rect x="${leaf.x + 4}" y="${leaf.y + 4}" width="${leaf.width - 8}" height="${leaf.height - 8}" class="fixed-lite-frame" />
-                    <rect x="${leaf.x + 10}" y="${leaf.y + 10}" width="${leaf.width - 20}" height="${leaf.height - 20}" class="glass-pane" />
-                    <rect x="${leaf.x + 14}" y="${leaf.y + 14}" width="${leaf.width - 28}" height="${leaf.height - 28}" class="glass-shine" />
+                    <rect x="${gx}" y="${gy}" width="${gw}" height="${gh}" class="glass-pane" />
+                    <line x1="${gx}" y1="${gy}" x2="${gx + gw}" y2="${gy + gh}" class="glass-diagonal" />
+                    <line x1="${gx + gw}" y1="${gy}" x2="${gx}" y2="${gy + gh}" class="glass-diagonal" />
                 `;
             } else {
                 const sashInset = quote.systemType === 'corredera' ? 8 : 6;
                 const glassInsetX = quote.systemType === 'corredera' ? 14 : 12;
                 const glassInsetY = quote.systemType === 'corredera' ? 12 : 10;
+                const gx = leaf.x + glassInsetX, gy = leaf.y + glassInsetY;
+                const gw = leaf.width - (glassInsetX * 2), gh = leaf.height - (glassInsetY * 2);
                 leavesMarkup += `
                     <rect x="${leaf.x}" y="${leaf.y}" width="${leaf.width}" height="${leaf.height}" class="sash" />
                     <rect x="${leaf.x + sashInset}" y="${leaf.y + sashInset}" width="${leaf.width - (sashInset * 2)}" height="${leaf.height - (sashInset * 2)}" class="sash-inner" />
-                    <rect x="${leaf.x + glassInsetX}" y="${leaf.y + glassInsetY}" width="${leaf.width - (glassInsetX * 2)}" height="${leaf.height - (glassInsetY * 2)}" class="glass-pane" />
-                    <rect x="${leaf.x + glassInsetX + 3}" y="${leaf.y + glassInsetY + 3}" width="${leaf.width - ((glassInsetX + 3) * 2)}" height="${leaf.height - ((glassInsetY + 3) * 2)}" class="glass-shine" />
+                    <rect x="${gx}" y="${gy}" width="${gw}" height="${gh}" class="glass-pane" />
+                    <line x1="${gx}" y1="${gy}" x2="${gx + gw}" y2="${gy + gh}" class="glass-diagonal" />
+                    <line x1="${gx + gw}" y1="${gy}" x2="${gx}" y2="${gy + gh}" class="glass-diagonal" />
                     ${shouldRenderHandle ? buildHandles(leaf, handleSide) : ''}
                 `;
             }
@@ -721,7 +726,7 @@ if (form) {
                         .meeting-rail { fill: #edf2f5; stroke: rgba(77, 88, 98, 0.5); stroke-width: 0.75; }
                         .fixed-lite-frame { fill: none; stroke: rgba(59, 70, 79, 0.76); stroke-width: 0.9; }
                         .glass-pane { fill: url(#glassFill); stroke: rgba(100, 154, 159, 0.7); stroke-width: 0.7; }
-                        .glass-shine { fill: none; stroke: rgba(255, 255, 255, 0.45); stroke-width: 0.45; }
+                        .glass-diagonal { stroke: rgba(100, 154, 159, 0.55); stroke-width: 0.6; fill: none; stroke-linecap: round; }
                         .technical-line { stroke: rgba(120, 131, 141, 0.5); stroke-width: 0.55; fill: none; }
                         .opening-line-strong { stroke: #4c565f; stroke-width: 1.45; fill: none; stroke-linecap: round; stroke-linejoin: round; }
                         .hinge-line { stroke: #5d666f; stroke-width: 1.3; fill: none; stroke-linecap: round; }
