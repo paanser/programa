@@ -5,10 +5,12 @@ declare(strict_types=1);
 require_once __DIR__ . '/lib/db.php';
 require_once __DIR__ . '/lib/helpers.php';
 
+$lang = get_current_lang();
+
 $id = (int)($_GET['id'] ?? 0);
 if ($id <= 0) {
     http_response_code(400);
-    echo 'ID inválido / ID invàlid';
+    echo h(tr('invalid_id', $lang));
     exit;
 }
 
@@ -21,7 +23,7 @@ try {
 
     if (!$row) {
         http_response_code(404);
-        echo 'Presupuesto no encontrado / Pressupost no trobat';
+        echo h(tr('quote_not_found', $lang));
         exit;
     }
 
@@ -77,9 +79,9 @@ try {
     ]);
 
     $newId = (int)$pdo->lastInsertId();
-    header('Location: view_quote.php?id=' . $newId);
+    header('Location: ' . url_with_lang('view_quote.php', ['id' => $newId], $lang));
     exit;
 } catch (Throwable $e) {
     http_response_code(500);
-    echo 'Error duplicando presupuesto / Error duplicant pressupost: ' . h($e->getMessage());
+    echo h(tr('duplicate_error', $lang)) . ': ' . h($e->getMessage());
 }

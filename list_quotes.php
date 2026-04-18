@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/lib/db.php';
 require_once __DIR__ . '/lib/helpers.php';
 
+$lang = get_current_lang();
 $error = null;
 $rows = [];
 
@@ -16,20 +17,29 @@ try {
 }
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="<?= h($lang) ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Historial / Historial</title>
+    <title><?= h(tr('history_title', $lang)) ?></title>
     <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
 <header class="topbar">
-    <h1>Historial de presupuestos <span>/ Historial de pressupostos</span></h1>
-    <nav>
-        <a href="index.php">Nuevo / Nou</a>
-        <a href="list_quotes.php" class="active">Historial / Historial</a>
-    </nav>
+    <h1><?= h(tr('history_title', $lang)) ?></h1>
+    <div class="topbar-tools">
+        <nav>
+            <a href="<?= h(url_with_lang('index.php', [], $lang)) ?>"><?= h(tr('new', $lang)) ?></a>
+            <a href="<?= h(url_with_lang('list_quotes.php', [], $lang)) ?>" class="active"><?= h(tr('history', $lang)) ?></a>
+        </nav>
+        <label class="lang-switcher">
+            <span><?= h(tr('language', $lang)) ?></span>
+            <select onchange="window.location.href=this.value">
+                <option value="<?= h(url_with_lang('list_quotes.php', [], 'es')) ?>" <?= $lang === 'es' ? 'selected' : '' ?>><?= h(tr('spanish', $lang)) ?></option>
+                <option value="<?= h(url_with_lang('list_quotes.php', [], 'ca')) ?>" <?= $lang === 'ca' ? 'selected' : '' ?>><?= h(tr('catalan', $lang)) ?></option>
+            </select>
+        </label>
+    </div>
 </header>
 
 <main class="layout" style="grid-template-columns: 1fr;">
@@ -42,12 +52,12 @@ try {
                 <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Número / Número</th>
-                    <th>Fecha / Data</th>
-                    <th>Cliente / Client</th>
-                    <th>Sistema</th>
-                    <th>Total</th>
-                    <th>Acciones / Accions</th>
+                    <th><?= h(tr('quote', $lang)) ?></th>
+                    <th><?= h(tr('date', $lang)) ?></th>
+                    <th><?= h(tr('client', $lang)) ?></th>
+                    <th><?= h(tr('system', $lang)) ?></th>
+                    <th><?= h(tr('total', $lang)) ?></th>
+                    <th><?= h(tr('actions', $lang)) ?></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -57,12 +67,12 @@ try {
                         <td><?= h((string)$row['quote_number']) ?></td>
                         <td><?= h((string)$row['created_at']) ?></td>
                         <td><?= h((string)$row['client_name']) ?></td>
-                        <td><?= h((string)$row['system_type']) ?></td>
+                        <td><?= h(humanize_system_type((string)$row['system_type'], $lang)) ?></td>
                         <td><?= number_format((float)$row['total'], 2, ',', '.') ?> EUR</td>
                         <td>
-                            <a href="view_quote.php?id=<?= (int)$row['id'] ?>">Ver / Veure</a>
+                            <a href="<?= h(url_with_lang('view_quote.php', ['id' => (int)$row['id']], $lang)) ?>"><?= h(tr('view', $lang)) ?></a>
                             |
-                            <a href="duplicate_quote.php?id=<?= (int)$row['id'] ?>">Duplicar / Duplicar</a>
+                            <a href="<?= h(url_with_lang('duplicate_quote.php', ['id' => (int)$row['id']], $lang)) ?>"><?= h(tr('duplicate', $lang)) ?></a>
                         </td>
                     </tr>
                 <?php endforeach; ?>

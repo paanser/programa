@@ -1,4 +1,4 @@
-# Presupuestos Vidrio y Aluminio / Pressupostos Vidre i Alumini
+# Presupuestador carpinteria metelica vidres sosa
 
 Aplicación web en PHP + MySQL para crear presupuestos con dibujo técnico SVG dinámico.
 Aplicació web en PHP + MySQL per crear pressupostos amb dibuix tècnic SVG dinàmic.
@@ -13,6 +13,7 @@ Aplicació web en PHP + MySQL per crear pressupostos amb dibuix tècnic SVG din�
 - Historial y detalle de presupuestos.
 - Duplicado de presupuestos con un clic.
 - Impresión limpia para PDF con dibujo técnico.
+- Catalogo editable de precios de vidrio desde config.php.
 
 ## Instalación en Dinahosting / Instal·lació a Dinahosting
 
@@ -54,6 +55,13 @@ Aplicació web en PHP + MySQL per crear pressupostos amb dibuix tècnic SVG din�
 - `lib/helpers.php`: utilidades y cálculo de importes.
 - `assets/app.js`: motor de dibujo SVG + cálculo en cliente.
 - `assets/styles.css`: estilos.
+
+## Tarifas de vidrio
+
+- Puedes actualizar rapidamente los precios por m2 en `config.php`, dentro de `glass_price_catalog`.
+- Cada clave del catalogo coincide con una opcion del selector de vidrio.
+- Al cambiar el tipo de vidrio en el formulario, el precio se rellena automaticamente con la tarifa configurada.
+- Si necesitas ajustar un presupuesto puntual, puedes sobrescribir manualmente el precio en el formulario.
 
 ## Siguiente mejora recomendada / Millora següent recomanada
 

@@ -3,8 +3,8 @@ return [
     'db_host' => 'localhost',
     'db_port' => '3306',
     'db_name' => 'presupuestos_vidrio',
-    'db_user' => 'tu_usuario',
-    'db_pass' => 'tu_password',
+    'db_user' => 'pau',
+    'db_pass' => 'pau',
     'iva_pct_default' => 21,
     'glass_price_catalog' => [
         'camara_4_12_4' => 38.00,

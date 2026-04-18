@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run PHP Server",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "/workspaces/programa/start-server.sh"
+      ],
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ]
+}

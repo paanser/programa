@@ -5,19 +5,22 @@ declare(strict_types=1);
 require_once __DIR__ . '/lib/db.php';
 require_once __DIR__ . '/lib/helpers.php';
 
+$lang = get_current_lang($_POST);
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: index.php');
+    header('Location: ' . url_with_lang('index.php', [], $lang));
     exit;
 }
 
 $clientName = trim((string)($_POST['client_name'] ?? ''));
 if ($clientName === '') {
     http_response_code(422);
-    echo 'Cliente obligatorio / Client obligatori';
+    echo h(tr('required_client', $lang));
     exit;
 }
 
 $calc = calculate_quote($_POST);
+$config = build_quote_config($_POST, $calc);
 $quoteNumber = generate_quote_number();
 $createdAt = date('Y-m-d H:i:s');
 
@@ -47,10 +50,10 @@ try {
         ':client_name' => $clientName,
         ':client_email' => trim((string)($_POST['client_email'] ?? '')),
         ':client_phone' => trim((string)($_POST['client_phone'] ?? '')),
-        ':system_type' => trim((string)($_POST['system_type'] ?? 'corredera')),
-        ':opening_type' => trim((string)($_POST['opening_type'] ?? 'izquierda')),
-        ':profile_color' => trim((string)($_POST['profile_color'] ?? '')),
-        ':glass_type' => trim((string)($_POST['glass_type'] ?? '')),
+        ':system_type' => (string)$calc['system_type'],
+        ':opening_type' => (string)$calc['opening_type'],
+        ':profile_color' => (string)$calc['profile_color'],
+        ':glass_type' => (string)$calc['glass_type'],
         ':width_mm' => $calc['width_mm'],
         ':height_mm' => $calc['height_mm'],
         ':leaves' => $calc['leaves'],
@@ -67,15 +70,15 @@ try {
         ':taxable_base' => $calc['taxable_base'],
         ':iva_amount' => $calc['iva_amount'],
         ':total' => $calc['total'],
-        ':drawing_svg' => (string)($_POST['drawing_svg'] ?? ''),
-        ':config_json' => (string)($_POST['config_json'] ?? '{}'),
+        ':drawing_svg' => (string)$calc['drawing_svg'],
+        ':config_json' => json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         ':notes' => trim((string)($_POST['notes'] ?? '')),
     ]);
 
     $id = (int)$pdo->lastInsertId();
-    header('Location: view_quote.php?id=' . $id);
+    header('Location: ' . url_with_lang('view_quote.php', ['id' => $id], $lang));
     exit;
 } catch (Throwable $e) {
     http_response_code(500);
-    echo 'Error guardando presupuesto / Error desant pressupost: ' . h($e->getMessage());
+    echo h(tr('save_error', $lang)) . ': ' . h($e->getMessage());
 }
