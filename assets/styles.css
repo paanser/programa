@@ -145,6 +145,22 @@ p {
     flex-wrap: wrap;
 }
 
+.user-session {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.user-session a {
+    text-decoration: none;
+    padding: 0.35rem 0.6rem;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(61, 73, 84, 0.1);
+}
+
 .lang-switcher {
     display: flex;
     align-items: center;
@@ -478,6 +494,49 @@ p {
     overflow-x: auto;
 }
 
+.history-filters {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.7rem;
+    margin-bottom: 1rem;
+}
+
+.history-filters .actions {
+    margin-top: 1.25rem;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    border: 1px solid transparent;
+}
+
+.status-pending {
+    background: rgba(250, 217, 111, 0.25);
+    border-color: rgba(182, 139, 26, 0.35);
+}
+
+.status-accepted {
+    background: rgba(121, 200, 149, 0.22);
+    border-color: rgba(30, 122, 76, 0.35);
+}
+
+.status-rejected {
+    background: rgba(229, 126, 126, 0.2);
+    border-color: rgba(165, 57, 57, 0.32);
+}
+
+.quote-status-select {
+    margin-top: 0.35rem;
+}
+
+.auth-panel {
+    max-width: 520px;
+    margin: 0 auto;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
@@ -518,7 +577,8 @@ td {
 @media (max-width: 920px) {
     .layout,
     .grid.two,
-    .glass-summary-grid {
+    .glass-summary-grid,
+    .history-filters {
         grid-template-columns: 1fr;
     }
 

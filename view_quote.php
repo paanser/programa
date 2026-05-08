@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/lib/db.php';
 require_once __DIR__ . '/lib/helpers.php';
+require_once __DIR__ . '/lib/auth.php';
 
 $lang = get_current_lang();
+$currentUser = require_auth($lang);
+$isAdmin = is_admin_user($currentUser);
 $config = [];
 $items = [];
 $quoteTotals = [];
@@ -19,8 +22,14 @@ if ($id <= 0) {
 
 try {
     $pdo = get_pdo();
-    $stmt = $pdo->prepare('SELECT * FROM quotes WHERE id = :id');
-    $stmt->execute([':id' => $id]);
+    $sql = 'SELECT * FROM quotes WHERE id = :id';
+    $params = [':id' => $id];
+    if (!$isAdmin) {
+        $sql .= ' AND user_id = :user_id';
+        $params[':user_id'] = (int)$currentUser['id'];
+    }
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     $row = $stmt->fetch();
 
     if (!$row) {
@@ -62,6 +71,10 @@ try {
                 <option value="<?= h(url_with_lang('view_quote.php', ['id' => $id], 'ca')) ?>" <?= $lang === 'ca' ? 'selected' : '' ?>><?= h(tr('catalan', $lang)) ?></option>
             </select>
         </label>
+        <div class="user-session">
+            <span><?= h(tr('logged_in_as', $lang)) ?>: <?= h((string)$currentUser['name']) ?></span>
+            <a href="<?= h(url_with_lang('logout.php', [], $lang)) ?>"><?= h(tr('logout', $lang)) ?></a>
+        </div>
     </div>
 </header>
 
@@ -77,6 +90,8 @@ try {
         <h2><?= h(tr('client', $lang)) ?></h2>
         <p><strong><?= h((string)$row['client_name']) ?></strong></p>
         <p><?= h((string)$row['client_email']) ?> - <?= h((string)$row['client_phone']) ?></p>
+        <?php $quoteStatus = in_array((string)($row['status'] ?? ''), ['pending', 'accepted', 'rejected'], true) ? (string)$row['status'] : 'pending'; ?>
+        <p><strong><?= h(tr('status', $lang)) ?>:</strong> <span class="status-badge status-<?= h($quoteStatus) ?>"><?= h(humanize_quote_status($quoteStatus, $lang)) ?></span></p>
 
         <h3><?= h(tr('configuration', $lang)) ?></h3>
         <p><?= h(tr('system', $lang)) ?>: <?= h(humanize_system_type((string)$row['system_type'], $lang)) ?></p>

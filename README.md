@@ -11,7 +11,10 @@ Aplicació web en PHP + MySQL per crear pressupostos amb dibuix tècnic SVG din�
 - Cálculo automático de aluminio, vidrio, margen, IVA y total.
 - Guardado en MySQL.
 - Historial y detalle de presupuestos.
+- Login multiusuario con sesiones (admin por defecto en la base de datos).
 - Duplicado de presupuestos con un clic.
+- Estado del presupuesto (pendiente, aceptado o rechazado).
+- Filtros en historial por cliente, estado y rango de fechas.
 - Impresión limpia para PDF con dibujo técnico.
 - Catalogo editable de precios de vidrio desde config.php.
 

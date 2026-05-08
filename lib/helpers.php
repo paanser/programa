@@ -159,6 +159,25 @@ function tr(string $key, ?string $lang = null): string
             'save_error' => 'Error guardando presupuesto',
             'duplicate_error' => 'Error duplicando presupuesto',
             'required_client' => 'Cliente obligatorio',
+            'login_title' => 'Iniciar sesion',
+            'username' => 'Usuario',
+            'password' => 'Contrasena',
+            'login' => 'Entrar',
+            'logout' => 'Cerrar sesion',
+            'invalid_credentials' => 'Usuario o contrasena incorrectos',
+            'logged_in_as' => 'Usuario',
+            'status' => 'Estado',
+            'status_pending' => 'Pendiente',
+            'status_accepted' => 'Aceptado',
+            'status_rejected' => 'Rechazado',
+            'status_updated' => 'Estado actualizado',
+            'status_update_error' => 'No se pudo actualizar el estado',
+            'status_all' => 'Todos',
+            'search' => 'Buscar',
+            'filter_client' => 'Cliente',
+            'filter_from' => 'Desde',
+            'filter_to' => 'Hasta',
+            'results_found' => 'Resultados encontrados',
         ],
         'ca' => [
             'app_title' => 'Presupuestador carpinteria metelica vidres sosa',
@@ -300,6 +319,25 @@ function tr(string $key, ?string $lang = null): string
             'save_error' => 'Error desant pressupost',
             'duplicate_error' => 'Error duplicant pressupost',
             'required_client' => 'Client obligatori',
+            'login_title' => 'Iniciar sessio',
+            'username' => 'Usuari',
+            'password' => 'Contrasenya',
+            'login' => 'Entrar',
+            'logout' => 'Tancar sessio',
+            'invalid_credentials' => 'Usuari o contrasenya incorrectes',
+            'logged_in_as' => 'Usuari',
+            'status' => 'Estat',
+            'status_pending' => 'Pendent',
+            'status_accepted' => 'Acceptat',
+            'status_rejected' => 'Rebutjat',
+            'status_updated' => 'Estat actualitzat',
+            'status_update_error' => 'No s\'ha pogut actualitzar l\'estat',
+            'status_all' => 'Tots',
+            'search' => 'Cercar',
+            'filter_client' => 'Client',
+            'filter_from' => 'Des de',
+            'filter_to' => 'Fins a',
+            'results_found' => 'Resultats trobats',
         ],
     ];
 
@@ -373,6 +411,17 @@ function humanize_tilt_turn_leaf(string $value, ?string $lang = null): string
     ];
 
     return isset($map[$value]) ? tr($map[$value], $lang) : trim(str_replace('_', ' ', $value));
+}
+
+function humanize_quote_status(string $status, ?string $lang = null): string
+{
+    $map = [
+        'pending' => 'status_pending',
+        'accepted' => 'status_accepted',
+        'rejected' => 'status_rejected',
+    ];
+
+    return isset($map[$status]) ? tr($map[$status], $lang) : tr('status_pending', $lang);
 }
 
 function get_default_glass_price_catalog(): array

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/lib/db.php';
 require_once __DIR__ . '/lib/helpers.php';
+require_once __DIR__ . '/lib/auth.php';
 
 $lang = get_current_lang($_POST);
+$currentUser = require_auth($lang);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ' . url_with_lang('index.php', [], $lang));
@@ -33,14 +35,14 @@ try {
         width_mm, height_mm, leaves, quantity,
         aluminum_price_ml, glass_price_m2, labor_cost, margin_pct, iva_pct,
         aluminum_ml, glass_m2, subtotal, margin_amount, taxable_base, iva_amount, total,
-        drawing_svg, config_json, notes
+        drawing_svg, config_json, notes, user_id, status
     ) VALUES (
         :quote_number, :created_at, :client_name, :client_email, :client_phone,
         :system_type, :opening_type, :profile_color, :glass_type,
         :width_mm, :height_mm, :leaves, :quantity,
         :aluminum_price_ml, :glass_price_m2, :labor_cost, :margin_pct, :iva_pct,
         :aluminum_ml, :glass_m2, :subtotal, :margin_amount, :taxable_base, :iva_amount, :total,
-        :drawing_svg, :config_json, :notes
+        :drawing_svg, :config_json, :notes, :user_id, :status
     )';
 
     $stmt = $pdo->prepare($sql);
@@ -73,6 +75,8 @@ try {
         ':drawing_svg' => (string)$calc['drawing_svg'],
         ':config_json' => json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         ':notes' => trim((string)($_POST['notes'] ?? '')),
+        ':user_id' => (int)$currentUser['id'],
+        ':status' => 'pending',
     ]);
 
     $id = (int)$pdo->lastInsertId();

@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/lib/helpers.php';
+require_once __DIR__ . '/lib/auth.php';
+
+$lang = get_current_lang();
+require_auth($lang);
+
 $root = __DIR__;
 $checks = [];
 

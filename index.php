@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/lib/helpers.php';
+require_once __DIR__ . '/lib/auth.php';
 
 $lang = get_current_lang();
+$currentUser = require_auth($lang);
 $carpentryOptions = get_carpentry_options();
 $glassOptions = get_glass_options();
 $glassPriceCatalog = get_default_glass_price_catalog();
@@ -64,6 +66,10 @@ if ($configExists) {
                 <option value="<?= h(url_with_lang('index.php', [], 'ca')) ?>" <?= $lang === 'ca' ? 'selected' : '' ?>><?= h(tr('catalan', $lang)) ?></option>
             </select>
         </label>
+        <div class="user-session">
+            <span><?= h(tr('logged_in_as', $lang)) ?>: <?= h((string)$currentUser['name']) ?></span>
+            <a href="<?= h(url_with_lang('logout.php', [], $lang)) ?>"><?= h(tr('logout', $lang)) ?></a>
+        </div>
     </div>
 </header>
 

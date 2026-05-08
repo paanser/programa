@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/lib/db.php';
 require_once __DIR__ . '/lib/helpers.php';
+require_once __DIR__ . '/lib/auth.php';
 
 $lang = get_current_lang();
+$currentUser = require_auth($lang);
+$isAdmin = is_admin_user($currentUser);
 
 $id = (int)($_GET['id'] ?? 0);
 if ($id <= 0) {
@@ -17,8 +20,14 @@ if ($id <= 0) {
 try {
     $pdo = get_pdo();
 
-    $stmt = $pdo->prepare('SELECT * FROM quotes WHERE id = :id');
-    $stmt->execute([':id' => $id]);
+    $sql = 'SELECT * FROM quotes WHERE id = :id';
+    $params = [':id' => $id];
+    if (!$isAdmin) {
+        $sql .= ' AND user_id = :user_id';
+        $params[':user_id'] = (int)$currentUser['id'];
+    }
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     $row = $stmt->fetch();
 
     if (!$row) {
@@ -36,14 +45,14 @@ try {
         width_mm, height_mm, leaves, quantity,
         aluminum_price_ml, glass_price_m2, labor_cost, margin_pct, iva_pct,
         aluminum_ml, glass_m2, subtotal, margin_amount, taxable_base, iva_amount, total,
-        drawing_svg, config_json, notes
+        drawing_svg, config_json, notes, user_id, status
     ) VALUES (
         :quote_number, :created_at, :client_name, :client_email, :client_phone,
         :system_type, :opening_type, :profile_color, :glass_type,
         :width_mm, :height_mm, :leaves, :quantity,
         :aluminum_price_ml, :glass_price_m2, :labor_cost, :margin_pct, :iva_pct,
         :aluminum_ml, :glass_m2, :subtotal, :margin_amount, :taxable_base, :iva_amount, :total,
-        :drawing_svg, :config_json, :notes
+        :drawing_svg, :config_json, :notes, :user_id, :status
     )';
 
     $insert = $pdo->prepare($insertSql);
@@ -76,6 +85,8 @@ try {
         ':drawing_svg' => (string)$row['drawing_svg'],
         ':config_json' => (string)$row['config_json'],
         ':notes' => (string)$row['notes'],
+        ':user_id' => (int)$currentUser['id'],
+        ':status' => 'pending',
     ]);
 
     $newId = (int)$pdo->lastInsertId();
