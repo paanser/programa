@@ -92,7 +92,7 @@ try {
     if ($where !== []) {
         $sql .= ' WHERE ' . implode(' AND ', $where);
     }
-    $sql .= ' ORDER BY id DESC LIMIT 500';
+    $sql .= ' ORDER BY id DESC LIMIT 200';
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
@@ -214,7 +214,6 @@ document.querySelectorAll('.quote-status-select').forEach(function (el) {
         formData.append('action', 'update_status');
         formData.append('id', quoteId);
         formData.append('status', selectedStatus);
-        formData.append('lang', <?= json_encode($lang) ?>);
 
         fetch('list_quotes.php?lang=' + encodeURIComponent(<?= json_encode($lang) ?>), {
             method: 'POST',
