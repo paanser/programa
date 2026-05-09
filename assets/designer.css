@@ -1,0 +1,162 @@
+/* ── Designer layout ──────────────────────────────────────── */
+
+.designer-layout {
+    display: grid;
+    grid-template-columns: 290px 1fr;
+    height: calc(100vh - 56px);
+    overflow: hidden;
+}
+
+.designer-panel {
+    background: var(--panel);
+    border-right: 1px solid var(--panel-border);
+    padding: 1.1rem 1.1rem 2rem;
+    overflow-y: auto;
+    box-shadow: 2px 0 8px rgba(31,42,51,0.06);
+}
+
+.designer-panel h2 {
+    margin: 0 0 0.15rem;
+    font-size: 1.05rem;
+    color: var(--brand-dark);
+}
+
+.designer-canvas-area {
+    display: flex;
+    flex-direction: column;
+    background: #eceff2;
+    overflow: hidden;
+}
+
+.canvas-hint {
+    font-size: 0.76rem;
+    color: var(--muted);
+    padding: 0.4rem 1rem;
+    border-bottom: 1px solid var(--panel-border);
+    background: var(--panel);
+}
+
+.canvas-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    padding: 1.5rem;
+}
+
+/* ── Re-use form-section from descompuesto ────────────────── */
+
+.form-section {
+    margin-top: 1.1rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--panel-border);
+}
+
+.form-section h3 {
+    margin: 0 0 0.6rem;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+}
+
+.print-btn {
+    margin-top: 1.2rem;
+    width: 100%;
+    background: linear-gradient(180deg, var(--brand), var(--brand-dark));
+}
+
+/* ── Split buttons ────────────────────────────────────────── */
+
+.btn-group {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.split-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    justify-content: center;
+    font-size: 0.8rem;
+    padding: 0.45rem 0.5rem;
+}
+
+.split-btn svg { flex-shrink: 0; }
+
+/* ── Panel list ───────────────────────────────────────────── */
+
+.panel-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-top: 0.2rem;
+}
+
+.panel-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.35rem 0.55rem;
+    border-left: 3px solid var(--accent);
+    background: rgba(66,81,93,0.04);
+    border-radius: 0 5px 5px 0;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background 0.1s;
+}
+
+.panel-list-item:hover { background: rgba(66,81,93,0.09); }
+.panel-list-item.selected { background: rgba(29,78,216,0.1); border-left-color: #1d4ed8; }
+.panel-list-item span { color: var(--muted); font-size: 0.75rem; font-family: monospace; }
+
+/* ── System legend ────────────────────────────────────────── */
+
+.sys-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin-top: 0.4rem;
+}
+
+.sys-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+
+.sys-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.2);
+    flex-shrink: 0;
+}
+
+/* ── Print ────────────────────────────────────────────────── */
+
+@media print {
+    .designer-panel, .topbar, .background-shape, .canvas-hint {
+        display: none !important;
+    }
+    .designer-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+    .canvas-wrap { padding: 0; }
+    .canvas-wrap svg { width: 100% !important; height: auto !important; }
+}
+
+@media (max-width: 800px) {
+    .designer-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+        overflow: visible;
+    }
+    .designer-canvas-area { min-height: 400px; }
+    .canvas-wrap svg { max-width: 100%; height: auto; }
+}
