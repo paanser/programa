@@ -1,6 +1,6 @@
 {
   "name": "PHP App",
-  "postStartCommand": "php -S 0.0.0.0:8080 -t /home/user/programa &",
+  "postStartCommand": "chmod +x /home/user/programa/start-server.sh && /home/user/programa/start-server.sh",
   "forwardPorts": [8080],
   "portsAttributes": {
     "8080": {
