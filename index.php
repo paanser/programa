@@ -55,6 +55,7 @@ if ($configExists) {
     <div class="topbar-tools">
         <nav>
             <a href="<?= h(url_with_lang('index.php', [], $lang)) ?>" class="active"><?= h(tr('new', $lang)) ?></a>
+            <a href="descompuesto.php">Descompuesto S28</a>
             <a href="<?= h(url_with_lang('list_quotes.php', [], $lang)) ?>"><?= h(tr('history', $lang)) ?></a>
         </nav>
         <label class="lang-switcher">

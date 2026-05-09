@@ -1,0 +1,202 @@
+/* ── Descompuesto layout ─────────────────────────────────── */
+
+.descomp-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .descomp-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Form panel ──────────────────────────────────────────── */
+
+.descomp-form-panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 1.4rem;
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 1rem;
+}
+
+.descomp-form-panel h2 {
+    margin: 0 0 0.2rem;
+    font-size: 1.15rem;
+    color: var(--brand-dark);
+}
+
+.form-section {
+    margin-top: 1.2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--panel-border);
+}
+
+.form-section h3 {
+    margin: 0 0 0.7rem;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+}
+
+.print-btn {
+    margin-top: 1.4rem;
+    width: 100%;
+    background: linear-gradient(180deg, var(--brand), var(--brand-dark));
+}
+
+/* ── Results panel ───────────────────────────────────────── */
+
+.descomp-results-panel {
+    min-height: 400px;
+}
+
+.result-header {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 1.1rem 1.4rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow);
+}
+
+.result-header h2 {
+    margin: 0 0 0.2rem;
+    font-size: 1.2rem;
+    color: var(--brand-dark);
+}
+
+.section-title {
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    margin: 1.4rem 0 0.5rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--panel-border);
+}
+
+/* ── Tables ─────────────────────────────────────────────── */
+
+.result-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(31,42,51,0.05);
+    font-size: 0.87rem;
+    margin-bottom: 0.5rem;
+}
+
+.result-table th {
+    background: var(--brand-dark);
+    color: #fff;
+    padding: 0.55rem 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
+}
+
+.result-table td {
+    padding: 0.45rem 0.75rem;
+    border-bottom: 1px solid rgba(61,73,84,0.08);
+    vertical-align: middle;
+}
+
+.result-table tbody tr:hover {
+    background: rgba(66, 81, 93, 0.04);
+}
+
+.result-table tfoot td {
+    background: rgba(66, 81, 93, 0.07);
+    padding: 0.55rem 0.75rem;
+    font-size: 0.9rem;
+}
+
+.result-table.compact td,
+.result-table.compact th {
+    padding: 0.38rem 0.65rem;
+    font-size: 0.83rem;
+}
+
+.ref-cell {
+    font-family: monospace;
+    font-size: 0.82rem;
+    color: var(--brand-dark);
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.formula-cell {
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.note-cell {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-style: italic;
+}
+
+.cell-error {
+    color: #c0392b;
+    font-weight: 700;
+}
+
+/* ── Formula note ────────────────────────────────────────── */
+
+.formula-note {
+    margin-top: 1rem;
+    padding: 0.8rem 1rem;
+    background: rgba(66,81,93,0.06);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+/* ── Print ───────────────────────────────────────────────── */
+
+@media print {
+    .descomp-form-panel,
+    .topbar,
+    .background-shape,
+    .print-btn {
+        display: none !important;
+    }
+    .descomp-layout {
+        grid-template-columns: 1fr;
+        padding: 0;
+    }
+    .result-table th {
+        background: #2f3942 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    .result-header,
+    .result-table {
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+    .section-title {
+        margin-top: 1rem;
+    }
+    body {
+        background: white;
+    }
+}
