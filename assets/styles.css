@@ -474,6 +474,20 @@ p {
     transition: opacity 0.2s ease;
 }
 
+.list-filters {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 1.25rem;
+}
+
+.list-filters input[type="search"],
+.list-filters select {
+    flex: 1;
+    min-width: 160px;
+}
+
 .table-wrap {
     overflow-x: auto;
 }

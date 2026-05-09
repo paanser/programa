@@ -2,6 +2,14 @@
 
 declare(strict_types=1);
 
+$allowedIps = ['127.0.0.1', '::1'];
+$remoteIp = $_SERVER['REMOTE_ADDR'] ?? '';
+if (!in_array($remoteIp, $allowedIps, true)) {
+    http_response_code(403);
+    echo 'Acceso restringido. Esta pagina solo es accesible desde el servidor local.';
+    exit;
+}
+
 $root = __DIR__;
 $checks = [];
 

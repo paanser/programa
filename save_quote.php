@@ -79,6 +79,7 @@ try {
     header('Location: ' . url_with_lang('view_quote.php', ['id' => $id], $lang));
     exit;
 } catch (Throwable $e) {
+    error_log('[save_quote] ' . $e->getMessage());
     http_response_code(500);
-    echo h(tr('save_error', $lang)) . ': ' . h($e->getMessage());
+    echo h(tr('save_error', $lang));
 }

@@ -123,7 +123,7 @@ if ($configExists) {
                     </select>
                 </label>
                 <label><?= h(tr('reference', $lang)) ?>
-                    <input type="text" name="carpentry_reference" id="carpentryReference" value="" placeholder="Serie concreta, acabado o referencia">
+                    <input type="text" name="carpentry_reference" id="carpentryReference" value="" placeholder="<?= h(tr('carpentry_reference_placeholder', $lang)) ?>">
                 </label>
                 <label><?= h(tr('trim', $lang)) ?>
                     <select name="trim_size" id="trimSize">

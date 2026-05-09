@@ -82,6 +82,7 @@ try {
     header('Location: ' . url_with_lang('view_quote.php', ['id' => $newId], $lang));
     exit;
 } catch (Throwable $e) {
+    error_log('[duplicate_quote] ' . $e->getMessage());
     http_response_code(500);
-    echo h(tr('duplicate_error', $lang)) . ': ' . h($e->getMessage());
+    echo h(tr('duplicate_error', $lang));
 }

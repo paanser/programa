@@ -34,8 +34,9 @@ try {
     $items = is_array($config['items'] ?? null) ? $config['items'] : [];
     $quoteTotals = is_array($config['quote_totals'] ?? null) ? $config['quote_totals'] : [];
 } catch (Throwable $e) {
+    error_log('[view_quote] ' . $e->getMessage());
     http_response_code(500);
-    echo 'Error: ' . h($e->getMessage());
+    echo h(tr('save_error', $lang));
     exit;
 }
 ?>
