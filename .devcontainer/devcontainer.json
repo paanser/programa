@@ -5,7 +5,8 @@
   "portsAttributes": {
     "8080": {
       "label": "PHP App",
-      "onAutoForward": "openBrowser"
+      "onAutoForward": "openBrowser",
+      "visibility": "public"
     }
   }
 }
