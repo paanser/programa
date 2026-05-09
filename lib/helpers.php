@@ -21,16 +21,16 @@ function tr(string $key, ?string $lang = null): string
     $lang = $lang ?? get_current_lang();
 
     if (!isset($cache[$lang])) {
-        $path = __DIR__ . ‘/../lang/’ . $lang . ‘.php’;
+        $path = __DIR__ . '/../lang/' . $lang . '.php';
         $cache[$lang] = file_exists($path) ? (require $path) : [];
     }
 
-    if (!isset($cache[‘es’])) {
-        $path = __DIR__ . ‘/../lang/es.php’;
-        $cache[‘es’] = file_exists($path) ? (require $path) : [];
+    if (!isset($cache['es'])) {
+        $path = __DIR__ . '/../lang/es.php';
+        $cache['es'] = file_exists($path) ? (require $path) : [];
     }
 
-    return (string)($cache[$lang][$key] ?? $cache[‘es’][$key] ?? $key);
+    return (string)($cache[$lang][$key] ?? $cache['es'][$key] ?? $key);
 }
 
 function url_with_lang(string $path, array $params = [], ?string $lang = null): string
