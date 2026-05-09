@@ -18,7 +18,9 @@ CREATE TABLE IF NOT EXISTS quotes (
     quantity INT UNSIGNED NOT NULL DEFAULT 1,
     aluminum_price_ml DECIMAL(10,2) NOT NULL,
     glass_price_m2 DECIMAL(10,2) NOT NULL,
-    labor_cost DECIMAL(10,2) NOT NULL,
+    labor_cost DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    hardware_cost DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    installation_cost DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     margin_pct DECIMAL(5,2) NOT NULL,
     iva_pct DECIMAL(5,2) NOT NULL,
     aluminum_ml DECIMAL(10,3) NOT NULL,
@@ -31,6 +33,9 @@ CREATE TABLE IF NOT EXISTS quotes (
     drawing_svg MEDIUMTEXT,
     config_json JSON,
     notes TEXT,
+    status VARCHAR(30) NOT NULL DEFAULT 'draft',
+    valid_until DATE DEFAULT NULL,
     INDEX idx_created_at (created_at),
-    INDEX idx_client_name (client_name)
+    INDEX idx_client_name (client_name),
+    INDEX idx_status (status)
 ) ENGINE=InnoDB;

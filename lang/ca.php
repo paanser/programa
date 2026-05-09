@@ -146,4 +146,31 @@ return [
     'filter_system' => 'Tots els sistemes',
     'no_results' => 'No hi ha pressupostos que coincideixin amb la cerca.',
     'carpentry_reference_placeholder' => 'Serie concreta, acabat o referencia',
+    // Estat
+    'status' => 'Estat',
+    'status_all' => 'Tots els estats',
+    'status_draft' => 'Esborrany',
+    'status_sent' => 'Enviat',
+    'status_accepted' => 'Acceptat',
+    'status_rejected' => 'Rebutjat',
+    'status_ordered' => 'Demanat',
+    'valid_until' => 'Valid fins',
+    'valid_until_hint' => 'Data de validesa del pressupost.',
+    // Ferratges i installacio
+    'hardware_cost' => 'Ferratges €/ud',
+    'hardware_hint' => 'Cost de ferratges per unitat: maneta, frontisses, tancament, burlet...',
+    'installation_cost' => 'Installacio €/ud',
+    'installation_hint' => 'Cost de ma d\'obra d\'installacio per unitat.',
+    // Accions
+    'delete' => 'Eliminar',
+    'delete_confirm' => 'Estas segur que vols eliminar aquest pressupost? Aquesta accio no es pot desfer.',
+    'delete_error' => 'Error eliminant pressupost',
+    'delete_success' => 'Pressupost eliminat correctament',
+    'change_status' => 'Canviar estat',
+    // Estadistiques
+    'stats_title' => 'Resum',
+    'stats_total' => 'Total pressupostos',
+    'stats_amount' => 'Import total',
+    'stats_accepted' => 'Acceptats',
+    'stats_pending' => 'Pendents',
 ];

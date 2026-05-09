@@ -50,11 +50,12 @@ function generate_quote_number(): string
 function get_carpentry_options(): array
 {
     return [
-        'exlabesa' => 'Exlabesa',
-        'cortizo' => 'Cortizo',
-        'marco_40_40' => 'Marco 40+40',
-        'marco_40_20' => 'Marco 40x20',
-        'otra' => 'other_carpentry',
+        'corredera'  => 'Serie corredera',
+        'abatible'   => 'Serie abatible',
+        'fijo'       => 'Serie fijo',
+        'oscilo'     => 'Serie oscilobatiente',
+        'rpt'        => 'Serie RPT',
+        'otra'       => 'other_carpentry',
     ];
 }
 
@@ -64,6 +65,28 @@ function humanize_carpentry_model(string $value): string
     $label = $map[$value] ?? trim(str_replace('_', ' ', $value));
 
     return array_key_exists($value, $map) ? tr((string)$label) : $label;
+}
+
+function get_status_options(?string $lang = null): array
+{
+    return [
+        'draft'    => tr('status_draft', $lang),
+        'sent'     => tr('status_sent', $lang),
+        'accepted' => tr('status_accepted', $lang),
+        'rejected' => tr('status_rejected', $lang),
+        'ordered'  => tr('status_ordered', $lang),
+    ];
+}
+
+function get_status_css_class(string $status): string
+{
+    return match ($status) {
+        'accepted' => 'status-badge--accepted',
+        'rejected' => 'status-badge--rejected',
+        'sent'     => 'status-badge--sent',
+        'ordered'  => 'status-badge--ordered',
+        default    => 'status-badge--draft',
+    };
 }
 
 function humanize_system_type(string $value, ?string $lang = null): string
@@ -224,6 +247,8 @@ function build_quote_item_config(array $data, array $calc): array
     $pricingMode = (string)($data['pricing_mode'] ?? 'fabricada');
     $commercialMarginPct = max(0.0, (float)($data['commercial_margin_pct'] ?? ($data['margin_pct'] ?? 0)));
     $purchasedUnitCost = max(0.0, (float)($data['purchased_unit_cost'] ?? 0));
+    $hardwareCostPerUnit = max(0.0, (float)($data['hardware_cost'] ?? 0));
+    $installationCostPerUnit = max(0.0, (float)($data['installation_cost'] ?? 0));
     $internalExtraCost = max(0.0, (float)($data['internal_extra_cost'] ?? 0));
 
     return [
@@ -232,6 +257,8 @@ function build_quote_item_config(array $data, array $calc): array
         'pricing_mode' => $pricingMode,
         'is_factory_finished' => !empty($data['is_factory_finished']),
         'purchased_unit_cost' => round($purchasedUnitCost, 2),
+        'hardware_cost' => round($hardwareCostPerUnit, 2),
+        'installation_cost' => round($installationCostPerUnit, 2),
         'internal_extra_cost' => round($internalExtraCost, 2),
         'commercial_margin_pct' => round($commercialMarginPct, 2),
         'margin_pct' => $calc['margin_pct'],
@@ -310,6 +337,8 @@ function calculate_quote_item(array $data): array
     $aluminumPriceMl = max(0.0, (float)($data['aluminum_price_ml'] ?? 0));
     $glassPriceM2 = max(0.0, (float)($data['glass_price_m2'] ?? 0));
     $laborCost = max(0.0, (float)($data['labor_cost'] ?? 0));
+    $hardwareCost = max(0.0, (float)($data['hardware_cost'] ?? 0));
+    $installationCost = max(0.0, (float)($data['installation_cost'] ?? 0));
     $internalExtraCost = max(0.0, (float)($data['internal_extra_cost'] ?? 0));
     $marginPct = max(0.0, (float)($data['margin_pct'] ?? 0));
     $commercialMarginPct = max(0.0, (float)($data['commercial_margin_pct'] ?? $marginPct));
@@ -330,8 +359,10 @@ function calculate_quote_item(array $data): array
 
     $aluminumCost = $aluminumMl * $aluminumPriceMl;
     $glassCost = $glassM2 * $glassPriceM2;
-    $fabricatedBaseCost = $aluminumCost + $glassCost + $laborCost + $internalExtraCost;
-    $purchasedBaseCost = ($purchasedUnitCost * $quantity) + $internalExtraCost;
+    $hardwareTotalCost = $hardwareCost * $quantity;
+    $installationTotalCost = $installationCost * $quantity;
+    $fabricatedBaseCost = $aluminumCost + $glassCost + $laborCost + $hardwareTotalCost + $installationTotalCost + $internalExtraCost;
+    $purchasedBaseCost = ($purchasedUnitCost * $quantity) + $hardwareTotalCost + $installationTotalCost + $internalExtraCost;
 
     $baseCost = $pricingMode === 'comprada' ? $purchasedBaseCost : $fabricatedBaseCost;
     $effectiveMarginPct = $pricingMode === 'comprada' ? $commercialMarginPct : $marginPct;
@@ -356,6 +387,10 @@ function calculate_quote_item(array $data): array
         'glass_price_m2' => round($glassPriceM2, 2),
         'glass_cost' => round($glassCost, 2),
         'labor_cost' => round($laborCost, 2),
+        'hardware_cost' => round($hardwareCost, 2),
+        'hardware_total_cost' => round($hardwareTotalCost, 2),
+        'installation_cost' => round($installationCost, 2),
+        'installation_total_cost' => round($installationTotalCost, 2),
         'internal_extra_cost' => round($internalExtraCost, 2),
         'margin_pct' => round($effectiveMarginPct, 2),
         'commercial_margin_pct' => round($commercialMarginPct, 2),

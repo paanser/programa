@@ -146,4 +146,31 @@ return [
     'filter_system' => 'Todos los sistemas',
     'no_results' => 'No hay presupuestos que coincidan con la busqueda.',
     'carpentry_reference_placeholder' => 'Serie concreta, acabado o referencia',
+    // Estado
+    'status' => 'Estado',
+    'status_all' => 'Todos los estados',
+    'status_draft' => 'Borrador',
+    'status_sent' => 'Enviado',
+    'status_accepted' => 'Aceptado',
+    'status_rejected' => 'Rechazado',
+    'status_ordered' => 'Pedido',
+    'valid_until' => 'Valido hasta',
+    'valid_until_hint' => 'Fecha de validez del presupuesto.',
+    // Herrajes e instalacion
+    'hardware_cost' => 'Herrajes €/ud',
+    'hardware_hint' => 'Coste de herrajes por unidad: manilla, bisagras, cierre, burlete...',
+    'installation_cost' => 'Instalacion €/ud',
+    'installation_hint' => 'Coste de mano de obra de instalacion por unidad.',
+    // Acciones
+    'delete' => 'Eliminar',
+    'delete_confirm' => 'Estas seguro de que quieres eliminar este presupuesto? Esta accion no se puede deshacer.',
+    'delete_error' => 'Error eliminando presupuesto',
+    'delete_success' => 'Presupuesto eliminado correctamente',
+    'change_status' => 'Cambiar estado',
+    // Estadisticas
+    'stats_title' => 'Resumen',
+    'stats_total' => 'Total presupuestos',
+    'stats_amount' => 'Importe total',
+    'stats_accepted' => 'Aceptados',
+    'stats_pending' => 'Pendientes',
 ];

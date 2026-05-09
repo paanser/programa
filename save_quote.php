@@ -27,20 +27,23 @@ $createdAt = date('Y-m-d H:i:s');
 try {
     $pdo = get_pdo();
 
+    $validUntilRaw = trim((string)($_POST['valid_until'] ?? ''));
+    $validUntil = ($validUntilRaw !== '' && strtotime($validUntilRaw)) ? $validUntilRaw : null;
+
     $sql = 'INSERT INTO quotes (
         quote_number, created_at, client_name, client_email, client_phone,
         system_type, opening_type, profile_color, glass_type,
         width_mm, height_mm, leaves, quantity,
-        aluminum_price_ml, glass_price_m2, labor_cost, margin_pct, iva_pct,
+        aluminum_price_ml, glass_price_m2, labor_cost, hardware_cost, installation_cost, margin_pct, iva_pct,
         aluminum_ml, glass_m2, subtotal, margin_amount, taxable_base, iva_amount, total,
-        drawing_svg, config_json, notes
+        drawing_svg, config_json, notes, status, valid_until
     ) VALUES (
         :quote_number, :created_at, :client_name, :client_email, :client_phone,
         :system_type, :opening_type, :profile_color, :glass_type,
         :width_mm, :height_mm, :leaves, :quantity,
-        :aluminum_price_ml, :glass_price_m2, :labor_cost, :margin_pct, :iva_pct,
+        :aluminum_price_ml, :glass_price_m2, :labor_cost, :hardware_cost, :installation_cost, :margin_pct, :iva_pct,
         :aluminum_ml, :glass_m2, :subtotal, :margin_amount, :taxable_base, :iva_amount, :total,
-        :drawing_svg, :config_json, :notes
+        :drawing_svg, :config_json, :notes, :status, :valid_until
     )';
 
     $stmt = $pdo->prepare($sql);
@@ -61,6 +64,8 @@ try {
         ':aluminum_price_ml' => $calc['aluminum_price_ml'],
         ':glass_price_m2' => $calc['glass_price_m2'],
         ':labor_cost' => $calc['labor_cost'],
+        ':hardware_cost' => $calc['hardware_cost'] ?? 0,
+        ':installation_cost' => $calc['installation_cost'] ?? 0,
         ':margin_pct' => $calc['margin_pct'],
         ':iva_pct' => $calc['iva_pct'],
         ':aluminum_ml' => $calc['aluminum_ml'],
@@ -73,6 +78,8 @@ try {
         ':drawing_svg' => (string)$calc['drawing_svg'],
         ':config_json' => json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         ':notes' => trim((string)($_POST['notes'] ?? '')),
+        ':status' => 'draft',
+        ':valid_until' => $validUntil,
     ]);
 
     $id = (int)$pdo->lastInsertId();

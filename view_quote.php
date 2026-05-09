@@ -75,6 +75,26 @@ try {
             <button type="button" onclick="window.print()"><?= h(tr('print_pdf', $lang)) ?></button>
         </div>
 
+        <?php
+        $quoteStatus = (string)($row['status'] ?? 'draft');
+        $statusOptions = get_status_options($lang);
+        ?>
+        <div class="status-bar no-print">
+            <span class="status-badge <?= h(get_status_css_class($quoteStatus)) ?>"><?= h($statusOptions[$quoteStatus] ?? $quoteStatus) ?></span>
+            <?php if (($row['valid_until'] ?? '') !== '' && $row['valid_until'] !== null): ?>
+                <span class="valid-until-label"><?= h(tr('valid_until', $lang)) ?>: <?= h((string)$row['valid_until']) ?></span>
+            <?php endif; ?>
+            <form method="post" action="update_status.php" class="inline-form">
+                <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
+                <input type="hidden" name="lang" value="<?= h($lang) ?>">
+                <select name="status" onchange="this.form.submit()" class="status-select <?= h(get_status_css_class($quoteStatus)) ?>">
+                    <?php foreach ($statusOptions as $sv => $sl): ?>
+                        <option value="<?= h($sv) ?>" <?= $quoteStatus === $sv ? 'selected' : '' ?>><?= h($sl) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </form>
+        </div>
+
         <h2><?= h(tr('client', $lang)) ?></h2>
         <p><strong><?= h((string)$row['client_name']) ?></strong></p>
         <p><?= h((string)$row['client_email']) ?> - <?= h((string)$row['client_phone']) ?></p>
@@ -123,18 +143,24 @@ try {
         <h3><?= h(tr('amounts', $lang)) ?></h3>
         <div class="totals">
             <div class="total-row"><span><?= h(tr('aluminum_price', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['aluminum_ml'] ?? $row['aluminum_ml']), 3, ',', '.') ?> ml</strong></div>
-            <div class="total-row"><span><?= h(tr('glass', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['glass_m2'] ?? $row['glass_m2']), 3, ',', '.') ?> m2</strong></div>
+            <div class="total-row"><span><?= h(tr('glass', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['glass_m2'] ?? $row['glass_m2']), 3, ',', '.') ?> m²</strong></div>
             <?php if (isset($quoteTotals['glass_cost']) || isset($config['glass_cost'])): ?>
-                <div class="total-row"><span><?= h(tr('glass_cost', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['glass_cost'] ?? $config['glass_cost']), 2, ',', '.') ?> EUR</strong></div>
+                <div class="total-row"><span><?= h(tr('glass_cost', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['glass_cost'] ?? $config['glass_cost']), 2, ',', '.') ?> €</strong></div>
+            <?php endif; ?>
+            <?php if ((float)($row['hardware_cost'] ?? 0) > 0): ?>
+                <div class="total-row"><span><?= h(tr('hardware_cost', $lang)) ?></span><strong><?= number_format((float)$row['hardware_cost'], 2, ',', '.') ?> €/ud</strong></div>
+            <?php endif; ?>
+            <?php if ((float)($row['installation_cost'] ?? 0) > 0): ?>
+                <div class="total-row"><span><?= h(tr('installation_cost', $lang)) ?></span><strong><?= number_format((float)$row['installation_cost'], 2, ',', '.') ?> €/ud</strong></div>
             <?php endif; ?>
             <?php if (($config['pricing_mode'] ?? 'fabricada') === 'comprada'): ?>
-                <div class="total-row"><span><?= h(tr('purchase_cost_me', $lang)) ?></span><strong><?= number_format((float)($config['purchased_unit_cost'] ?? 0), 2, ',', '.') ?> EUR/ud</strong></div>
+                <div class="total-row"><span><?= h(tr('purchase_cost_me', $lang)) ?></span><strong><?= number_format((float)($config['purchased_unit_cost'] ?? 0), 2, ',', '.') ?> €/ud</strong></div>
                 <div class="total-row"><span><?= h(tr('commercial_margin', $lang)) ?></span><strong><?= number_format((float)($config['commercial_margin_pct'] ?? $row['margin_pct']), 2, ',', '.') ?> %</strong></div>
             <?php endif; ?>
-            <div class="total-row"><span><?= h(tr('subtotal', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['subtotal'] ?? $row['subtotal']), 2, ',', '.') ?> EUR</strong></div>
-            <div class="total-row"><span><?= h(tr('margin', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['margin_amount'] ?? $row['margin_amount']), 2, ',', '.') ?> EUR</strong></div>
-            <div class="total-row"><span><?= h(tr('iva', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['iva_amount'] ?? $row['iva_amount']), 2, ',', '.') ?> EUR</strong></div>
-            <div class="total-row total-main"><span><?= h(tr('total', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['total'] ?? $row['total']), 2, ',', '.') ?> EUR</strong></div>
+            <div class="total-row"><span><?= h(tr('subtotal', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['subtotal'] ?? $row['subtotal']), 2, ',', '.') ?> €</strong></div>
+            <div class="total-row"><span><?= h(tr('margin', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['margin_amount'] ?? $row['margin_amount']), 2, ',', '.') ?> €</strong></div>
+            <div class="total-row"><span><?= h(tr('iva', $lang)) ?> (<?= number_format((float)$row['iva_pct'], 0) ?>%)</span><strong><?= number_format((float)($quoteTotals['iva_amount'] ?? $row['iva_amount']), 2, ',', '.') ?> €</strong></div>
+            <div class="total-row total-main"><span><?= h(tr('total', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['total'] ?? $row['total']), 2, ',', '.') ?> €</strong></div>
         </div>
 
         <h3><?= h(tr('notes', $lang)) ?></h3>

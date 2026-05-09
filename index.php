@@ -231,6 +231,14 @@ if ($configExists) {
                 <label class="fabricated-cost-field"><?= h(tr('labor', $lang)) ?>
                     <input type="number" name="labor_cost" id="labor" min="0" step="0.01" value="65.00" required>
                 </label>
+                <label><?= h(tr('hardware_cost', $lang)) ?>
+                    <input type="number" name="hardware_cost" id="hardwareCost" min="0" step="0.01" value="0.00">
+                    <span class="field-hint"><?= h(tr('hardware_hint', $lang)) ?></span>
+                </label>
+                <label><?= h(tr('installation_cost', $lang)) ?>
+                    <input type="number" name="installation_cost" id="installationCost" min="0" step="0.01" value="0.00">
+                    <span class="field-hint"><?= h(tr('installation_hint', $lang)) ?></span>
+                </label>
                 <label><?= h(tr('internal_extra_cost', $lang)) ?>
                     <input type="number" name="internal_extra_cost" id="internalExtraCost" min="0" step="0.01" value="0.00">
                     <span class="field-hint"><?= h(tr('internal_extra_hint', $lang)) ?></span>
@@ -245,6 +253,11 @@ if ($configExists) {
                     <input type="number" name="iva_pct" id="iva" min="0" step="0.01" value="<?= h((string)$defaultIva) ?>" required>
                 </label>
             </div>
+
+            <label><?= h(tr('valid_until', $lang)) ?>
+                <input type="date" name="valid_until" id="validUntil">
+                <span class="field-hint"><?= h(tr('valid_until_hint', $lang)) ?></span>
+            </label>
 
             <label><?= h(tr('notes', $lang)) ?>
                 <textarea name="notes" rows="3" placeholder="<?= h(tr('notes_placeholder', $lang)) ?>"></textarea>
