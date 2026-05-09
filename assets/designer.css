@@ -160,3 +160,24 @@
     .designer-canvas-area { min-height: 400px; }
     .canvas-wrap svg { max-width: 100%; height: auto; }
 }
+
+/* Responsive mejorado */
+@media (max-width: 800px) {
+    .designer-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+    .designer-panel {
+        border-right: none;
+        border-bottom: 1px solid var(--panel-border);
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+    .designer-canvas-area {
+        min-height: 50vw;
+    }
+    .canvas-wrap svg {
+        width: 100% !important;
+        height: auto !important;
+    }
+}
