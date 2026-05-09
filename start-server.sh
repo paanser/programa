@@ -2,5 +2,5 @@
 
 set -e
 
-cd /workspaces/programa
-php -S 0.0.0.0:8000 -t /workspaces/programa
+cd /home/user/programa
+php -S 0.0.0.0:8080 -t /home/user/programa

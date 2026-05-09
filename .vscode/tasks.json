@@ -4,10 +4,8 @@
     {
       "label": "Run PHP Server",
       "type": "shell",
-      "command": "bash",
-      "args": [
-        "/workspaces/programa/start-server.sh"
-      ],
+      "command": "php",
+      "args": ["-S", "0.0.0.0:8080", "-t", "/home/user/programa"],
       "isBackground": true,
       "problemMatcher": []
     }
