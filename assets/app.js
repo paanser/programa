@@ -795,14 +795,6 @@ if (form) {
         drawingWrap.innerHTML = svg;
         drawingSvgInput.value = svg.trim();
 
-        if (profilePreviewSwatch) {
-            profilePreviewSwatch.style.background = `linear-gradient(135deg, ${palette.light}, ${palette.base} 60%, ${palette.dark})`;
-            profilePreviewSwatch.style.borderColor = palette.shadow;
-        }
-        if (profilePreviewLabel) {
-            profilePreviewLabel.textContent = quote.profileColor;
-        }
-
         return svg.trim();
     };
 
@@ -993,13 +985,23 @@ if (form) {
         glassPanels: quote.glassPanels || quote.leaves || 1,
     });
 
+    const updateProfilePreview = (quote) => {
+        const palette = getProfilePalette(quote.profileColorHex);
+        if (profilePreviewSwatch) {
+            profilePreviewSwatch.style.background = `linear-gradient(135deg, ${palette.light}, ${palette.base} 60%, ${palette.dark})`;
+            profilePreviewSwatch.style.borderColor = palette.shadow;
+        }
+        if (profilePreviewLabel) {
+            profilePreviewLabel.textContent = quote.profileColor;
+        }
+    };
+
     const renderWindowDrawing = (quote) => {
+        updateProfilePreview(quote);
         if (window.WindowDrawing) {
             try {
-                window.WindowDrawing.render(drawingWrap, toWindowConfig(quote));
-                // Allow React to flush synchronously (react-dom/client renders synchronously in test mode,
-                // but in production the SVG is captured after a microtask tick via getSvg)
-                return window.WindowDrawing.getSvg(drawingWrap);
+                const svg = window.WindowDrawing.render(drawingWrap, toWindowConfig(quote));
+                return svg || window.WindowDrawing.getSvg(drawingWrap);
             } catch (e) {
                 console.error('WindowDrawing render error, falling back:', e);
             }
