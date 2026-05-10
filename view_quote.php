@@ -132,6 +132,7 @@ try {
             <?php endif; ?>
             <div class="total-row"><span><?= h(tr('subtotal', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['subtotal'] ?? $row['subtotal']), 2, ',', '.') ?> EUR</strong></div>
             <div class="total-row"><span><?= h(tr('margin', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['margin_amount'] ?? $row['margin_amount']), 2, ',', '.') ?> EUR</strong></div>
+            <div class="total-row"><span><?= h(tr('taxable_base', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['taxable_base'] ?? $row['taxable_base']), 2, ',', '.') ?> EUR</strong></div>
             <div class="total-row"><span><?= h(tr('iva', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['iva_amount'] ?? $row['iva_amount']), 2, ',', '.') ?> EUR</strong></div>
             <div class="total-row total-main"><span><?= h(tr('total', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['total'] ?? $row['total']), 2, ',', '.') ?> EUR</strong></div>
         </div>

@@ -335,6 +335,7 @@ window.APP_UI_TEXT = <?= json_encode([
     'subtotal' => tr('subtotal', $lang),
     'total' => tr('total', $lang),
     'margin' => tr('margin', $lang),
+    'taxableBase' => tr('taxable_base', $lang),
     'commercialMargin' => tr('commercial_margin', $lang),
     'iva' => tr('iva', $lang),
     'purchaseCostMe' => tr('purchase_cost_me', $lang),

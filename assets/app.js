@@ -504,8 +504,8 @@ if (form) {
                 ? text('onlyLeaf', 'Unica')
                 : text('left', 'Izquierda');
 
-        const glassWidthMm = Math.max(1, integerValue(fields.glassWidthMm, Math.max(1, Math.round(widthMm / Math.max(1, leaves)))));
-        const glassHeightMm = Math.max(1, integerValue(fields.glassHeightMm, Math.max(1, heightMm - 100)));
+        const glassWidthMm = Math.max(1, integerValue(fields.glassWidthMm, Math.max(1, Math.round((widthMm / Math.max(1, leaves)) - 80))));
+        const glassHeightMm = Math.max(1, integerValue(fields.glassHeightMm, Math.max(1, heightMm - 110)));
         const glassPanels = Math.max(1, integerValue(fields.glassPanels, leaves));
         const aluminumPriceMl = Math.max(0, numberValue(fields.priceAl, 0));
         const glassPriceM2 = Math.max(0, numberValue(fields.priceGlass, 0));
