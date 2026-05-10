@@ -576,8 +576,8 @@ function calculate_quote_item(array $data): array
         $tiltTurnLeaf = '';
     }
     $quantity = max(1, (int)($data['quantity'] ?? 1));
-    $glassWidthMm = max(1, (int)($data['glass_width_mm'] ?? $widthMm));
-    $glassHeightMm = max(1, (int)($data['glass_height_mm'] ?? $heightMm));
+    $glassWidthMm = max(1, (int)($data['glass_width_mm'] ?? max(1, (int)(($widthMm / $leaves) - 80))));
+    $glassHeightMm = max(1, (int)($data['glass_height_mm'] ?? max(1, $heightMm - 110)));
     $glassPanels = max(1, (int)($data['glass_panels'] ?? $leaves));
 
     $aluminumPriceMl = max(0.0, (float)($data['aluminum_price_ml'] ?? 0));
@@ -601,9 +601,9 @@ function calculate_quote_item(array $data): array
     $glassPieceAreaM2 = round(($glassWidthMm / 1000) * ($glassHeightMm / 1000), 3);
     $glassM2 = round($glassPieceAreaM2 * $glassPanels * $quantity, 3);
 
-    $aluminumCost = $aluminumMl * $aluminumPriceMl;
-    $glassCost = $glassM2 * $glassPriceM2;
-    $fabricatedBaseCost = $aluminumCost + $glassCost + $laborCost + $internalExtraCost;
+    $aluminumCost = round($aluminumMl * $aluminumPriceMl, 2);
+    $glassCost = round($glassM2 * $glassPriceM2, 2);
+    $fabricatedBaseCost = round($aluminumCost + $glassCost + $laborCost + $internalExtraCost, 2);
     $purchasedBaseCost = ($purchasedUnitCost * $quantity) + $internalExtraCost;
 
     $baseCost = $pricingMode === 'comprada' ? $purchasedBaseCost : $fabricatedBaseCost;

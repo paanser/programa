@@ -408,6 +408,8 @@ if (form) {
         const markerCx = leaf.x + (leaf.width / 2);
         const markerCy = leaf.y + (leaf.height / 2) + 2;
         const tiltY = leaf.y + 24;
+        const badgeX = hingeSide === 'left' ? leaf.x + leaf.width - 14 : leaf.x + 14;
+        const badgeY = leaf.y + 14;
 
         return `
             <line x1="${hingeX}" y1="${hingeTopY}" x2="${hingeX}" y2="${hingeBottomY}" class="hinge-line" />
@@ -418,6 +420,8 @@ if (form) {
                 <path d="M ${markerCx - 22} ${tiltY} L ${markerCx} ${tiltY - 14} L ${markerCx + 22} ${tiltY}" class="tilt-mark" />
                 <line x1="${markerCx - 18}" y1="${tiltY - 4}" x2="${markerCx + 18}" y2="${tiltY - 4}" class="tilt-mark" />
             ` : ''}
+            <circle cx="${badgeX}" cy="${badgeY}" r="9" class="marker-tag" />
+            <text x="${badgeX}" y="${badgeY + 5}" text-anchor="middle" class="marker-label">${index + 1}</text>
         `;
     };
 
@@ -613,15 +617,33 @@ if (form) {
         const safeColor = escapeSvgText(quote.profileColor);
         const palette = getProfilePalette(quote.profileColorHex);
         const glassPalette = getGlassPalette();
+        const FRAME_CENTER_X = 279;
+        const FRAME_CENTER_Y = 221;
+        const FRAME_DEPTH = 14;
+        const MAX_OUTER_W = 220;
+        const MAX_OUTER_H = 180;
+        const MIN_OUTER_W = 80;
+        const MIN_OUTER_H = 80;
+        const aspectRatio = quote.widthMm / quote.heightMm;
+        let outerWidth, outerHeight;
+        if (aspectRatio >= MAX_OUTER_W / MAX_OUTER_H) {
+            outerWidth = MAX_OUTER_W;
+            outerHeight = outerWidth / aspectRatio;
+        } else {
+            outerHeight = MAX_OUTER_H;
+            outerWidth = outerHeight * aspectRatio;
+        }
+        outerWidth = Math.round(Math.max(MIN_OUTER_W, Math.min(MAX_OUTER_W, outerWidth)));
+        outerHeight = Math.round(Math.max(MIN_OUTER_H, Math.min(MAX_OUTER_H, outerHeight)));
         const frame = {
-            outerX: 160,
-            outerY: 122,
-            outerWidth: 238,
-            outerHeight: 198,
-            innerX: 174,
-            innerY: 136,
-            innerWidth: 210,
-            innerHeight: 170,
+            outerX: Math.round(FRAME_CENTER_X - outerWidth / 2),
+            outerY: Math.round(FRAME_CENTER_Y - outerHeight / 2),
+            outerWidth,
+            outerHeight,
+            innerX: Math.round(FRAME_CENTER_X - outerWidth / 2) + FRAME_DEPTH,
+            innerY: Math.round(FRAME_CENTER_Y - outerHeight / 2) + FRAME_DEPTH,
+            innerWidth: outerWidth - (FRAME_DEPTH * 2),
+            innerHeight: outerHeight - (FRAME_DEPTH * 2),
         };
         const { geometry: leaves, barWidth } = getLeafGeometry(quote, frame);
         const trimOffset = getTrimOffset(quote.trimSize);
@@ -633,6 +655,9 @@ if (form) {
         let barsMarkup = '';
         let markersMarkup = '';
         let trimMarkup = '';
+        const miterMarksMarkup = usesMiterCut
+            ? buildMiterMarks(frame.outerX, frame.outerY, frame.outerWidth, frame.outerHeight)
+            : '';
 
         if (trimOffset > 0) {
             trimMarkup = `
@@ -752,17 +777,18 @@ if (form) {
                 ${trimMarkup}
                 <rect x="${frame.outerX}" y="${frame.outerY}" width="${frame.outerWidth}" height="${frame.outerHeight}" class="profile-frame" />
                 <rect x="${frame.innerX}" y="${frame.innerY}" width="${frame.innerWidth}" height="${frame.innerHeight}" class="profile-inner-edge" />
+                ${miterMarksMarkup}
                 ${leavesMarkup}
                 ${barsMarkup}
                 ${markersMarkup}
                 <line x1="${frame.outerX}" y1="${frame.outerY + frame.outerHeight + 24}" x2="${frame.outerX + frame.outerWidth}" y2="${frame.outerY + frame.outerHeight + 24}" class="dimension" />
                 <line x1="${frame.outerX}" y1="${frame.outerY + frame.outerHeight}" x2="${frame.outerX}" y2="${frame.outerY + frame.outerHeight + 24}" class="dimension" />
                 <line x1="${frame.outerX + frame.outerWidth}" y1="${frame.outerY + frame.outerHeight}" x2="${frame.outerX + frame.outerWidth}" y2="${frame.outerY + frame.outerHeight + 24}" class="dimension" />
-                <text x="${frame.outerX + (frame.outerWidth / 2)}" y="${frame.outerY + frame.outerHeight + 42}" text-anchor="middle" class="dimension-text">H1=${quote.widthMm}</text>
+                <text x="${frame.outerX + (frame.outerWidth / 2)}" y="${frame.outerY + frame.outerHeight + 42}" text-anchor="middle" class="dimension-text">L=${quote.widthMm}</text>
                 <line x1="${frame.outerX + frame.outerWidth + 18}" y1="${frame.outerY}" x2="${frame.outerX + frame.outerWidth + 18}" y2="${frame.outerY + frame.outerHeight}" class="dimension" />
                 <line x1="${frame.outerX + frame.outerWidth}" y1="${frame.outerY}" x2="${frame.outerX + frame.outerWidth + 18}" y2="${frame.outerY}" class="dimension" />
                 <line x1="${frame.outerX + frame.outerWidth}" y1="${frame.outerY + frame.outerHeight}" x2="${frame.outerX + frame.outerWidth + 18}" y2="${frame.outerY + frame.outerHeight}" class="dimension" />
-                <text x="${verticalTextX}" y="${verticalTextY}" text-anchor="middle" class="dimension-text" transform="rotate(90 ${verticalTextX} ${verticalTextY})">V1=${quote.heightMm}</text>
+                <text x="${verticalTextX}" y="${verticalTextY}" text-anchor="middle" class="dimension-text" transform="rotate(90 ${verticalTextX} ${verticalTextY})">H=${quote.heightMm}</text>
             </svg>
         `;
 
@@ -790,6 +816,7 @@ if (form) {
         glassCost: roundMoney(acc.glassCost + item.glassCost),
         subtotal: roundMoney(acc.subtotal + item.subtotal),
         marginAmount: roundMoney(acc.marginAmount + item.marginAmount),
+        taxableBase: roundMoney(acc.taxableBase + item.taxableBase),
         ivaAmount: roundMoney(acc.ivaAmount + item.ivaAmount),
         total: roundMoney(acc.total + item.total),
     }), {
@@ -800,6 +827,7 @@ if (form) {
         glassCost: 0,
         subtotal: 0,
         marginAmount: 0,
+        taxableBase: 0,
         ivaAmount: 0,
         total: 0,
     });
@@ -815,6 +843,7 @@ if (form) {
             <div class="total-row"><span>${text('glassCost', 'Coste vidrio')}</span><strong>${formatMoney(aggregate.glassCost)}</strong></div>
             <div class="total-row"><span>${text('base', 'Base')}</span><strong>${formatMoney(aggregate.subtotal)}</strong></div>
             <div class="total-row"><span>${text('margin', 'Margen')}</span><strong>${formatMoney(aggregate.marginAmount)}</strong></div>
+            <div class="total-row"><span>${text('taxableBase', 'Base imponible')}</span><strong>${formatMoney(aggregate.taxableBase)}</strong></div>
             <div class="total-row"><span>${text('iva', 'IVA')}</span><strong>${formatMoney(aggregate.ivaAmount)}</strong></div>
             <div class="total-row total-main"><span>${text('total', 'Total')}</span><strong>${formatMoney(aggregate.total)}</strong></div>
         `;
