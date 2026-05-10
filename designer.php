@@ -118,14 +118,20 @@ $lang = get_current_lang();
 
     <!-- ── CANVAS DERECHO ── -->
     <section class="designer-canvas-area">
-        <div class="canvas-hint">
+        <div class="canvas-tabs" id="canvasTabs">
+            <button class="canvas-tab is-active" data-tab="schema">Esquema</button>
+            <button class="canvas-tab" data-tab="technical" id="techTabBtn">Vista técnica</button>
+        </div>
+        <div class="canvas-hint" id="canvasHint">
             Clic en un panel para seleccionarlo · Usa los botones para dividirlo · Las dimensiones son en mm
         </div>
         <div class="canvas-wrap" id="canvasWrap"></div>
+        <div class="canvas-wrap drawing-wrap" id="techWrap" style="display:none;min-height:500px"></div>
     </section>
 
 </main>
 
+<script src="assets/window-drawing.js"></script>
 <script>
 // ══════════════════════════════════════════════════════════
 //  MODELO DE DATOS
@@ -426,6 +432,8 @@ function render() {
     updateForm();
     updatePanelList();
     updateLegend();
+    // Keep tech view in sync when tab is active
+    if (typeof activeTab !== 'undefined' && activeTab === 'technical') renderTechView();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -460,8 +468,94 @@ document.getElementById('splitRatio').addEventListener('input', e => {
     if (parent && parent.split) { parent.split.ratio = parseInt(e.target.value) / 100; render(); }
 });
 
+// ══════════════════════════════════════════════════════════
+//  VISTA TÉCNICA (React WindowDrawing)
+// ══════════════════════════════════════════════════════════
+
+// Maps designer system types → React WindowConfig systemType
+const SYS_MAP = {
+    practicable: 'abatible',
+    abatible:    'abatible',
+    fijo:        'fijo',
+    oscilobatiente: 'oscilobatiente',
+    corredera:   'corredera',
+    puerta:      'puerta',
+};
+
+let activeTab = 'schema';
+
+function buildWindowConfig(node, leafData) {
+    const sys = SYS_MAP[node.system] || 'fijo';
+    const wMm = Math.round(state.facadeW * leafData.w);
+    const hMm = Math.round(state.facadeH * leafData.h);
+    const leavesCount = sys === 'corredera' ? 2 : 1;
+    return {
+        systemType: sys,
+        openingType: node.opening === 'der' ? 'derecha' : 'izquierda',
+        widthMm: wMm,
+        heightMm: hMm,
+        leaves: leavesCount,
+        trimSizeMm: 0,
+        frameCutType: 'mitered',
+        tiltTurnLeaf: sys === 'oscilobatiente' ? 'unica' : undefined,
+        profileColorHex: '#565b61',
+        profileColorName: 'Antracita',
+        glassDescription: 'Cámara 4/12/4',
+        carpentryModel: node.label || '',
+        carpentryReference: '',
+        quantity: 1,
+        glassPanels: leavesCount,
+    };
+}
+
+function renderTechView() {
+    if (!window.WindowDrawing) return;
+    const techWrap = document.getElementById('techWrap');
+    const node = find(state.tree, state.sel);
+    const leafData = node ? leaves(state.tree).find(l => l.node.id === state.sel) : null;
+    if (!node || node.split || !leafData) {
+        techWrap.innerHTML = '<p style="padding:2rem;color:#6b7280;text-align:center">Selecciona un panel hoja para ver el dibujo técnico</p>';
+        return;
+    }
+    try {
+        window.WindowDrawing.render(techWrap, buildWindowConfig(node, leafData));
+    } catch (e) {
+        techWrap.innerHTML = '<p style="padding:2rem;color:#c00;text-align:center">Error generando la vista técnica</p>';
+        console.error(e);
+    }
+}
+
+function setTab(tab) {
+    activeTab = tab;
+    const schema = document.getElementById('canvasWrap');
+    const tech   = document.getElementById('techWrap');
+    const hint   = document.getElementById('canvasHint');
+    document.querySelectorAll('.canvas-tab').forEach(btn => {
+        btn.classList.toggle('is-active', btn.dataset.tab === tab);
+    });
+    if (tab === 'technical') {
+        schema.style.display = 'none';
+        hint.style.display   = 'none';
+        tech.style.display   = '';
+        renderTechView();
+    } else {
+        schema.style.display = '';
+        hint.style.display   = '';
+        tech.style.display   = 'none';
+    }
+}
+
+document.querySelectorAll('.canvas-tab').forEach(btn =>
+    btn.addEventListener('click', () => setTab(btn.dataset.tab))
+);
+
+// ══════════════════════════════════════════════════════════
+//  MAIN RENDER (actualizado para refrescar vista técnica)
+// ══════════════════════════════════════════════════════════
+
 // Render inicial
 render();
+if (activeTab === 'technical') renderTechView();
 </script>
 </body>
 </html>

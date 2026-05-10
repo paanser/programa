@@ -28,6 +28,35 @@
     overflow: hidden;
 }
 
+/* ── Canvas tabs ─────────────────────────────────────────── */
+
+.canvas-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--panel-border);
+    background: var(--panel);
+}
+
+.canvas-tab {
+    padding: 0.5rem 1.1rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    cursor: pointer;
+    color: var(--muted);
+    transition: color 0.15s, border-color 0.15s;
+    border-radius: 0;
+}
+
+.canvas-tab:hover { color: var(--brand-dark); }
+.canvas-tab.is-active {
+    color: var(--brand-dark);
+    border-bottom-color: var(--brand);
+    font-weight: 600;
+}
+
 .canvas-hint {
     font-size: 0.76rem;
     color: var(--muted);
@@ -43,6 +72,16 @@
     justify-content: center;
     overflow: auto;
     padding: 1.5rem;
+}
+
+/* Tech view overrides when used as full canvas */
+.canvas-wrap.drawing-wrap {
+    background: #fff;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    align-items: stretch;
 }
 
 /* ── Re-use form-section from descompuesto ────────────────── */

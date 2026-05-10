@@ -13,6 +13,7 @@ $systemOptions = [
     'abatible' => tr('casement', $lang),
     'fijo' => tr('fixed', $lang),
     'oscilobatiente' => tr('tilt_turn', $lang),
+    'puerta' => tr('door', $lang),
 ];
 $openingOptions = [
     'izquierda' => tr('left', $lang),
