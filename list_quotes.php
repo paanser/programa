@@ -31,7 +31,6 @@ try {
         <nav>
             <a href="<?= h(url_with_lang('index.php', [], $lang)) ?>"><?= h(tr('new', $lang)) ?></a>
             <a href="designer.php">Configurador</a>
-            <a href="descompuesto.php">Descompuesto S28</a>
             <a href="<?= h(url_with_lang('list_quotes.php', [], $lang)) ?>" class="active"><?= h(tr('history', $lang)) ?></a>
         </nav>
         <label class="lang-switcher">

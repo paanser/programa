@@ -2,7 +2,7 @@
 
 .designer-layout {
     display: grid;
-    grid-template-columns: 290px 1fr;
+    grid-template-columns: 300px 1fr;
     height: calc(100vh - 56px);
     overflow: hidden;
 }
@@ -25,7 +25,7 @@
     display: flex;
     flex-direction: column;
     background: #eceff2;
-    overflow: hidden;
+    overflow-y: auto;
 }
 
 .canvas-hint {
@@ -34,18 +34,18 @@
     padding: 0.4rem 1rem;
     border-bottom: 1px solid var(--panel-border);
     background: var(--panel);
+    flex-shrink: 0;
 }
 
 .canvas-wrap {
-    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: auto;
     padding: 1.5rem;
+    flex-shrink: 0;
 }
 
-/* ── Re-use form-section from descompuesto ────────────────── */
+/* ── Form sections ────────────────────────────────────────── */
 
 .form-section {
     margin-top: 1.1rem;
@@ -85,6 +85,42 @@
 }
 
 .split-btn svg { flex-shrink: 0; }
+
+/* ── Split position mm input ─────────────────────────────── */
+
+.split-pos-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-top: 0.3rem;
+}
+
+.split-pos-row input[type="range"] { flex: 1; }
+
+.split-mm-input {
+    width: 72px !important;
+    font-family: monospace;
+    font-size: 0.82rem;
+}
+
+.split-mm-unit {
+    font-size: 0.78rem;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+/* ── Paso libre info ──────────────────────────────────────── */
+
+#pasoLibreRow {
+    background: rgba(160,72,32,0.06);
+    border: 1px solid rgba(160,72,32,0.2);
+    border-radius: 6px;
+    padding: 0.5rem 0.6rem;
+    margin-top: 0.4rem;
+}
+
+#pasoLibreRow label { margin-bottom: 0; }
+#pasoLibreInfo { margin-top: 0.25rem; color: #a04820; }
 
 /* ── Panel list ───────────────────────────────────────────── */
 
@@ -137,6 +173,99 @@
     flex-shrink: 0;
 }
 
+/* ── BOM section ──────────────────────────────────────────── */
+
+.bom-section {
+    background: var(--panel);
+    border-top: 2px solid var(--panel-border);
+    padding: 1.2rem 1.5rem 2rem;
+    flex-shrink: 0;
+}
+
+.bom-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 0.8rem;
+}
+
+.bom-header h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--brand-dark);
+}
+
+.bom-empty {
+    padding: 1.2rem 0;
+    text-align: center;
+}
+
+.bom-table-title {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    margin: 1.1rem 0 0.4rem;
+}
+
+.bom-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.bom-table th {
+    background: #e8ecef;
+    text-align: left;
+    padding: 0.3rem 0.55rem;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--brand-dark);
+    border-bottom: 1px solid var(--panel-border);
+}
+
+.bom-table td {
+    padding: 0.28rem 0.55rem;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    vertical-align: top;
+}
+
+.bom-table tfoot td {
+    font-weight: 600;
+    border-top: 1px solid var(--panel-border);
+    background: #f4f6f8;
+    padding: 0.35rem 0.55rem;
+}
+
+.bom-table .ref-cell {
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: #405870;
+    white-space: nowrap;
+}
+
+.bom-table .panel-cell {
+    font-size: 0.74rem;
+    color: var(--muted);
+}
+
+.bom-table .note-cell {
+    font-size: 0.74rem;
+    color: var(--muted);
+    font-style: italic;
+}
+
+.bom-table .cell-error { color: #c0392b; font-weight: 600; }
+
+.bom-note {
+    font-size: 0.74rem;
+    color: var(--muted);
+    margin-top: 0.8rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--panel-border);
+}
+
 /* ── Print ────────────────────────────────────────────────── */
 
 @media print {
@@ -146,12 +275,16 @@
     .designer-layout {
         grid-template-columns: 1fr;
         height: auto;
+        overflow: visible;
     }
+    .designer-canvas-area { overflow: visible; }
     .canvas-wrap { padding: 0; }
     .canvas-wrap svg { width: 100% !important; height: auto !important; }
+    .bom-section { border-top: 2px solid #ccc; page-break-before: auto; }
+    .bom-table { font-size: 0.72rem; }
 }
 
-@media (max-width: 800px) {
+@media (max-width: 900px) {
     .designer-layout {
         grid-template-columns: 1fr;
         height: auto;
