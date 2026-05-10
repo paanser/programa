@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import { createElement } from 'react';
+import ReactDOM from 'react-dom';
 import type { WindowConfig } from './types';
 import { WindowDrawing } from './components/WindowDrawing';
 import { getSvgString } from './export';
@@ -13,7 +14,10 @@ function render(container: HTMLElement, config: WindowConfig): string {
     root = createRoot(container);
     roots.set(container, root);
   }
-  root.render(createElement(WindowDrawing, { config }));
+  // flushSync forces React to render synchronously so getSvgString captures the result immediately
+  ReactDOM.flushSync(() => {
+    root!.render(createElement(WindowDrawing, { config }));
+  });
   return getSvgString(container);
 }
 

@@ -1,6 +1,26 @@
 (function() {
 	//#region \0rolldown/runtime.js
+	var __create = Object.create;
+	var __defProp = Object.defineProperty;
+	var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+	var __getOwnPropNames = Object.getOwnPropertyNames;
+	var __getProtoOf = Object.getPrototypeOf;
+	var __hasOwnProp = Object.prototype.hasOwnProperty;
 	var __commonJSMin = (cb, mod) => () => (mod || (cb((mod = { exports: {} }).exports, mod), cb = null), mod.exports);
+	var __copyProps = (to, from, except, desc) => {
+		if (from && typeof from === "object" || typeof from === "function") for (var keys = __getOwnPropNames(from), i = 0, n = keys.length, key; i < n; i++) {
+			key = keys[i];
+			if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
+				get: ((k) => from[k]).bind(null, key),
+				enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
+			});
+		}
+		return to;
+	};
+	var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", {
+		value: mod,
+		enumerable: true
+	}) : target, mod));
 	//#endregion
 	//#region node_modules/scheduler/cjs/scheduler.production.js
 	/**
@@ -25196,6 +25216,7 @@
 	//#endregion
 	//#region src/geometry/viewport.ts
 	var import_react = require_react();
+	var import_react_dom = /* @__PURE__ */ __toESM(require_react_dom(), 1);
 	var import_client = require_client();
 	var VIEWBOX_W = 1400;
 	var VIEWBOX_H = 900;
@@ -26679,7 +26700,9 @@
 			root = (0, import_client.createRoot)(container);
 			roots.set(container, root);
 		}
-		root.render((0, import_react.createElement)(WindowDrawing, { config }));
+		import_react_dom.flushSync(() => {
+			root.render((0, import_react.createElement)(WindowDrawing, { config }));
+		});
 		return getSvgString(container);
 	}
 	function getSvg(container) {
