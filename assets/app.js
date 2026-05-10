@@ -974,13 +974,47 @@ if (form) {
         selectedItemId = currentItem.id;
     };
 
+    // Adapter: converts app.js quote object → WindowConfig for the React drawing component
+    const toWindowConfig = (quote) => ({
+        systemType: quote.systemType,
+        openingType: quote.openingType || 'izquierda',
+        widthMm: quote.widthMm,
+        heightMm: quote.heightMm,
+        leaves: quote.leaves,
+        trimSizeMm: quote.trimSize || 0,
+        frameCutType: quote.frameCutType || 'recto',
+        tiltTurnLeaf: quote.tiltTurnLeaf || undefined,
+        profileColorHex: quote.profileColorHex || '#f2efe8',
+        profileColorName: quote.profileColor || '',
+        glassDescription: quote.glassDescription || quote.glassType || '',
+        carpentryModel: quote.carpentryModel || '',
+        carpentryReference: quote.carpentryReference || '',
+        quantity: quote.quantity || 1,
+        glassPanels: quote.glassPanels || quote.leaves || 1,
+    });
+
+    const renderWindowDrawing = (quote) => {
+        if (window.WindowDrawing) {
+            try {
+                window.WindowDrawing.render(drawingWrap, toWindowConfig(quote));
+                // Allow React to flush synchronously (react-dom/client renders synchronously in test mode,
+                // but in production the SVG is captured after a microtask tick via getSvg)
+                return window.WindowDrawing.getSvg(drawingWrap);
+            } catch (e) {
+                console.error('WindowDrawing render error, falling back:', e);
+            }
+        }
+        // Fallback to legacy renderer if the new component fails or isn't loaded
+        return renderDrawing(quote);
+    };
+
     const syncState = () => {
         if (suppressSync) {
             return;
         }
 
         const quote = calculateQuote();
-        quote.drawingSvg = renderDrawing(quote);
+        quote.drawingSvg = renderWindowDrawing(quote);
         upsertSelectedItem(quote);
         renderGlassSummary(quote);
         renderItemsList();
