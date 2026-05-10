@@ -1,10 +1,7 @@
 <?php
-
 declare(strict_types=1);
-
-require_once __DIR__ . '/lib/helpers.php';
-
-$lang = get_current_lang();
+header('Location: designer.php');
+exit;
 $carpentryOptions = get_carpentry_options();
 $glassOptions = get_glass_options();
 $glassPriceCatalog = get_default_glass_price_catalog();
