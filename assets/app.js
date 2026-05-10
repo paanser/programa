@@ -633,12 +633,17 @@ if (form) {
         let barsMarkup = '';
         let markersMarkup = '';
         let trimMarkup = '';
+        let miterMarkup = '';
 
         if (trimOffset > 0) {
             trimMarkup = `
                 <rect x="${frame.outerX - trimOffset}" y="${frame.outerY - trimOffset}" width="${frame.outerWidth + (trimOffset * 2)}" height="${frame.outerHeight + (trimOffset * 2)}" class="trim-band" />
                 <rect x="${frame.outerX - trimOffset + 3}" y="${frame.outerY - trimOffset + 3}" width="${frame.outerWidth + (trimOffset * 2) - 6}" height="${frame.outerHeight + (trimOffset * 2) - 6}" class="trim-outline" />
             `;
+        }
+
+        if (usesMiterCut) {
+            miterMarkup = buildMiterMarks(frame.outerX, frame.outerY, frame.outerWidth, frame.outerHeight);
         }
 
         leaves.forEach((leaf, index) => {
@@ -755,14 +760,15 @@ if (form) {
                 ${leavesMarkup}
                 ${barsMarkup}
                 ${markersMarkup}
+                ${miterMarkup}
                 <line x1="${frame.outerX}" y1="${frame.outerY + frame.outerHeight + 24}" x2="${frame.outerX + frame.outerWidth}" y2="${frame.outerY + frame.outerHeight + 24}" class="dimension" />
                 <line x1="${frame.outerX}" y1="${frame.outerY + frame.outerHeight}" x2="${frame.outerX}" y2="${frame.outerY + frame.outerHeight + 24}" class="dimension" />
                 <line x1="${frame.outerX + frame.outerWidth}" y1="${frame.outerY + frame.outerHeight}" x2="${frame.outerX + frame.outerWidth}" y2="${frame.outerY + frame.outerHeight + 24}" class="dimension" />
-                <text x="${frame.outerX + (frame.outerWidth / 2)}" y="${frame.outerY + frame.outerHeight + 42}" text-anchor="middle" class="dimension-text">H1=${quote.widthMm}</text>
+                <text x="${frame.outerX + (frame.outerWidth / 2)}" y="${frame.outerY + frame.outerHeight + 42}" text-anchor="middle" class="dimension-text">L=${quote.widthMm}</text>
                 <line x1="${frame.outerX + frame.outerWidth + 18}" y1="${frame.outerY}" x2="${frame.outerX + frame.outerWidth + 18}" y2="${frame.outerY + frame.outerHeight}" class="dimension" />
                 <line x1="${frame.outerX + frame.outerWidth}" y1="${frame.outerY}" x2="${frame.outerX + frame.outerWidth + 18}" y2="${frame.outerY}" class="dimension" />
                 <line x1="${frame.outerX + frame.outerWidth}" y1="${frame.outerY + frame.outerHeight}" x2="${frame.outerX + frame.outerWidth + 18}" y2="${frame.outerY + frame.outerHeight}" class="dimension" />
-                <text x="${verticalTextX}" y="${verticalTextY}" text-anchor="middle" class="dimension-text" transform="rotate(90 ${verticalTextX} ${verticalTextY})">V1=${quote.heightMm}</text>
+                <text x="${verticalTextX}" y="${verticalTextY}" text-anchor="middle" class="dimension-text" transform="rotate(90 ${verticalTextX} ${verticalTextY})">H=${quote.heightMm}</text>
             </svg>
         `;
 

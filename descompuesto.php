@@ -935,18 +935,19 @@ function renderResults() {
     document.getElementById('resultsBox').innerHTML = html;
 }
 
-// Sincronizar glasThick con glassType
+// Sincronizar glassThick con glassType
 document.getElementById('glassType').addEventListener('change', function() {
     const map = {
         '4_6_4': 16, '4_12_4': 20, '4_16_4': 24,
         '4_8_4_8_4': 36, 'laminar_6': 6, 'laminar_88': 8.8, 'simple_4': 4,
     };
-    if (map[this.value]) document.getElementById('glassThick').value = map[this.value];
+    if (this.value in map) document.getElementById('glassThick').value = map[this.value];
     renderResults();
 });
 
-// Escuchar cambios en todos los campos
+// Escuchar cambios en todos los campos (excepto glassType que tiene su propio handler)
 document.querySelectorAll('input, select').forEach(el => {
+    if (el.id === 'glassType') return;
     el.addEventListener('input', renderResults);
     el.addEventListener('change', renderResults);
 });
