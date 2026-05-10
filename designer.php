@@ -158,7 +158,30 @@ $lang = get_current_lang();
             </div>
         </div>
 
-        <!-- §4 DIVIDIR PANEL -->
+        <!-- §4 PERSIANA -->
+        <div class="cfg-section">
+            <h3 class="cfg-section-title">Persiana / Cajón</h3>
+            <label>Tipo
+                <select id="cfgPersiana">
+                    <option value="ninguna">Sin persiana</option>
+                    <option value="registro">Cajón Registro (tapeta exterior)</option>
+                    <option value="compacto">Compacto integrado</option>
+                </select>
+            </label>
+            <div id="cfgPersianaOpts" style="display:none">
+                <label>Alto cajón (mm)<input type="number" id="cfgPersianaAlto" min="100" max="400" step="5" value="180"></label>
+                <label id="cfgPersianaForroRow">Forro tapeta
+                    <select id="cfgPersianaForro">
+                        <option value="40">40 mm (Ref. 6.755)</option>
+                        <option value="60" selected>60 mm (Ref. 6.756)</option>
+                        <option value="85">85 mm (Ref. 6.757)</option>
+                    </select>
+                </label>
+            </div>
+            <p class="field-hint persiana-info" id="cfgPersianaInfo"></p>
+        </div>
+
+        <!-- §5 DIVIDIR PANEL -->
         <div class="cfg-section">
             <h3 class="cfg-section-title">Dividir panel seleccionado</h3>
             <div class="btn-group">
@@ -272,6 +295,7 @@ $lang = get_current_lang();
             <div class="sys-legend" id="sysLegend"></div>
         </div>
         <div class="cfg-section">
+            <button id="btnDupeEl" class="secondary-button" style="width:100%;margin-bottom:0.4rem">Duplicar elemento</button>
             <button id="btnDeleteEl" class="danger-button" style="width:100%">Eliminar elemento</button>
         </div>
 
@@ -384,6 +408,7 @@ function mkElement(templateKey){
         cutType:'recto',tapajuntas:0,
         pricingMode:'comprada',purchasedCost:0,commercialMarginPct:25,
         alPriceMl:18,laborCost:65,marginPct:25,extraCost:0,ivaPct:21,glassPriceM2:35,
+        persiana:'ninguna',persianaAlto:180,persianaForroMm:60,
         tree:tpl.buildTree(),selModuleId:null};
 }
 
@@ -413,8 +438,10 @@ let svgMeta={sc:1,ox:0,oy:0};
 
 function buildSVG(el){
     const fw=el.facadeW,fh=el.facadeH,avW=SVG_W-MARGIN*2,avH=SVG_H-MARGIN*2;
-    const sc=Math.min(avW/fw,avH/fh),W=fw*sc,H=fh*sc;
-    const ox=(SVG_W-W)/2,oy=(SVG_H-H)/2,FR=Math.max(6,Math.min(14,sc*24));
+    const cajMm=(el.persiana&&el.persiana!=='ninguna')?(el.persianaAlto||180):0;
+    const sc=Math.min(avW/fw,avH/(fh+cajMm)),W=fw*sc,H=fh*sc;
+    const cajH=cajMm*sc; // cajón height in px
+    const ox=(SVG_W-W)/2,oy=(SVG_H-H-cajH)/2+cajH,FR=Math.max(6,Math.min(14,sc*24));
     svgMeta={sc,ox,oy,W,H,FR};
     const fc=el.colorHex||'#3a4750',fd=darkenHex(fc,0.35),fm=darkenHex(fc,0.15),ft=lightenHex(fc,0.15);
 
@@ -468,6 +495,28 @@ function buildSVG(el){
     const dyL=oy-34;s+=dimLine(ox,dyL+10,ox+W,dyL+10,true);s+=`<rect x="${ox+W/2-28}" y="${dyL-1}" width="56" height="14" fill="white" opacity="0.7" rx="3"/>`;s+=`<text x="${ox+W/2}" y="${dyL+10}" text-anchor="middle" dominant-baseline="middle" font-size="11" font-family="monospace" fill="#1a2830" font-weight="600">${fw} mm</text>`;
     const dxL=ox-34;s+=dimLine(dxL+10,oy,dxL+10,oy+H,false);s+=`<text x="${dxL+4}" y="${oy+H/2}" text-anchor="middle" dominant-baseline="middle" font-size="11" font-family="monospace" fill="#1a2830" font-weight="600" transform="rotate(-90 ${dxL+4} ${oy+H/2})">${fh} mm</text>`;
     for(const{x,w}of leafs){if(leafs.length>1){const px=ox+x*W,pe=px+w*W,pW=Math.round(fw*w),dy2=oy+H+18;s+=`<line x1="${px+2}" y1="${dy2-3}" x2="${px+2}" y2="${dy2+3}" stroke="#6a8090" stroke-width="1"/>`;s+=`<line x1="${pe-2}" y1="${dy2-3}" x2="${pe-2}" y2="${dy2+3}" stroke="#6a8090" stroke-width="1"/>`;s+=`<line x1="${px+2}" y1="${dy2}" x2="${pe-2}" y2="${dy2}" stroke="#6a8090" stroke-width="0.8" stroke-dasharray="3,2"/>`;s+=`<text x="${px+w*W/2}" y="${dy2+9}" text-anchor="middle" font-size="8.5" font-family="monospace" fill="#6a8090">${pW}</text>`;}}
+
+    // Cajón de persiana
+    if(cajMm>0){
+        const bx=ox-FR,by=oy-FR-cajH,bw=W+FR*2,bh=cajH;
+        if(el.persiana==='registro'){
+            s+=`<defs><pattern id="cajhatch" patternUnits="userSpaceOnUse" width="7" height="7"><line x1="0" y1="7" x2="7" y2="0" stroke="${ft}" stroke-width="0.9" opacity="0.6"/></pattern></defs>`;
+            s+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="${lightenHex(fc,0.22)}" stroke="${fd}" stroke-width="1.5" rx="3"/>`;
+            s+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="url(#cajhatch)" rx="3" pointer-events="none"/>`;
+            // Maintenance access line
+            s+=`<line x1="${bx+8}" y1="${by+bh-5}" x2="${bx+bw-8}" y2="${by+bh-5}" stroke="${fd}" stroke-width="1" stroke-dasharray="6,3" opacity="0.7" pointer-events="none"/>`;
+            const lh=Math.min(10,bh*0.52);if(lh>5){s+=`<text x="${bx+bw/2}" y="${by+bh/2+lh*0.3}" text-anchor="middle" font-size="${lh.toFixed(1)}" font-family="system-ui" fill="${fd}" font-weight="600" pointer-events="none">REGISTRO ${cajMm} mm</text>`;}
+        } else {
+            s+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="${fc}" stroke="${fd}" stroke-width="1.5" rx="3"/>`;
+            s+=`<rect x="${bx+FR*0.5}" y="${by+bh*0.2}" width="${bw-FR}" height="${bh*0.6}" fill="${lightenHex(fc,0.18)}" rx="2" pointer-events="none"/>`;
+            const lh=Math.min(10,bh*0.48);if(lh>5){s+=`<text x="${bx+bw/2}" y="${by+bh/2+lh*0.3}" text-anchor="middle" font-size="${lh.toFixed(1)}" font-family="system-ui" fill="${ft}" font-weight="600" pointer-events="none">COMPACTO ${cajMm} mm</text>`;}
+        }
+        // Cota cajón
+        const dyC=by-16;s+=dimLine(bx,dyC,bx+bw,dyC,true);
+        s+=`<rect x="${bx+bw/2-22}" y="${dyC-11}" width="44" height="13" fill="white" opacity="0.75" rx="2"/>`;
+        s+=`<text x="${bx+bw/2}" y="${dyC-1}" text-anchor="middle" font-size="9" font-family="monospace" fill="#1a2830">${cajMm} mm</text>`;
+    }
+
     s+=`</svg>`;return s;
 }
 
@@ -544,6 +593,17 @@ function buildAndRenderBOM(){
     html+=`<h4 class="bom-table-title">Accesorios</h4><table class="bom-table"><thead><tr><th>Ref.</th><th>Descripción</th><th>Cant.</th><th>Nota</th></tr></thead><tbody>`;
     for(const[,a]of Object.entries(accT))html+=`<tr><td class="ref-cell">${esc(a.ref)}</td><td>${esc(a.desc)}</td><td>${esc(a.qty)}</td><td class="note-cell">${esc(a.note)}</td></tr>`;
     html+=`</tbody></table><p class="bom-note">S28: cara marco 21.8 mm · desc. hoja 43.6 mm · desc. puerta 73.6 mm</p>`;
+    if(el.persiana==='registro'){
+        const forroRefs={'40':'6.755','60':'6.756','85':'6.757'};
+        const fmm=String(el.persianaForroMm||60);
+        const ref=forroRefs[fmm]||'6.756';
+        const fw=el.facadeW,qty=el.qty;
+        const forroMl=((fw/1000)*qty).toFixed(3);
+        html+=`<h4 class="bom-table-title">Cajón Registro ${fmm}mm</h4>`;
+        html+=`<table class="bom-table"><thead><tr><th>Ref.</th><th>Descripción</th><th>Longitud (mm)</th><th>Cant.</th><th>Total ml</th></tr></thead><tbody>`;
+        html+=`<tr><td class="ref-cell">${esc(ref)}</td><td>Forro tapeta registro ${fmm}mm</td><td>${fw}</td><td>${qty}</td><td>${forroMl}</td></tr>`;
+        html+=`</tbody><tfoot><tr><td colspan="4"><strong>Total forro</strong></td><td><strong>${forroMl} ml</strong></td></tr></tfoot></table>`;
+    }
     document.getElementById('bomResults').innerHTML=html;
 }
 
@@ -599,6 +659,13 @@ function syncConfigPanel(){
     document.getElementById('cfgMargin').value=el.marginPct;
     document.getElementById('cfgExtra').value=el.extraCost;
     document.getElementById('cfgIva').value=el.ivaPct;
+    document.getElementById('cfgPersiana').value=el.persiana||'ninguna';
+    document.getElementById('cfgPersianaAlto').value=el.persianaAlto||180;
+    document.getElementById('cfgPersianaForro').value=String(el.persianaForroMm||60);
+    const hasPers=el.persiana&&el.persiana!=='ninguna';
+    document.getElementById('cfgPersianaOpts').style.display=hasPers?'':'none';
+    document.getElementById('cfgPersianaForroRow').style.display=el.persiana==='registro'?'':'none';
+    document.getElementById('cfgPersianaInfo').textContent=hasPers?`Cajón ${el.persianaAlto}mm sobre el marco (${el.persiana==='registro'?'apertura mantenimiento':'integrado'})`:'';
     updatePriceSummary(el);updateModuleControls(el);updatePanelList(el);updateLegend(el);
 }
 
@@ -723,6 +790,10 @@ document.getElementById('splitRatio').addEventListener('input',e=>{const el=acti
 document.getElementById('splitMm').addEventListener('input',e=>{const el=activeEl();if(!el)return;const p=findParent(el.tree,elSel);if(!p||!p.split)return;const b=getNodeBounds(el.tree,p.id),pm=p.split.dir==='v'?Math.round(el.facadeW*b.w):Math.round(el.facadeH*b.h);p.split.ratio=Math.max(.05,Math.min(.95,(parseInt(e.target.value)||0)/pm));render();});
 document.getElementById('btnBom').addEventListener('click',showBom);
 document.getElementById('clientName').addEventListener('input',e=>{state.clientName=e.target.value;});
+document.getElementById('cfgPersiana').addEventListener('change',e=>{const el=activeEl();if(!el)return;el.persiana=e.target.value;const hp=e.target.value!=='ninguna';document.getElementById('cfgPersianaOpts').style.display=hp?'':'none';document.getElementById('cfgPersianaForroRow').style.display=e.target.value==='registro'?'':'none';document.getElementById('cfgPersianaInfo').textContent=hp?`Cajón ${el.persianaAlto}mm sobre el marco (${e.target.value==='registro'?'apertura mantenimiento':'integrado'})`:'';render();});
+document.getElementById('cfgPersianaAlto').addEventListener('input',e=>{const el=activeEl();if(!el)return;el.persianaAlto=Math.max(100,parseInt(e.target.value)||180);document.getElementById('cfgPersianaInfo').textContent=el.persiana!=='ninguna'?`Cajón ${el.persianaAlto}mm sobre el marco (${el.persiana==='registro'?'apertura mantenimiento':'integrado'})`:'';render();});
+document.getElementById('cfgPersianaForro').addEventListener('change',e=>{const el=activeEl();if(!el)return;el.persianaForroMm=parseInt(e.target.value)||60;});
+document.getElementById('btnDupeEl').addEventListener('click',()=>{const el=activeEl();if(!el)return;const copy=JSON.parse(JSON.stringify(el));copy.id=uid();copy.name=el.name+' (copia)';(function reId(n){n.id=uid();if(n.split){reId(n.split.a);reId(n.split.b);}})(copy.tree);copy.selModuleId=null;state.elements.push(copy);selectElement(copy.id);});
 
 render();
 </script>
