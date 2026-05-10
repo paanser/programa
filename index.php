@@ -267,14 +267,15 @@ if ($configExists) {
             <input type="hidden" name="quote_items_json" id="quoteItemsJson">
 
             <input type="hidden" name="carpentry_ral" id="carpentryRal" value="9010">
+            <input type="hidden" name="designer_svg" id="designerSvg">
+            <input type="hidden" name="designer_tree_json" id="designerTreeJson">
 
             <div class="actions">
                 <button type="submit" <?= !$configExists ? 'disabled' : '' ?>><?= h(tr('save_budget', $lang)) ?></button>
             </div>
         </form>
-    </section>
 
-    <!-- ── DISEÑADOR DE PANELES (fuera del form) ── -->
+    <!-- ── DISEÑADOR DE PANELES (dentro del panel izquierdo, fuera del form) ── -->
     <details class="designer-embed" id="designerEmbed">
         <summary>
             Diseño de paneles
@@ -385,8 +386,7 @@ if ($configExists) {
             <div class="designer-embed__canvas" id="dw-canvasWrap"></div>
         </div>
     </details>
-    <input type="hidden" id="designerSvg" name="designer_svg">
-    <input type="hidden" id="designerTreeJson" name="designer_tree_json">
+    </section>
 
     <section class="panel preview-panel">
         <h2><?= h(tr('technical_preview', $lang)) ?></h2>
