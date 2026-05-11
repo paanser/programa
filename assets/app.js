@@ -45,6 +45,7 @@ if (form) {
         commercialMargin: document.getElementById('commercialMargin'),
         iva: document.getElementById('iva'),
         quantity: form.querySelector('input[name="quantity"]'),
+        windowLabel: document.getElementById('windowLabel'),
     };
 
     const numberValue = (input, fallback = 0) => {
@@ -423,13 +424,13 @@ if (form) {
 
     const getTrimOffset = (trimSize) => {
         if (trimSize >= 80) {
-            return 8;
+            return 16;
         }
         if (trimSize >= 60) {
-            return 6;
+            return 12;
         }
         if (trimSize >= 40) {
-            return 4;
+            return 8;
         }
         return 0;
     };
@@ -532,6 +533,7 @@ if (form) {
         const total = roundMoney(taxableBase + ivaAmount);
 
         return {
+            windowLabel: fields.windowLabel?.value.trim() || '',
             systemType,
             systemTypeLabel: fields.systemType?.selectedOptions?.[0]?.textContent?.trim() || systemType,
             openingType: fields.openingType?.value || 'izquierda',
@@ -635,9 +637,14 @@ if (form) {
         let trimMarkup = '';
 
         if (trimOffset > 0) {
+            const tx = frame.outerX - trimOffset;
+            const ty = frame.outerY - trimOffset;
+            const tw = frame.outerWidth + (trimOffset * 2);
+            const th = frame.outerHeight + (trimOffset * 2);
             trimMarkup = `
-                <rect x="${frame.outerX - trimOffset}" y="${frame.outerY - trimOffset}" width="${frame.outerWidth + (trimOffset * 2)}" height="${frame.outerHeight + (trimOffset * 2)}" class="trim-band" />
-                <rect x="${frame.outerX - trimOffset + 3}" y="${frame.outerY - trimOffset + 3}" width="${frame.outerWidth + (trimOffset * 2) - 6}" height="${frame.outerHeight + (trimOffset * 2) - 6}" class="trim-outline" />
+                <rect x="${tx}" y="${ty}" width="${tw}" height="${th}" class="trim-band" />
+                <rect x="${tx + 2}" y="${ty + 2}" width="${tw - 4}" height="${th - 4}" class="trim-outline" />
+                <text x="${tx + tw / 2}" y="${ty - 5}" text-anchor="middle" class="trim-label">Tapajuntas ${quote.trimSize} mm</text>
             `;
         }
 
@@ -716,8 +723,8 @@ if (form) {
                         .title { fill: #111111; font: 700 13px 'Trebuchet MS', Arial, sans-serif; }
                         .meta { fill: #40454a; font: 11px 'Trebuchet MS', Arial, sans-serif; }
                         .caption { fill: #40454a; font: 11px 'Trebuchet MS', Arial, sans-serif; }
-                        .trim-band { fill: #fafcfd; stroke: rgba(78, 90, 101, 0.34); stroke-width: 0.8; }
-                        .trim-outline { fill: none; stroke: rgba(78, 90, 101, 0.16); stroke-width: 0.7; }
+                        .trim-band { fill: #dde3e8; stroke: rgba(55, 68, 78, 0.72); stroke-width: 1.5; }
+                        .trim-outline { fill: none; stroke: rgba(55, 68, 78, 0.38); stroke-width: 0.9; stroke-dasharray: 5 3; }
                         .profile-frame { fill: url(#frameFill); stroke: rgba(59, 70, 79, 0.86); stroke-width: 1.05; }
                         .profile-inner-edge { fill: none; stroke: rgba(98, 110, 120, 0.38); stroke-width: 0.7; }
                         .miter-line { stroke: rgba(95, 104, 112, 0.5); stroke-width: 0.85; fill: none; stroke-linecap: round; }
@@ -738,6 +745,7 @@ if (form) {
                         .handle-line { stroke: rgba(111, 120, 128, 0.55); stroke-width: 0.8; }
                         .dimension { stroke: rgba(76, 86, 95, 0.8); stroke-width: 0.9; fill: none; }
                         .dimension-text { fill: #222222; font: 400 13px 'Trebuchet MS', Arial, sans-serif; }
+                        .trim-label { fill: #374854; font: 600 10px 'Trebuchet MS', Arial, sans-serif; }
                     </style>
                 </defs>
                 <rect x="0" y="0" width="560" height="430" class="sheet" />
@@ -821,6 +829,7 @@ if (form) {
     };
 
     const serializeItemForSubmit = (item) => ({
+        window_label: item.windowLabel || '',
         system_type: item.systemType,
         opening_type: item.openingType,
         carpentry_model: item.carpentryModelValue,
@@ -869,11 +878,13 @@ if (form) {
             return;
         }
 
-        quoteItemsList.innerHTML = quoteItems.map((item, index) => `
+        quoteItemsList.innerHTML = quoteItems.map((item, index) => {
+            const label = item.windowLabel || `${text('item', 'Partida')} ${index + 1}`;
+            return `
             <article class="quote-item-card ${item.id === selectedItemId ? 'is-selected' : ''}" data-item-id="${item.id}">
                 <div class="quote-item-card__head">
                     <button type="button" class="quote-item-select" data-select-item="${item.id}">
-                        <strong>${text('item', 'Partida')} ${index + 1}</strong>
+                        <strong>${label}</strong>
                         <span>${item.systemTypeLabel} · ${item.widthMm} x ${item.heightMm} mm</span>
                     </button>
                     ${quoteItems.length > 1 ? `<button type="button" class="quote-item-remove" data-remove-item="${item.id}">${text('removeItem', 'Eliminar ventana')}</button>` : ''}
@@ -883,7 +894,7 @@ if (form) {
                     <strong>${formatMoney(item.total)}</strong>
                 </div>
             </article>
-        `).join('');
+        `;}).join('');
     };
 
     const loadItemIntoForm = (item) => {
@@ -892,6 +903,7 @@ if (form) {
         }
 
         suppressSync = true;
+        if (fields.windowLabel) fields.windowLabel.value = item.windowLabel || '';
         fields.systemType.value = item.systemType;
         fields.openingType.value = item.openingType;
         fields.carpentryModel.value = item.carpentryModelValue;
@@ -956,6 +968,7 @@ if (form) {
         renderGlassSummary(quote);
         renderItemsList();
         renderTotals();
+        renderAllDescompuestos();
         updateSerializedInputs();
     };
 
@@ -1061,6 +1074,227 @@ if (form) {
             }
         }
     });
+
+    // ── Descompuesto S28 – motor de cálculo inline ────────────────────────────
+    const descompBoxEl = document.getElementById('descompuestoBox');
+    const descompBadgeEl = document.getElementById('descompuestoBadge');
+
+    const K_S28 = {
+        HOJA_OFFSET: 43.6,
+        HOJA_OFFSET_2H: 26,
+        GLASS_OFFSET_1H: 108,
+        GLASS_OFFSET_H: 108,
+        GLASS_OFFSET_2H: 88,
+        VIERTEG_EXTRA: 5,
+        JUNQ_EXTRA: 12,
+        FIJO_OFFSET: 48,
+        PUERTA_H_OFFSET: 73.6,
+        PUERTA_H_GLASS: 138,
+    };
+
+    const glassThickFromBudget = (typeKey) => {
+        const map = {
+            camara_4_12_4: 20, camara_4_16_4: 24, camara_4_4_12_4: 20, camara_4_4_16_4: 24,
+            camara_6_12_6: 24, camara_6_16_6: 28,
+            laminar_3_3: 8, laminar_4_4: 12, laminar_5_5: 14, laminar_6_6: 16,
+            bajo_emisivo_4_16_4: 24, bajo_emisivo_4_4_16_4: 24, bajo_emisivo_6_16_4: 24,
+            control_solar_4_16_4: 24, control_solar_4_4_16_4: 24, control_solar_6_16_6: 28,
+            acustico_4_4_16_4: 24, acustico_5_5_16_6: 28, acustico_6_6_16_6: 28,
+            templado_6: 6, templado_8: 8, templado_10: 10,
+            triple_4_10_4_10_4: 36, triple_4_12_4_12_4: 40,
+            monolitico_4: 4, monolitico_6: 6,
+        };
+        return map[typeKey] || 20;
+    };
+
+    const junqRefS28 = (thick) => (thick > 20 ? '6.180' : '6.179');
+
+    const mapToS28System = (systemType, leaves) => {
+        if (systemType === 'fijo') return 'v_fijo';
+        if (systemType === 'oscilobatiente') return leaves >= 2 ? 'v2h_prac' : 'v1h_osci';
+        if (systemType === 'abatible') {
+            if (leaves >= 3) return 'v3h_prac';
+            return leaves === 2 ? 'v2h_prac' : 'v1h_prac';
+        }
+        return null;
+    };
+
+    const calcS28 = (systemKey, L, H, qty, thick) => {
+        const jRef = junqRefS28(thick);
+        const r = (v) => Math.round(v);
+
+        const barsTable = {
+            v1h_prac: () => {
+                const hojaH = L - K_S28.HOJA_OFFSET, hojaV = H - K_S28.HOJA_OFFSET;
+                const gW = L - K_S28.GLASS_OFFSET_1H, gH = H - K_S28.GLASS_OFFSET_H;
+                return {
+                    bars: [
+                        { ref: '5.980', desc: 'Marco horizontal',    cut: L,       qty: 2 },
+                        { ref: '5.980', desc: 'Marco vertical',      cut: H,       qty: 2 },
+                        { ref: '5.982', desc: 'Hoja horizontal',     cut: hojaH,   qty: 2 },
+                        { ref: '5.982', desc: 'Hoja vertical',       cut: hojaV,   qty: 2 },
+                        { ref: '9.619', desc: 'Vierteaguas hoja',    cut: hojaH - K_S28.VIERTEG_EXTRA, qty: 1 },
+                        { ref: jRef,    desc: 'Junquillo horiz.',     cut: gW + K_S28.JUNQ_EXTRA, qty: 2 },
+                        { ref: jRef,    desc: 'Junquillo vert.',      cut: gH + K_S28.JUNQ_EXTRA, qty: 2 },
+                    ],
+                    glass: [{ desc: 'Vidrio hoja', W: gW, H: gH, qty: 1 }],
+                };
+            },
+            v1h_osci: () => {
+                const hojaH = L - K_S28.HOJA_OFFSET, hojaV = H - K_S28.HOJA_OFFSET;
+                const gW = L - K_S28.GLASS_OFFSET_1H, gH = H - K_S28.GLASS_OFFSET_H;
+                return {
+                    bars: [
+                        { ref: '5.980', desc: 'Marco horizontal',    cut: L,       qty: 2 },
+                        { ref: '5.980', desc: 'Marco vertical',      cut: H,       qty: 2 },
+                        { ref: '5.982', desc: 'Hoja horizontal',     cut: hojaH,   qty: 2 },
+                        { ref: '5.982', desc: 'Hoja vertical',       cut: hojaV,   qty: 2 },
+                        { ref: '9.619', desc: 'Vierteaguas hoja',    cut: hojaH - K_S28.VIERTEG_EXTRA, qty: 1 },
+                        { ref: jRef,    desc: 'Junquillo horiz.',     cut: gW + K_S28.JUNQ_EXTRA, qty: 2 },
+                        { ref: jRef,    desc: 'Junquillo vert.',      cut: gH + K_S28.JUNQ_EXTRA, qty: 2 },
+                    ],
+                    glass: [{ desc: 'Vidrio hoja', W: gW, H: gH, qty: 1 }],
+                };
+            },
+            v2h_prac: () => {
+                const hojaH = r(L / 2 - K_S28.HOJA_OFFSET_2H), hojaV = H - K_S28.HOJA_OFFSET;
+                const gW = r(L / 2 - K_S28.GLASS_OFFSET_2H), gH = H - K_S28.GLASS_OFFSET_H;
+                return {
+                    bars: [
+                        { ref: '5.980', desc: 'Marco horizontal',    cut: L,       qty: 2 },
+                        { ref: '5.980', desc: 'Marco vertical',      cut: H,       qty: 2 },
+                        { ref: '5.984', desc: 'Inversor recto',      cut: hojaV,   qty: 1 },
+                        { ref: '5.982', desc: 'Hoja horizontal',     cut: hojaH,   qty: 4 },
+                        { ref: '5.982', desc: 'Hoja vertical',       cut: hojaV,   qty: 4 },
+                        { ref: '9.619', desc: 'Vierteaguas (×2)',    cut: hojaH - K_S28.VIERTEG_EXTRA, qty: 2 },
+                        { ref: jRef,    desc: 'Junquillo horiz.',     cut: gW + K_S28.JUNQ_EXTRA, qty: 4 },
+                        { ref: jRef,    desc: 'Junquillo vert.',      cut: gH + K_S28.JUNQ_EXTRA, qty: 4 },
+                    ],
+                    glass: [{ desc: 'Vidrio por hoja', W: gW, H: gH, qty: 2 }],
+                };
+            },
+            v3h_prac: () => {
+                const hojaH = r(L / 3 - K_S28.HOJA_OFFSET_2H), hojaV = H - K_S28.HOJA_OFFSET;
+                const gW = r(L / 3 - K_S28.GLASS_OFFSET_2H), gH = H - K_S28.GLASS_OFFSET_H;
+                return {
+                    bars: [
+                        { ref: '5.980', desc: 'Marco horizontal',    cut: L,       qty: 2 },
+                        { ref: '5.980', desc: 'Marco vertical',      cut: H,       qty: 2 },
+                        { ref: '5.984', desc: 'Inversor recto (×2)', cut: hojaV,   qty: 2 },
+                        { ref: '5.982', desc: 'Hoja horizontal',     cut: hojaH,   qty: 6 },
+                        { ref: '5.982', desc: 'Hoja vertical',       cut: hojaV,   qty: 6 },
+                        { ref: '9.619', desc: 'Vierteaguas (×3)',    cut: hojaH - K_S28.VIERTEG_EXTRA, qty: 3 },
+                        { ref: jRef,    desc: 'Junquillo horiz.',     cut: gW + K_S28.JUNQ_EXTRA, qty: 6 },
+                        { ref: jRef,    desc: 'Junquillo vert.',      cut: gH + K_S28.JUNQ_EXTRA, qty: 6 },
+                    ],
+                    glass: [{ desc: 'Vidrio por hoja', W: gW, H: gH, qty: 3 }],
+                };
+            },
+            v_fijo: () => {
+                const gW = L - K_S28.FIJO_OFFSET, gH = H - K_S28.FIJO_OFFSET;
+                return {
+                    bars: [
+                        { ref: '5.980', desc: 'Marco horizontal',    cut: L,       qty: 2 },
+                        { ref: '5.980', desc: 'Marco vertical',      cut: H,       qty: 2 },
+                        { ref: jRef,    desc: 'Junquillo horiz.',     cut: gW + K_S28.JUNQ_EXTRA, qty: 2 },
+                        { ref: jRef,    desc: 'Junquillo vert.',      cut: gH + K_S28.JUNQ_EXTRA, qty: 2 },
+                    ],
+                    glass: [{ desc: 'Vidrio fijo', W: gW, H: gH, qty: 1 }],
+                };
+            },
+        };
+
+        const fn = barsTable[systemKey];
+        if (!fn) return null;
+        return fn();
+    };
+
+    const renderDecompBlock = (item, index) => {
+        const sysKey = mapToS28System(item.systemType, item.leaves);
+        const label = item.windowLabel || `Ventana ${index + 1}`;
+        const isSelected = item.id === selectedItemId;
+
+        if (!sysKey) {
+            return `<div class="decomp-block ${isSelected ? 'decomp-block--selected' : ''}">
+                <div class="decomp-block-header">
+                    <span class="decomp-block-label">${label}</span>
+                    <span class="decomp-block-meta">${item.systemTypeLabel} · ${item.widthMm} × ${item.heightMm} mm</span>
+                </div>
+                <p class="decomp-note">Sistema corredera: no aplica Serie 28. Use el Descompuesto S28 con el sistema de corredera correspondiente.</p>
+            </div>`;
+        }
+
+        const thick = glassThickFromBudget(item.glassTypeValue || '');
+        const data = calcS28(sysKey, item.widthMm, item.heightMm, item.quantity, thick);
+        if (!data) return '';
+
+        const barTotals = {};
+        for (const b of data.bars) {
+            if (!barTotals[b.ref]) barTotals[b.ref] = 0;
+            barTotals[b.ref] += (b.cut * b.qty * item.quantity) / 1000;
+        }
+        const totalMl = Object.values(barTotals).reduce((s, v) => s + v, 0);
+
+        const barsHtml = data.bars.map((b) => {
+            const ml = ((b.cut * b.qty * item.quantity) / 1000).toFixed(3);
+            const errCls = b.cut < 0 ? ' class="decomp-err"' : '';
+            return `<tr>
+                <td class="decomp-ref">${b.ref}</td>
+                <td>${b.desc}</td>
+                <td${errCls}>${Math.round(b.cut)}</td>
+                <td>${b.qty}</td>
+                <td>${ml} ml</td>
+            </tr>`;
+        }).join('');
+
+        const glassHtml = data.glass.map((g) => {
+            const m2 = ((g.W / 1000) * (g.H / 1000) * g.qty * item.quantity).toFixed(3);
+            const errCls = (g.W <= 0 || g.H <= 0) ? ' class="decomp-err"' : '';
+            return `<tr>
+                <td>${g.desc}</td>
+                <td${errCls}>${Math.round(g.W)}</td>
+                <td${errCls}>${Math.round(g.H)}</td>
+                <td>${g.qty * item.quantity}</td>
+                <td>${m2} m²</td>
+            </tr>`;
+        }).join('');
+
+        const S28_NAMES = {
+            v1h_prac: 'V1H Practicable', v1h_osci: 'V1H Oscilobatiente',
+            v2h_prac: 'V2H Practicable', v3h_prac: 'V3H Practicable', v_fijo: 'Ventana Fija',
+        };
+
+        return `<div class="decomp-block ${isSelected ? 'decomp-block--selected' : ''}">
+            <div class="decomp-block-header">
+                <span class="decomp-block-label">${label}</span>
+                <span class="decomp-block-meta">${S28_NAMES[sysKey] || sysKey} · ${item.widthMm} × ${item.heightMm} mm · ${item.quantity} ud. · Cámara ${thick} mm</span>
+            </div>
+            <p class="decomp-subsection-title">Barras de corte – Serie 28 EXTRUAL</p>
+            <table class="decomp-table">
+                <thead><tr><th>Ref.</th><th>Descripción</th><th>Corte (mm)</th><th>Cant./ud</th><th>Total ml</th></tr></thead>
+                <tbody>${barsHtml}</tbody>
+                <tfoot><tr><td colspan="4"><strong>Total aluminio (${item.quantity} ud.)</strong></td><td><strong>${totalMl.toFixed(3)} ml</strong></td></tr></tfoot>
+            </table>
+            <p class="decomp-subsection-title">Vidrio</p>
+            <table class="decomp-table">
+                <thead><tr><th>Descripción</th><th>Ancho (mm)</th><th>Alto (mm)</th><th>Total piezas</th><th>m²</th></tr></thead>
+                <tbody>${glassHtml}</tbody>
+            </table>
+        </div>`;
+    };
+
+    const renderAllDescompuestos = () => {
+        if (!descompBoxEl) return;
+        if (quoteItems.length === 0) {
+            descompBoxEl.innerHTML = '';
+            if (descompBadgeEl) descompBadgeEl.textContent = '';
+            return;
+        }
+        descompBoxEl.innerHTML = quoteItems.map(renderDecompBlock).join('');
+        if (descompBadgeEl) descompBadgeEl.textContent = `${quoteItems.length}`;
+    };
+
+    // ── fin motor S28 ─────────────────────────────────────────────────────────
 
     form.addEventListener('input', syncState);
     form.addEventListener('change', syncState);

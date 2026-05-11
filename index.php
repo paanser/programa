@@ -102,6 +102,10 @@ if ($configExists) {
             <div class="quote-items-list" id="quoteItemsList"></div>
 
             <h3><?= h(tr('visual_selector', $lang)) ?></h3>
+            <label>Referencia de ventana
+                <input type="text" id="windowLabel" name="window_label" placeholder="Ej. V1 · Dormitorio, Balconera terraza...">
+                <span class="field-hint">Identificador para esta ventana en el descompuesto</span>
+            </label>
             <div class="grid two">
                 <label><?= h(tr('system', $lang)) ?>
                     <select name="system_type" id="systemType">
@@ -276,6 +280,9 @@ if ($configExists) {
 
         <h3><?= h(tr('financial_summary', $lang)) ?></h3>
         <div class="totals" id="totalsBox"></div>
+
+        <h3 class="descomp-inline-heading">Descompuesto S28 <span class="descomp-inline-badge" id="descompuestoBadge"></span></h3>
+        <div id="descompuestoBox"></div>
     </section>
 </main>
 

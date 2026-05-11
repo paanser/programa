@@ -170,6 +170,93 @@
     line-height: 1.6;
 }
 
+/* ── Lista de ventanas (multi-window) ───────────────────── */
+
+.descomp-windows-header {
+    margin-bottom: 0.6rem;
+}
+
+.descomp-windows-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 0.6rem;
+}
+
+.descomp-win-item {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.descomp-win-item--active {
+    border-color: var(--brand);
+    background: rgba(66, 81, 93, 0.06);
+}
+
+.descomp-win-select {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+    padding: 0.5rem 0.7rem;
+    background: transparent;
+    color: var(--text);
+    box-shadow: none;
+    border-radius: 0;
+    text-align: left;
+    font-size: 0.85rem;
+}
+
+.descomp-win-select strong {
+    font-size: 0.88rem;
+}
+
+.descomp-win-select span {
+    font-size: 0.76rem;
+    color: var(--muted);
+    font-weight: 400;
+}
+
+.descomp-win-remove {
+    padding: 0 0.6rem;
+    background: transparent;
+    color: var(--muted);
+    font-size: 1.1rem;
+    box-shadow: none;
+    border-radius: 0;
+    border-left: 1px solid var(--panel-border);
+    line-height: 1;
+}
+
+.descomp-win-remove:hover {
+    background: rgba(192, 57, 43, 0.08);
+    color: #c0392b;
+}
+
+.descomp-windows-actions {
+    margin-bottom: 0.6rem;
+}
+
+.descomp-windows-actions .secondary-button {
+    width: 100%;
+    font-size: 0.85rem;
+    padding: 0.55rem 0.8rem;
+}
+
+.result-header--active {
+    border-left: 3px solid var(--brand);
+}
+
+.window-separator {
+    border: none;
+    border-top: 2px dashed var(--panel-border);
+    margin: 1.5rem 0;
+}
+
 /* ── Print ───────────────────────────────────────────────── */
 
 @media print {
