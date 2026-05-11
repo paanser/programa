@@ -19,11 +19,13 @@
 body {
     margin: 0;
     min-height: 100vh;
+    min-height: 100dvh;
     font-family: 'Trebuchet MS', Arial, sans-serif;
     color: var(--text);
     background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 22%),
         linear-gradient(180deg, var(--bg), var(--bg-strong));
+    -webkit-text-size-adjust: 100%;
 }
 
 a {
@@ -32,15 +34,22 @@ a {
 
 button,
 .link-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
     border: 0;
     border-radius: 8px;
     padding: 0.72rem 1rem;
     font: inherit;
+    font-size: 1rem;
     cursor: pointer;
     background: linear-gradient(180deg, var(--brand), var(--brand-dark));
     color: #fff;
     text-decoration: none;
     box-shadow: 0 4px 10px rgba(31, 42, 51, 0.12);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 button[disabled] {
@@ -59,6 +68,9 @@ textarea {
     background: rgba(255, 255, 255, 0.98);
     color: var(--text);
     font: inherit;
+    font-size: 1rem;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 textarea {
@@ -117,6 +129,8 @@ p {
     gap: 1rem;
     align-items: center;
     padding: 1rem clamp(1rem, 3vw, 1.5rem);
+    padding-left: max(clamp(1rem, 3vw, 1.5rem), env(safe-area-inset-left, 0px));
+    padding-right: max(clamp(1rem, 3vw, 1.5rem), env(safe-area-inset-right, 0px));
     border-bottom: 1px solid rgba(61, 73, 84, 0.12);
 }
 
@@ -161,11 +175,15 @@ p {
 }
 
 .topbar nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
     padding: 0.55rem 0.85rem;
     border-radius: 6px;
     text-decoration: none;
     background: rgba(255, 255, 255, 0.75);
     border: 1px solid rgba(61, 73, 84, 0.1);
+    white-space: nowrap;
 }
 
 .topbar nav a.active {
@@ -178,7 +196,9 @@ p {
     display: grid;
     grid-template-columns: minmax(320px, 1.18fr) minmax(320px, 0.82fr);
     gap: 1rem;
-    padding: 0 clamp(1rem, 3vw, 1.5rem) 1.25rem;
+    padding: 0 clamp(1rem, 3vw, 1.5rem) calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    padding-left: max(clamp(1rem, 3vw, 1.5rem), env(safe-area-inset-left, 0px));
+    padding-right: max(clamp(1rem, 3vw, 1.5rem), env(safe-area-inset-right, 0px));
 }
 
 .panel {
@@ -267,22 +287,31 @@ p {
 }
 
 .quote-item-remove {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
     padding: 0.45rem 0.7rem;
     border-radius: 999px;
     background: rgba(66, 81, 93, 0.08);
     color: var(--brand-dark);
     box-shadow: none;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .secondary-button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
     border: 1px solid rgba(88, 61, 34, 0.14);
     border-radius: 999px;
     padding: 0.7rem 1rem;
     font: inherit;
+    font-size: 1rem;
     color: var(--text);
     background: rgba(255, 255, 255, 0.72);
     cursor: pointer;
+    white-space: nowrap;
 }
 
 .field-hint {
@@ -376,7 +405,7 @@ p {
 }
 
 .drawing-wrap {
-    min-height: 390px;
+    min-height: clamp(220px, 40vw, 390px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -390,6 +419,8 @@ p {
 .drawing-wrap svg {
     width: 100%;
     height: auto;
+    max-width: 100%;
+    display: block;
 }
 
 .drawing-wrap--item {
@@ -441,6 +472,7 @@ p {
     fill: #3d3a35;
     font-family: Georgia, 'Times New Roman', serif;
     font-size: 14px;
+    dominant-baseline: middle;
 }
 
 .dimension-text.vertical {
@@ -476,6 +508,8 @@ p {
 
 .table-wrap {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
 }
 
 table {
@@ -515,10 +549,17 @@ td {
     background: rgba(120, 132, 142, 0.08);
 }
 
+/* ── Breakpoint: tablet portrait (≤ 768px) ────────────────── */
+@media (max-width: 768px) {
+    .glass-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* ── Breakpoint: tablet / small laptop (≤ 920px) ─────────── */
 @media (max-width: 920px) {
     .layout,
-    .grid.two,
-    .glass-summary-grid {
+    .grid.two {
         grid-template-columns: 1fr;
     }
 
@@ -536,6 +577,212 @@ td {
         justify-content: space-between;
     }
 }
+
+/* ── Breakpoint: mobile (≤ 600px) ────────────────────────── */
+@media (max-width: 600px) {
+    .layout {
+        gap: 0.75rem;
+        padding-top: 0.5rem;
+    }
+
+    .glass-summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .panel {
+        border-radius: 8px;
+        padding: 0.85rem;
+    }
+
+    .topbar nav {
+        gap: 0.4rem;
+    }
+
+    .topbar nav a {
+        font-size: 0.88rem;
+        padding: 0.4rem 0.7rem;
+    }
+
+    .actions,
+    .action-bar {
+        flex-direction: column;
+    }
+
+    .actions button,
+    .actions .link-button,
+    .action-bar button,
+    .action-bar .link-button {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .quote-item-card__head,
+    .quote-item-card__meta {
+        flex-wrap: wrap;
+    }
+
+    .drawing-wrap {
+        min-height: 240px;
+        padding: 0.6rem;
+    }
+
+    .drawing-wrap--item {
+        min-height: 180px;
+    }
+
+    th,
+    td {
+        padding: 0.7rem 0.55rem;
+        font-size: 0.88rem;
+    }
+
+    .topbar-tools {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.6rem;
+    }
+
+    .lang-switcher {
+        width: 100%;
+    }
+
+    .lang-switcher select {
+        flex: 1;
+    }
+}
+
+/* ── Breakpoint: small mobile (≤ 400px) ─────────────────── */
+@media (max-width: 400px) {
+    .topbar h1 {
+        font-size: 1rem;
+    }
+
+    .topbar nav a {
+        font-size: 0.82rem;
+        padding: 0.35rem 0.6rem;
+    }
+
+    .glass-stat strong {
+        font-size: 0.9rem;
+    }
+}
+
+/* ── Breakpoint: large desktop (≥ 1400px) ───────────────── */
+@media (min-width: 1400px) {
+    .layout {
+        max-width: 1600px;
+        margin: 0 auto;
+        gap: 1.5rem;
+        padding-top: 0.5rem;
+    }
+}
+
+/* ── Quotes table (list_quotes.php) ─────────────────────── */
+
+.quotes-table th {
+    background: var(--brand-dark);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.quotes-table tbody tr:hover {
+    background: rgba(66, 81, 93, 0.04);
+}
+
+.quotes-table__actions {
+    white-space: nowrap;
+}
+
+.quotes-table__action-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0.3rem 0.65rem;
+    border-radius: 6px;
+    border: 1px solid rgba(61, 73, 84, 0.14);
+    background: rgba(255, 255, 255, 0.75);
+    color: var(--brand-dark);
+    text-decoration: none;
+    font-size: 0.85rem;
+    margin-right: 0.35rem;
+}
+
+.quotes-table__action-link:last-child {
+    margin-right: 0;
+}
+
+.quotes-table__action-link:hover {
+    background: rgba(66, 81, 93, 0.08);
+}
+
+@media (max-width: 680px) {
+    .quotes-table-wrap {
+        overflow-x: visible;
+    }
+
+    .quotes-table,
+    .quotes-table thead {
+        display: none;
+    }
+
+    .quotes-table tbody,
+    .quotes-table tbody tr,
+    .quotes-table tbody td {
+        display: block;
+    }
+
+    .quotes-table tbody tr {
+        margin-bottom: 0.75rem;
+        padding: 0.85rem 1rem;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid rgba(61, 73, 84, 0.12);
+    }
+
+    .quotes-table tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.35rem 0;
+        border: none;
+        font-size: 0.9rem;
+        border-bottom: 1px solid rgba(61, 73, 84, 0.06);
+    }
+
+    .quotes-table tbody td:last-child {
+        border-bottom: none;
+        padding-top: 0.6rem;
+    }
+
+    .quotes-table tbody td::before {
+        content: attr(data-label);
+        font-size: 0.78rem;
+        color: var(--muted);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        flex-shrink: 0;
+        min-width: 90px;
+    }
+
+    .quotes-table__actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        justify-content: flex-end;
+    }
+
+    .quotes-table__actions::before {
+        display: none;
+    }
+}
+
+/* ── Print ───────────────────────────────────────────────── */
 
 @media print {
     body {

@@ -20,7 +20,7 @@ try {
 <html lang="<?= h($lang) ?>">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title><?= h(tr('history_title', $lang)) ?></title>
     <link rel="stylesheet" href="assets/styles.css">
 </head>
@@ -49,8 +49,8 @@ try {
         <?php if ($error): ?>
             <div class="alert">Error: <?= h($error) ?></div>
         <?php endif; ?>
-        <div class="table-wrap">
-            <table>
+        <div class="table-wrap quotes-table-wrap">
+            <table class="quotes-table">
                 <thead>
                 <tr>
                     <th>ID</th>
@@ -65,16 +65,15 @@ try {
                 <tbody>
                 <?php foreach ($rows as $row): ?>
                     <tr>
-                        <td><?= (int)$row['id'] ?></td>
-                        <td><?= h((string)$row['quote_number']) ?></td>
-                        <td><?= h((string)$row['created_at']) ?></td>
-                        <td><?= h((string)$row['client_name']) ?></td>
-                        <td><?= h(humanize_system_type((string)$row['system_type'], $lang)) ?></td>
-                        <td><?= number_format((float)$row['total'], 2, ',', '.') ?> EUR</td>
-                        <td>
-                            <a href="<?= h(url_with_lang('view_quote.php', ['id' => (int)$row['id']], $lang)) ?>"><?= h(tr('view', $lang)) ?></a>
-                            |
-                            <a href="<?= h(url_with_lang('duplicate_quote.php', ['id' => (int)$row['id']], $lang)) ?>"><?= h(tr('duplicate', $lang)) ?></a>
+                        <td data-label="ID"><?= (int)$row['id'] ?></td>
+                        <td data-label="<?= h(tr('quote', $lang)) ?>"><?= h((string)$row['quote_number']) ?></td>
+                        <td data-label="<?= h(tr('date', $lang)) ?>"><?= h((string)$row['created_at']) ?></td>
+                        <td data-label="<?= h(tr('client', $lang)) ?>"><?= h((string)$row['client_name']) ?></td>
+                        <td data-label="<?= h(tr('system', $lang)) ?>"><?= h(humanize_system_type((string)$row['system_type'], $lang)) ?></td>
+                        <td data-label="<?= h(tr('total', $lang)) ?>"><?= number_format((float)$row['total'], 2, ',', '.') ?> EUR</td>
+                        <td data-label="<?= h(tr('actions', $lang)) ?>" class="quotes-table__actions">
+                            <a class="quotes-table__action-link" href="<?= h(url_with_lang('view_quote.php', ['id' => (int)$row['id']], $lang)) ?>"><?= h(tr('view', $lang)) ?></a>
+                            <a class="quotes-table__action-link" href="<?= h(url_with_lang('duplicate_quote.php', ['id' => (int)$row['id']], $lang)) ?>"><?= h(tr('duplicate', $lang)) ?></a>
                         </td>
                     </tr>
                 <?php endforeach; ?>

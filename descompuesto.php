@@ -7,7 +7,7 @@ $lang = get_current_lang();
 <html lang="<?= h($lang) ?>">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Descompuesto Serie 28 – <?= h(tr('app_title', $lang)) ?></title>
     <link rel="stylesheet" href="assets/styles.css">
     <link rel="stylesheet" href="assets/descompuesto.css">
@@ -823,7 +823,7 @@ function renderResults() {
     </div>
 
     <h3 class="section-title">Perfiles de aluminio – Barras de corte</h3>
-    <table class="result-table">
+    <div class="result-table-wrap"><table class="result-table">
         <thead>
             <tr>
                 <th>Referencia</th>
@@ -858,12 +858,12 @@ function renderResults() {
                 <td><strong>${(totalAlMm * qty / 1000).toFixed(3)} ml</strong></td>
             </tr>
         </tfoot>
-    </table>`;
+    </table></div>`;
 
     // ── Resumen por referencia ──
     html += `
     <h3 class="section-title">Resumen de compra por referencia</h3>
-    <table class="result-table compact">
+    <div class="result-table-wrap"><table class="result-table compact">
         <thead>
             <tr><th>Referencia</th><th>Descripción</th><th>Total ml (×${qty} ud)</th></tr>
         </thead>
@@ -875,12 +875,12 @@ function renderResults() {
             <td>${(r.totalMm * qty / 1000).toFixed(3)} ml</td>
         </tr>`;
     }
-    html += `</tbody></table>`;
+    html += `</tbody></table></div>`;
 
     // ── Vidrio ──
     html += `
     <h3 class="section-title">Vidrio</h3>
-    <table class="result-table compact">
+    <div class="result-table-wrap"><table class="result-table compact">
         <thead>
             <tr><th>Descripción</th><th>Ancho (mm)</th><th>Alto (mm)</th><th>Cant./ud</th><th>Total</th><th>m²</th></tr>
         </thead>
@@ -902,12 +902,12 @@ function renderResults() {
     }
     html += `</tbody>
         <tfoot><tr><td colspan="5"><strong>Total m² vidrio</strong></td><td><strong>${totalM2.toFixed(3)} m²</strong></td></tr></tfoot>
-    </table>`;
+    </table></div>`;
 
     // ── Accesorios ──
     html += `
     <h3 class="section-title">Accesorios</h3>
-    <table class="result-table compact">
+    <div class="result-table-wrap"><table class="result-table compact">
         <thead>
             <tr><th>Referencia</th><th>Descripción</th><th>Cant. por ud</th><th>Nota</th></tr>
         </thead>
@@ -920,7 +920,7 @@ function renderResults() {
             <td class="note-cell">${a.note || ''}</td>
         </tr>`;
     }
-    html += `</tbody></table>`;
+    html += `</tbody></table></div>`;
 
     // ── Nota de cotas ──
     html += `
