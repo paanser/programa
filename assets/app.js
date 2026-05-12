@@ -22,6 +22,7 @@ if (form) {
         tiltTurnConfig: document.getElementById('tiltTurnConfig'),
         tiltTurnLeaf: document.getElementById('tiltTurnLeaf'),
         frameCutType: document.getElementById('frameCutType'),
+        serieKey: document.getElementById('serieKey'),
         glassType: document.getElementById('glassType'),
         glassDescription: document.getElementById('glassDescription'),
         glassWidthMm: document.getElementById('glassWidthMm'),
@@ -543,6 +544,7 @@ if (form) {
             tiltTurnLeaf,
             tiltTurnLeafLabel,
             frameCutType: systemType === 'fijo' ? 'mitered' : (fields.frameCutType?.value || 'recto'),
+            serieKey: fields.serieKey?.value || '',
             glassTypeValue: fields.glassType?.value || '',
             glassType: fields.glassType?.selectedOptions?.[0]?.textContent?.trim() || '',
             glassDescription: fields.glassDescription?.value.trim() || '',
@@ -609,25 +611,41 @@ if (form) {
 
     const renderDrawing = (quote) => {
         const safeModel = escapeSvgText(quote.carpentryModel || quote.systemTypeLabel || quote.systemType);
-        const safeReference = escapeSvgText(quote.carpentryReference || text('noReference', 'Sin referencia'));
+        const safeReference = escapeSvgText(quote.carpentryReference || text('noReference', 'Sin ref.'));
         const safeColor = escapeSvgText(quote.profileColor);
+        const safeGlass = escapeSvgText(quote.glassDescription || quote.glassType || text('glass', 'Vidrio'));
         const palette = getProfilePalette(quote.profileColorHex);
-        const glassPalette = getGlassPalette();
+
+        const CANVAS_X = 76, CANVAS_Y = 44;
+        const CANVAS_W = 340, CANVAS_H = 268;
+        const scaleX = CANVAS_W / quote.widthMm;
+        const scaleY = CANVAS_H / quote.heightMm;
+        const scale = Math.min(scaleX, scaleY, 0.48);
+        const drawW = Math.round(quote.widthMm * scale);
+        const drawH = Math.round(quote.heightMm * scale);
+        const frameX = Math.round(CANVAS_X + (CANVAS_W - drawW) / 2);
+        const frameY = Math.round(CANVAS_Y + (CANVAS_H - drawH) / 2);
+        const FT = 7;
+        const FI = 3;
+        const scaleN = Math.max(1, Math.round(1 / scale));
+
         const frame = {
-            outerX: 160,
-            outerY: 122,
-            outerWidth: 238,
-            outerHeight: 198,
-            innerX: 174,
-            innerY: 136,
-            innerWidth: 210,
-            innerHeight: 170,
+            outerX: frameX,
+            outerY: frameY,
+            outerWidth: drawW,
+            outerHeight: drawH,
+            innerX: frameX + FT,
+            innerY: frameY + FT,
+            innerWidth: drawW - FT * 2,
+            innerHeight: drawH - FT * 2,
         };
+
         const { geometry: leaves, barWidth } = getLeafGeometry(quote, frame);
         const trimOffset = getTrimOffset(quote.trimSize);
-        const trimLabel = quote.trimSize > 0 ? `${quote.trimSize} mm` : text('trimNone', 'Sin');
-        const frameCutLabel = quote.frameCutType === 'mitered' ? text('cutMitered', '45 grados') : text('cutRecto', 'Recto');
         const usesMiterCut = quote.systemType === 'fijo' || quote.frameCutType === 'mitered';
+
+        const pLight = mixColor(palette.base, '#ffffff', 0.78);
+        const pDark  = mixColor(palette.base, '#5a6470', 0.18);
 
         let leavesMarkup = '';
         let barsMarkup = '';
@@ -636,14 +654,14 @@ if (form) {
 
         if (trimOffset > 0) {
             trimMarkup = `
-                <rect x="${frame.outerX - trimOffset}" y="${frame.outerY - trimOffset}" width="${frame.outerWidth + (trimOffset * 2)}" height="${frame.outerHeight + (trimOffset * 2)}" class="trim-band" />
-                <rect x="${frame.outerX - trimOffset + 3}" y="${frame.outerY - trimOffset + 3}" width="${frame.outerWidth + (trimOffset * 2) - 6}" height="${frame.outerHeight + (trimOffset * 2) - 6}" class="trim-outline" />
+                <rect x="${frame.outerX - trimOffset}" y="${frame.outerY - trimOffset}"
+                      width="${frame.outerWidth + trimOffset * 2}" height="${frame.outerHeight + trimOffset * 2}"
+                      fill="#f5f8fa" stroke="rgba(78,90,101,0.30)" stroke-width="0.7" stroke-dasharray="4,3"/>
             `;
         }
 
         leaves.forEach((leaf, index) => {
             const slidingDirection = getSlidingDirection(quote.openingType, index, quote.leaves);
-            const casementHingeSide = getCasementHingeSide(quote.openingType, index, quote.leaves);
             const isCasementFamily = quote.systemType === 'abatible' || quote.systemType === 'oscilobatiente';
             const handleSide = quote.systemType === 'corredera'
                 ? (slidingDirection === 1 ? 'left' : 'right')
@@ -652,25 +670,25 @@ if (form) {
                 || (isCasementFamily && index === getCasementHandleLeafIndex(quote));
 
             if (quote.systemType === 'fijo') {
-                const gx = leaf.x + 10, gy = leaf.y + 10, gw = leaf.width - 20, gh = leaf.height - 20;
+                const gx = leaf.x + FI + 2, gy = leaf.y + FI + 2;
+                const gw = leaf.width - (FI + 2) * 2, gh = leaf.height - (FI + 2) * 2;
                 leavesMarkup += `
-                    <rect x="${leaf.x + 4}" y="${leaf.y + 4}" width="${leaf.width - 8}" height="${leaf.height - 8}" class="fixed-lite-frame" />
-                    <rect x="${gx}" y="${gy}" width="${gw}" height="${gh}" class="glass-pane" />
-                    <line x1="${gx}" y1="${gy}" x2="${gx + gw}" y2="${gy + gh}" class="glass-diagonal" />
-                    <line x1="${gx + gw}" y1="${gy}" x2="${gx}" y2="${gy + gh}" class="glass-diagonal" />
+                    <rect x="${gx}" y="${gy}" width="${gw}" height="${gh}" fill="#e8f3f6"/>
+                    <rect x="${gx}" y="${gy}" width="${gw}" height="${gh}" fill="url(#glassHatch)" stroke="#7aafc0" stroke-width="0.5"/>
                 `;
             } else {
-                const sashInset = quote.systemType === 'corredera' ? 8 : 6;
-                const glassInsetX = quote.systemType === 'corredera' ? 14 : 12;
-                const glassInsetY = quote.systemType === 'corredera' ? 12 : 10;
-                const gx = leaf.x + glassInsetX, gy = leaf.y + glassInsetY;
-                const gw = leaf.width - (glassInsetX * 2), gh = leaf.height - (glassInsetY * 2);
+                const sashInset = quote.systemType === 'corredera' ? 7 : 5;
+                const glassInset = quote.systemType === 'corredera' ? 12 : 10;
+                const gx = leaf.x + glassInset, gy = leaf.y + glassInset;
+                const gw = leaf.width - glassInset * 2, gh = leaf.height - glassInset * 2;
                 leavesMarkup += `
-                    <rect x="${leaf.x}" y="${leaf.y}" width="${leaf.width}" height="${leaf.height}" class="sash" />
-                    <rect x="${leaf.x + sashInset}" y="${leaf.y + sashInset}" width="${leaf.width - (sashInset * 2)}" height="${leaf.height - (sashInset * 2)}" class="sash-inner" />
-                    <rect x="${gx}" y="${gy}" width="${gw}" height="${gh}" class="glass-pane" />
-                    <line x1="${gx}" y1="${gy}" x2="${gx + gw}" y2="${gy + gh}" class="glass-diagonal" />
-                    <line x1="${gx + gw}" y1="${gy}" x2="${gx}" y2="${gy + gh}" class="glass-diagonal" />
+                    <rect x="${leaf.x}" y="${leaf.y}" width="${leaf.width}" height="${leaf.height}"
+                          fill="url(#alProfile)" stroke="rgba(50,60,68,0.85)" stroke-width="0.8"/>
+                    <rect x="${leaf.x + sashInset}" y="${leaf.y + sashInset}"
+                          width="${leaf.width - sashInset * 2}" height="${leaf.height - sashInset * 2}"
+                          fill="none" stroke="rgba(180,190,198,0.55)" stroke-width="0.5"/>
+                    <rect x="${gx}" y="${gy}" width="${gw}" height="${gh}" fill="#e8f3f6"/>
+                    <rect x="${gx}" y="${gy}" width="${gw}" height="${gh}" fill="url(#glassHatch)" stroke="#7aafc0" stroke-width="0.5"/>
                     ${shouldRenderHandle ? buildHandles(leaf, handleSide) : ''}
                 `;
             }
@@ -686,88 +704,101 @@ if (form) {
             if (index < leaves.length - 1) {
                 const barX = leaf.x + leaf.width;
                 barsMarkup += `
-                    <rect x="${barX}" y="${frame.innerY}" width="${barWidth}" height="${frame.innerHeight}" class="meeting-rail" />
-                    <line x1="${barX + (barWidth / 2)}" y1="${frame.innerY + 4}" x2="${barX + (barWidth / 2)}" y2="${frame.innerY + frame.innerHeight - 4}" class="technical-line" />
+                    <rect x="${barX}" y="${frame.innerY}" width="${barWidth}" height="${frame.innerHeight}"
+                          fill="url(#alProfile)" stroke="rgba(60,70,78,0.6)" stroke-width="0.6"/>
+                    <line x1="${barX + barWidth / 2}" y1="${frame.innerY + 3}"
+                          x2="${barX + barWidth / 2}" y2="${frame.innerY + frame.innerHeight - 3}"
+                          stroke="rgba(130,142,152,0.45)" stroke-width="0.5" fill="none"/>
                 `;
             }
         });
 
-        const tiltTurnDetail = quote.systemType === 'oscilobatiente'
-            ? ` · ${text('tiltTurnLeafShort', 'Oscilo')} ${quote.tiltTurnLeafLabel}`
-            : '';
-        const detailsLabel = `${quote.leaves} ${text('leavesShort', 'hojas')} · ${quote.quantity} ${text('unitsShort', 'ud.')} · ${text('sheetTrim', 'Tapajuntas')} ${trimLabel} · ${text('sheetCut', 'Corte')} ${frameCutLabel}${tiltTurnDetail}`;
-        const safeGlass = escapeSvgText(quote.glassDescription || quote.glassType || text('glass', 'Vidrio'));
-        const verticalTextX = frame.outerX + frame.outerWidth + 38;
-        const verticalTextY = frame.outerY + (frame.outerHeight / 2);
-
-        const svg = `
-            <svg viewBox="0 0 560 430" role="img" aria-label="Dibujo tecnico del cerramiento" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <linearGradient id="frameFill" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="${mixColor(palette.base, '#ffffff', 0.72)}" />
-                        <stop offset="100%" stop-color="${mixColor(palette.base, '#d9e0e6', 0.2)}" />
-                    </linearGradient>
-                    <linearGradient id="glassFill" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="#f6fbfc" />
-                        <stop offset="100%" stop-color="#d9eef0" />
-                    </linearGradient>
-                    <style>
-                        .sheet { fill: #ffffff; }
-                        .title { fill: #111111; font: 700 13px 'Trebuchet MS', Arial, sans-serif; }
-                        .meta { fill: #40454a; font: 11px 'Trebuchet MS', Arial, sans-serif; }
-                        .caption { fill: #40454a; font: 11px 'Trebuchet MS', Arial, sans-serif; }
-                        .trim-band { fill: #fafcfd; stroke: rgba(78, 90, 101, 0.34); stroke-width: 0.8; }
-                        .trim-outline { fill: none; stroke: rgba(78, 90, 101, 0.16); stroke-width: 0.7; }
-                        .profile-frame { fill: url(#frameFill); stroke: rgba(59, 70, 79, 0.86); stroke-width: 1.05; }
-                        .profile-inner-edge { fill: none; stroke: rgba(98, 110, 120, 0.38); stroke-width: 0.7; }
-                        .miter-line { stroke: rgba(95, 104, 112, 0.5); stroke-width: 0.85; fill: none; stroke-linecap: round; }
-                        .sash { fill: url(#frameFill); stroke: rgba(65, 75, 84, 0.84); stroke-width: 0.95; }
-                        .sash-inner { fill: none; stroke: rgba(255,255,255,0.55); stroke-width: 0.55; }
-                        .meeting-rail { fill: #edf2f5; stroke: rgba(77, 88, 98, 0.5); stroke-width: 0.75; }
-                        .fixed-lite-frame { fill: none; stroke: rgba(59, 70, 79, 0.76); stroke-width: 0.9; }
-                        .glass-pane { fill: url(#glassFill); stroke: rgba(100, 154, 159, 0.7); stroke-width: 0.7; }
-                        .glass-diagonal { stroke: rgba(100, 154, 159, 0.55); stroke-width: 0.6; fill: none; stroke-linecap: round; }
-                        .technical-line { stroke: rgba(120, 131, 141, 0.5); stroke-width: 0.55; fill: none; }
-                        .opening-line-strong { stroke: #4c565f; stroke-width: 1.45; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-                        .hinge-line { stroke: #5d666f; stroke-width: 1.3; fill: none; stroke-linecap: round; }
-                        .swing-arc { stroke: #6f7981; stroke-width: 1.15; fill: none; stroke-dasharray: 4 3; }
-                        .tilt-mark { stroke: #5f6972; stroke-width: 1.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-                        .marker-tag { fill: rgba(255,255,255,0.92); stroke: rgba(99, 109, 118, 0.6); stroke-width: 0.8; }
-                        .marker-label { fill: #2d2d2d; font: 700 13px 'Trebuchet MS', Arial, sans-serif; }
-                        .handle { fill: rgba(255,255,255,0.96); stroke: rgba(111, 120, 128, 0.55); stroke-width: 0.8; }
-                        .handle-line { stroke: rgba(111, 120, 128, 0.55); stroke-width: 0.8; }
-                        .dimension { stroke: rgba(76, 86, 95, 0.8); stroke-width: 0.9; fill: none; }
-                        .dimension-text { fill: #222222; font: 400 13px 'Trebuchet MS', Arial, sans-serif; }
-                    </style>
-                </defs>
-                <rect x="0" y="0" width="560" height="430" class="sheet" />
-                <text x="24" y="28" class="title">${safeModel}</text>
-                <text x="24" y="48" class="meta">${text('sheetSeries', 'Serie')}: ${safeReference}</text>
-                <text x="24" y="66" class="meta">${text('sheetColor', 'Color')}: ${safeColor}</text>
-                <text x="24" y="84" class="meta">${text('sheetTrim', 'Tapajuntas')}: ${trimLabel}</text>
-                <text x="24" y="102" class="meta">${text('sheetCut', 'Corte')}: ${frameCutLabel}</text>
-                <text x="24" y="120" class="meta">${text('sheetGlass', 'Vidrio')}: ${safeGlass}</text>
-                <text x="24" y="138" class="meta">${text('sheetSize', 'Medida')}: ${quote.widthMm} x ${quote.heightMm} mm</text>
-                <text x="24" y="156" class="caption">${detailsLabel}</text>
-                ${trimMarkup}
-                <rect x="${frame.outerX}" y="${frame.outerY}" width="${frame.outerWidth}" height="${frame.outerHeight}" class="profile-frame" />
-                <rect x="${frame.innerX}" y="${frame.innerY}" width="${frame.innerWidth}" height="${frame.innerHeight}" class="profile-inner-edge" />
-                ${leavesMarkup}
-                ${barsMarkup}
-                ${markersMarkup}
-                <line x1="${frame.outerX}" y1="${frame.outerY + frame.outerHeight + 24}" x2="${frame.outerX + frame.outerWidth}" y2="${frame.outerY + frame.outerHeight + 24}" class="dimension" />
-                <line x1="${frame.outerX}" y1="${frame.outerY + frame.outerHeight}" x2="${frame.outerX}" y2="${frame.outerY + frame.outerHeight + 24}" class="dimension" />
-                <line x1="${frame.outerX + frame.outerWidth}" y1="${frame.outerY + frame.outerHeight}" x2="${frame.outerX + frame.outerWidth}" y2="${frame.outerY + frame.outerHeight + 24}" class="dimension" />
-                <text x="${frame.outerX + (frame.outerWidth / 2)}" y="${frame.outerY + frame.outerHeight + 42}" text-anchor="middle" class="dimension-text">H1=${quote.widthMm}</text>
-                <line x1="${frame.outerX + frame.outerWidth + 18}" y1="${frame.outerY}" x2="${frame.outerX + frame.outerWidth + 18}" y2="${frame.outerY + frame.outerHeight}" class="dimension" />
-                <line x1="${frame.outerX + frame.outerWidth}" y1="${frame.outerY}" x2="${frame.outerX + frame.outerWidth + 18}" y2="${frame.outerY}" class="dimension" />
-                <line x1="${frame.outerX + frame.outerWidth}" y1="${frame.outerY + frame.outerHeight}" x2="${frame.outerX + frame.outerWidth + 18}" y2="${frame.outerY + frame.outerHeight}" class="dimension" />
-                <text x="${verticalTextX}" y="${verticalTextY}" text-anchor="middle" class="dimension-text" transform="rotate(90 ${verticalTextX} ${verticalTextY})">V1=${quote.heightMm}</text>
-            </svg>
+        const dimGap  = 22;
+        const bx = frame.outerX, by = frame.outerY, bw = frame.outerWidth, bh = frame.outerHeight;
+        const dimY  = by + bh + dimGap;
+        const dimX  = bx - dimGap;
+        const dimCx = bx + bw / 2;
+        const dimCy = by + bh / 2;
+        const arrowW = 5, arrowH = 3;
+        const dimMarkup = `
+            <line x1="${bx}" y1="${dimY}" x2="${bx + bw}" y2="${dimY}" stroke="#333" stroke-width="0.7" fill="none"/>
+            <line x1="${bx}" y1="${by + bh}" x2="${bx}" y2="${dimY + 3}" stroke="#555" stroke-width="0.5" fill="none"/>
+            <line x1="${bx + bw}" y1="${by + bh}" x2="${bx + bw}" y2="${dimY + 3}" stroke="#555" stroke-width="0.5" fill="none"/>
+            <polygon points="${bx},${dimY} ${bx + arrowW},${dimY - arrowH} ${bx + arrowW},${dimY + arrowH}" fill="#333"/>
+            <polygon points="${bx + bw},${dimY} ${bx + bw - arrowW},${dimY - arrowH} ${bx + bw - arrowW},${dimY + arrowH}" fill="#333"/>
+            <rect x="${dimCx - 28}" y="${dimY - 9}" width="56" height="14" fill="#fff"/>
+            <text x="${dimCx}" y="${dimY + 4}" text-anchor="middle" fill="#1a1a1a"
+                  font="400 9.5px 'Courier New',monospace" style="font:9.5px 'Courier New',monospace">${quote.widthMm} mm</text>
+            <line x1="${dimX}" y1="${by}" x2="${dimX}" y2="${by + bh}" stroke="#333" stroke-width="0.7" fill="none"/>
+            <line x1="${bx}" y1="${by}" x2="${dimX - 3}" y2="${by}" stroke="#555" stroke-width="0.5" fill="none"/>
+            <line x1="${bx}" y1="${by + bh}" x2="${dimX - 3}" y2="${by + bh}" stroke="#555" stroke-width="0.5" fill="none"/>
+            <polygon points="${dimX},${by} ${dimX - arrowH},${by + arrowW} ${dimX + arrowH},${by + arrowW}" fill="#333"/>
+            <polygon points="${dimX},${by + bh} ${dimX - arrowH},${by + bh - arrowW} ${dimX + arrowH},${by + bh - arrowW}" fill="#333"/>
+            <rect x="${dimX - 7}" y="${dimCy - 26}" width="14" height="52" fill="#fff"/>
+            <text x="${dimX}" y="${dimCy + 4}" text-anchor="middle" fill="#1a1a1a"
+                  transform="rotate(-90 ${dimX} ${dimCy})"
+                  font="400 9.5px 'Courier New',monospace" style="font:9.5px 'Courier New',monospace">${quote.heightMm} mm</text>
         `;
 
+        const tbX = 370, tbY = 348, tbW = 182, tbH = 78;
+        const trimLabel = quote.trimSize > 0 ? `${quote.trimSize} mm` : 'Sin';
+        const frameCutLabel = quote.frameCutType === 'mitered' ? '45°' : 'Recto';
+        const titleBlock = `
+            <rect x="${tbX}" y="${tbY}" width="${tbW}" height="${tbH}" fill="#fafbfc" stroke="#bbb" stroke-width="0.7"/>
+            <line x1="${tbX}" y1="${tbY + 18}" x2="${tbX + tbW}" y2="${tbY + 18}" stroke="#bbb" stroke-width="0.5"/>
+            <line x1="${tbX}" y1="${tbY + 34}" x2="${tbX + tbW}" y2="${tbY + 34}" stroke="#bbb" stroke-width="0.5"/>
+            <line x1="${tbX}" y1="${tbY + 50}" x2="${tbX + tbW}" y2="${tbY + 50}" stroke="#bbb" stroke-width="0.5"/>
+            <line x1="${tbX}" y1="${tbY + 64}" x2="${tbX + tbW}" y2="${tbY + 64}" stroke="#bbb" stroke-width="0.5"/>
+            <rect x="${tbX + tbW - 16}" y="${tbY + 3}" width="12" height="12" fill="${palette.base}" stroke="#aaa" stroke-width="0.5"/>
+            <text x="${tbX + 4}" y="${tbY + 13}" fill="#111" style="font:700 10.5px 'Courier New',monospace">${safeModel}</text>
+            <text x="${tbX + 4}" y="${tbY + 29}" fill="#333" style="font:9px 'Courier New',monospace">Ref: ${safeReference} · Color: ${safeColor}</text>
+            <text x="${tbX + 4}" y="${tbY + 46}" fill="#333" style="font:9px 'Courier New',monospace">${quote.widthMm} × ${quote.heightMm} mm · ${safeGlass}</text>
+            <text x="${tbX + 4}" y="${tbY + 61}" fill="#333" style="font:9px 'Courier New',monospace">${quote.leaves} hj · Tapaj. ${trimLabel} · Corte ${frameCutLabel}</text>
+            <text x="${tbX + 4}" y="${tbY + 75}" fill="#555" style="font:8.5px 'Courier New',monospace">Escala 1:${scaleN} · S28 EXTRUAL · ${quote.quantity} ud.</text>
+        `;
+
+        const barMm = 100;
+        const barPx = Math.round(barMm * scale);
+        const sbX = tbX, sbY = tbY - 20;
+        const scaleBar = `
+            <rect x="${sbX}" y="${sbY}" width="${barPx / 2}" height="5" fill="#333"/>
+            <rect x="${sbX + barPx / 2}" y="${sbY}" width="${barPx / 2}" height="5" fill="#fff" stroke="#333" stroke-width="0.5"/>
+            <text x="${sbX}" y="${sbY + 14}" fill="#444" style="font:8px 'Courier New',monospace">0</text>
+            <text x="${sbX + barPx / 2 - 4}" y="${sbY + 14}" fill="#444" style="font:8px 'Courier New',monospace">50</text>
+            <text x="${sbX + barPx - 2}" y="${sbY + 14}" fill="#444" style="font:8px 'Courier New',monospace">100mm</text>
+        `;
+
+        const svg = `
+<svg viewBox="0 0 560 430" role="img" aria-label="Dibujo tecnico del cerramiento" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <pattern id="glassHatch" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45 0 0)">
+    <line x1="0" y1="0" x2="0" y2="8" stroke="#8bbcce" stroke-width="0.6" opacity="0.7"/>
+  </pattern>
+  <linearGradient id="alProfile" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%"   stop-color="${pLight}"/>
+    <stop offset="40%"  stop-color="${palette.base}"/>
+    <stop offset="100%" stop-color="${pDark}"/>
+  </linearGradient>
+</defs>
+<rect width="560" height="430" fill="#ffffff"/>
+${trimMarkup}
+<rect x="${bx}" y="${by}" width="${bw}" height="${bh}"
+      fill="url(#alProfile)" stroke="#2a2a2a" stroke-width="1.1"/>
+<rect x="${bx + FT}" y="${by + FT}" width="${bw - FT * 2}" height="${bh - FT * 2}"
+      fill="#ffffff" stroke="#666" stroke-width="0.5"/>
+<rect x="${bx + FT + FI}" y="${by + FT + FI}" width="${bw - (FT + FI) * 2}" height="${bh - (FT + FI) * 2}"
+      fill="none" stroke="#999" stroke-width="0.35"/>
+${usesMiterCut ? buildMiterMarks(bx, by, bw, bh, Math.min(12, FT + 4)) : ''}
+${leavesMarkup}
+${barsMarkup}
+${markersMarkup}
+${dimMarkup}
+${titleBlock}
+${scaleBar}
+</svg>`.trim();
+
         drawingWrap.innerHTML = svg;
-        drawingSvgInput.value = svg.trim();
+        drawingSvgInput.value = svg;
 
         if (profilePreviewSwatch) {
             profilePreviewSwatch.style.background = `linear-gradient(135deg, ${palette.light}, ${palette.base} 60%, ${palette.dark})`;
@@ -777,7 +808,7 @@ if (form) {
             profilePreviewLabel.textContent = quote.profileColor;
         }
 
-        return svg.trim();
+        return svg;
     };
 
     const getSelectedItem = () => quoteItems.find((item) => item.id === selectedItemId) || null;
@@ -828,6 +859,7 @@ if (form) {
         trim_size: item.trimSize,
         tilt_turn_leaf: item.tiltTurnLeaf,
         frame_cut_type: item.frameCutType,
+        serie_key: item.serieKey,
         glass_type: item.glassTypeValue,
         glass_description: item.glassDescription,
         profile_color_hex: item.profileColorHex,
@@ -882,6 +914,14 @@ if (form) {
                     <span>${item.leaves} ${text('leavesShort', 'hojas')} · ${item.quantity} ${text('unitsShort', 'ud.')}</span>
                     <strong>${formatMoney(item.total)}</strong>
                 </div>
+                ${item.serieKey ? `
+                <div class="quote-item-bom-bar">
+                    <button type="button" class="secondary-button quote-item-bom-toggle"
+                            data-bom-item="${item.id}">Ver descompuesto</button>
+                    <span class="bom-serie-label">${item.serieKey === 's28_extrual' ? 'S28 · EXTRUAL' : item.serieKey}</span>
+                </div>
+                <div class="quote-item-bom-result" id="bom-${item.id}" hidden></div>
+                ` : ''}
             </article>
         `).join('');
     };
@@ -899,6 +939,7 @@ if (form) {
         fields.trimSize.value = String(item.trimSize);
         fields.tiltTurnLeaf.value = item.tiltTurnLeaf === 'derecha' ? 'derecha' : 'izquierda';
         fields.frameCutType.value = item.frameCutType === 'mitered' ? 'mitered' : 'recto';
+        if (fields.serieKey) fields.serieKey.value = item.serieKey || '';
         fields.glassType.value = item.glassTypeValue;
         fields.glassDescription.value = item.glassDescription;
         fields.glassWidthMm.value = String(item.glassWidthMm);
@@ -1052,6 +1093,24 @@ if (form) {
             return;
         }
 
+        const bomToggle = event.target.closest('[data-bom-item]');
+        if (bomToggle) {
+            const itemId = bomToggle.getAttribute('data-bom-item');
+            const resultDiv = document.getElementById(`bom-${itemId}`);
+            if (!resultDiv || !window.S28) return;
+            if (resultDiv.hidden) {
+                const it = quoteItems.find((i) => i.id === itemId);
+                if (!it) return;
+                const s28Key = window.S28.SYSTEM_MAP[it.systemType] || 'v1h_prac';
+                const glassThick = (window.S28.GLASS_THICK_MAP[it.glassTypeValue] || 20);
+                const bom = window.S28.buildBOM(s28Key, it.widthMm, it.heightMm, it.quantity, { glassThick });
+                resultDiv.innerHTML = window.S28.renderBOM(bom);
+            }
+            resultDiv.hidden = !resultDiv.hidden;
+            bomToggle.textContent = resultDiv.hidden ? 'Ver descompuesto' : 'Ocultar descompuesto';
+            return;
+        }
+
         const selectButton = event.target.closest('[data-select-item]');
         if (selectButton) {
             const nextItem = quoteItems.find((item) => item.id === selectButton.getAttribute('data-select-item'));
@@ -1162,7 +1221,6 @@ if (form) {
         });
     }
 
-    // Sync RAL code cuando cambia preset de color
     const carpentryRalInput = document.getElementById('carpentryRal');
     fields.profileColorPreset?.addEventListener('change', () => {
         const opt = fields.profileColorPreset.selectedOptions[0];
