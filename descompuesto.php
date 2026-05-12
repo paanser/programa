@@ -20,9 +20,7 @@ $lang = get_current_lang();
     <h1><?= h(tr('app_title', $lang)) ?></h1>
     <div class="topbar-tools">
         <nav>
-            <a href="<?= h(url_with_lang('index.php', [], $lang)) ?>"><?= h(tr('new', $lang)) ?></a>
-            <a href="designer.php">Configurador</a>
-            <a href="descompuesto.php" class="active">Descompuesto S28</a>
+            <a href="<?= h(url_with_lang('index.php', [], $lang)) ?>">Nuevo presupuesto</a>
             <a href="<?= h(url_with_lang('list_quotes.php', [], $lang)) ?>"><?= h(tr('history', $lang)) ?></a>
         </nav>
     </div>
@@ -141,9 +139,9 @@ $lang = get_current_lang();
 </main>
 
 <script>
-// ══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 //  DATOS SERIE 28 · EXTRUAL
-// ══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 
 // Diccionario de perfiles: ref → descripción
 const PROFILES = {
@@ -180,7 +178,7 @@ const PROFILES = {
     '6.182':  'Junquillo Redondo clip C-20.5',
 };
 
-// ── Formulas de corte ──────────────────────────────────────
+// ── Formulas de corte ──────────────────────────────────────────
 // L = ancho hueco, H = alto hueco
 // Constantes geométricas Serie 28
 const K = {
@@ -213,7 +211,7 @@ function junquilloRef(glassThick, junqType) {
     return types[junqType] || '6.179';
 }
 
-// ── Definición de sistemas ─────────────────────────────────
+// ── Definición de sistemas ─────────────────────────────────────────
 // Cada sistema devuelve barras y accesorios dado (L, H, qty, opts)
 // bars: [{ ref, desc, cut_formula_str, cut_mm, qty_per_unit }]
 // glass: [{ desc, W, H, qty_per_unit }]
@@ -221,7 +219,7 @@ function junquilloRef(glassThick, junqType) {
 
 const SYSTEMS = {
 
-    // ────────────────────────────────────────────────────
+    // ────────────────────────────────────────────────
     v1h_prac: {
         name: 'Ventana 1 Hoja Practicable',
         page: '28-B1',
@@ -247,7 +245,7 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
+    // ────────────────────────────────────────────────
     v1h_osci: {
         name: 'Ventana 1 Hoja Oscilobatiente',
         page: '28-B1',
@@ -273,7 +271,7 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
+    // ────────────────────────────────────────────────
     v1h_fijo: {
         name: 'Ventana 1 Hoja + Fijo',
         page: '28-B2',
@@ -309,7 +307,7 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
+    // ────────────────────────────────────────────────
     v2h_prac: {
         name: 'Ventana 2 Hojas Practicable',
         page: '28-B3',
@@ -337,7 +335,7 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
+    // ────────────────────────────────────────────────
     v2h_fijo: {
         name: 'Ventana 2 Hojas + Fijo',
         page: '28-B4',
@@ -374,7 +372,7 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
+    // ────────────────────────────────────────────────
     v3h_prac: {
         name: 'Ventana 3 Hojas Practicable',
         page: '28-B5',
@@ -401,7 +399,7 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
+    // ────────────────────────────────────────────────
     v_abatible: {
         name: 'Ventana Abatible (proyectante)',
         page: '28-B6',
@@ -426,7 +424,7 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
+    // ────────────────────────────────────────────────
     v_fijo: {
         name: 'Ventana Fija',
         page: '28',
@@ -447,7 +445,7 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
+    // ────────────────────────────────────────────────
     b1h_prac: {
         name: 'Balconera 1 Hoja Practicable',
         page: '28-B10',
@@ -473,7 +471,7 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
+    // ────────────────────────────────────────────────
     b2h_prac: {
         name: 'Balconera 2 Hojas Practicable',
         page: '28-B12',
@@ -500,7 +498,7 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
+    // ────────────────────────────────────────────────
     b1h_ext: {
         name: 'Balconera 1 Hoja Apertura Exterior',
         page: '28-B12',
@@ -526,7 +524,7 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
+    // ────────────────────────────────────────────────
     p1h_int: {
         name: 'Puerta 1 Hoja Interior',
         page: '28-B17',
@@ -552,7 +550,7 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
+    // ────────────────────────────────────────────────
     p1h_fijo: {
         name: 'Puerta 1 Hoja + Fijo',
         page: '28-B22',
@@ -588,9 +586,9 @@ const SYSTEMS = {
     },
 };
 
-// ══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 //  ACCESORIOS por sistema
-// ══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 
 function accesorios_v1h_prac(osci) {
     const list = [
@@ -681,7 +679,7 @@ function accesorios_abatible() {
         { ref:'04.JU.004.E',desc:'Junta Exterior EPDM',              qty:'2H+2L' },
         { ref:'04.JU.004.D',desc:'Junta Interior EPDM',              qty:'2H+2L' },
         { ref:'04.JA.001',  desc:'Junta Acristalamiento Ext.',       qty:'2H+2L' },
-        { ref:'SEGÚN VIDRIO',desc:'Junta Acristalamiento Int.',      qty:'2H+2L' },
+        { ref:'SEGÚN VIDRIO',desc:'Junta Acristalamiento Int.',     qty:'2H+2L' },
     ];
 }
 
@@ -755,9 +753,9 @@ function accesorios_puerta() {
     ];
 }
 
-// ══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 //  RENDER
-// ══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 
 function mm(v) { return Math.round(v); }
 function m3(v) { return (v / 1000).toFixed(3); }
