@@ -164,16 +164,25 @@ try {
                                 <span><?= h(tr('glass_composition', $lang)) ?>: <?= h((string)$item['glass_description']) ?></span>
                             <?php endif; ?>
                         </div>
+                        <?php
+                        $itemSvg = (string)($item['drawing_svg'] ?? '');
+                        if ($itemSvg === '') {
+                            $itemSvg = (string)($row['drawing_svg'] ?? '');
+                        }
+                        if ($itemSvg !== ''): ?>
                         <div class="drawing-wrap drawing-wrap--item">
-                            <?= (string)($item['drawing_svg'] ?? '') ?>
+                            <?= $itemSvg ?>
                         </div>
+                        <?php endif; ?>
                     </article>
                 <?php endforeach; ?>
             </div>
         <?php else: ?>
+            <?php if ((string)($row['drawing_svg'] ?? '') !== ''): ?>
             <div class="drawing-wrap">
                 <?= (string)$row['drawing_svg'] ?>
             </div>
+            <?php endif; ?>
         <?php endif; ?>
     </section>
 </main>

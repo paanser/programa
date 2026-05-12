@@ -21,6 +21,17 @@ if ($clientName === '') {
 
 $calc = calculate_quote($_POST);
 $config = build_quote_config($_POST, $calc);
+
+$mainSvg = trim((string)($calc['drawing_svg'] ?? ''));
+if ($mainSvg !== '' && isset($config['items']) && is_array($config['items'])) {
+    foreach ($config['items'] as &$cfgItem) {
+        if (empty($cfgItem['drawing_svg'])) {
+            $cfgItem['drawing_svg'] = $mainSvg;
+        }
+    }
+    unset($cfgItem);
+}
+
 $quoteNumber = generate_quote_number();
 $createdAt = date('Y-m-d H:i:s');
 
