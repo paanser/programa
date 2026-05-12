@@ -560,3 +560,178 @@ td {
         padding: 0;
     }
 }
+
+/* ── Responsive mejorado para móvil ── */
+@media (max-width: 768px) {
+    .layout {
+        grid-template-columns: 1fr;
+        padding: 0 0.75rem 1rem;
+    }
+    input, select, textarea, button {
+        font-size: 16px; /* evita zoom en iOS */
+    }
+    .topbar nav {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+    .topbar nav a {
+        white-space: nowrap;
+    }
+    .glass-summary-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .drawing-wrap {
+        min-height: 220px;
+    }
+    .drawing-wrap svg {
+        width: 100%;
+        height: auto;
+    }
+}
+
+/* ── Designer embed dentro de index.php ── */
+.designer-embed {
+    margin: 1rem 0;
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    background: var(--panel);
+    overflow: hidden;
+}
+.designer-embed > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255,255,255,0.7);
+}
+.designer-embed > summary::before {
+    content: '▶';
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+}
+.designer-embed[open] > summary::before {
+    transform: rotate(90deg);
+}
+.designer-embed__badge {
+    margin-left: auto;
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--muted);
+}
+.designer-embed__hint {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.55rem 1rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+    background: rgba(248,249,250,0.9);
+    border-top: 1px solid var(--panel-border);
+    border-bottom: 1px solid var(--panel-border);
+    flex-wrap: wrap;
+}
+.designer-embed__body {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 420px;
+}
+.designer-embed__controls {
+    padding: 0.85rem;
+    border-right: 1px solid var(--panel-border);
+    overflow-y: auto;
+    max-height: 560px;
+    background: rgba(252,253,254,0.98);
+}
+.designer-embed__canvas {
+    background: #eceff2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    overflow: auto;
+    min-height: 380px;
+}
+.designer-embed__canvas svg {
+    width: 100%;
+    height: auto;
+    max-width: 800px;
+}
+@media (max-width: 768px) {
+    .designer-embed__body {
+        grid-template-columns: 1fr;
+    }
+    .designer-embed__controls {
+        border-right: none;
+        border-bottom: 1px solid var(--panel-border);
+        max-height: 50vh;
+    }
+    .designer-embed__canvas {
+        min-height: 280px;
+    }
+}
+
+/* Clases compartidas (designer embed + designer.php) */
+.form-section {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(61,73,84,0.08);
+}
+.form-section:last-child { border-bottom: none; }
+.form-section h3 {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 0.55rem;
+}
+.btn-group { display: flex; gap: 0.4rem; }
+.split-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    justify-content: center;
+    padding: 0.45rem 0.5rem;
+    font-size: 0.85rem;
+}
+.panel-list { display: grid; gap: 0.3rem; }
+.panel-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.35rem 0.55rem;
+    border-left: 3px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.83rem;
+    background: rgba(255,255,255,0.7);
+    transition: background 0.1s;
+}
+.panel-list-item.selected {
+    background: rgba(29,78,216,0.08);
+    border-left-color: #1d4ed8;
+}
+.panel-list-item span { color: var(--muted); font-size: 0.78rem; }
+.sys-legend { display: flex; flex-direction: column; gap: 0.2rem; }
+.sys-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+}
+.sys-swatch {
+    width: 14px; height: 14px; border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.2); flex-shrink: 0;
+}
+.range-row {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.83rem;
+}
+.range-row input[type=range] { flex: 1; margin: 0; padding: 0; min-height: unset; }
+.range-row span { min-width: 36px; text-align: right; color: var(--muted); }

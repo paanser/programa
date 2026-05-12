@@ -1,0 +1,12 @@
+{
+  "name": "PHP App",
+  "postStartCommand": "chmod +x /home/user/programa/start-server.sh && /home/user/programa/start-server.sh",
+  "forwardPorts": [8080],
+  "portsAttributes": {
+    "8080": {
+      "label": "PHP App",
+      "onAutoForward": "openBrowser",
+      "visibility": "public"
+    }
+  }
+}

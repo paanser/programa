@@ -1083,4 +1083,90 @@ if (form) {
         }
         throw error;
     }
+
+    // ── DESIGNER WIDGET ──────────────────────────────────
+    const designerEmbed    = document.getElementById('designerEmbed');
+    const designerSvgInput = document.getElementById('designerSvg');
+    const designerTreeJson = document.getElementById('designerTreeJson');
+    const dwApplySvg       = document.getElementById('dwApplySvg');
+    const dwSlopeRow       = document.getElementById('dw-slopeRow');
+    const dwShapeSelect    = document.getElementById('dw-shapeSelect');
+    let dwReady = false;
+
+    function syncDwDimensions() {
+        if (dwReady && window.DesignerWidget) {
+            const w = parseInt(fields.widthMm?.value || '1500', 10);
+            const h = parseInt(fields.heightMm?.value || '1200', 10);
+            window.DesignerWidget.setDimensions(w, h);
+        }
+    }
+
+    if (designerEmbed && window.DesignerWidget) {
+        designerEmbed.addEventListener('toggle', () => {
+            if (designerEmbed.open) {
+                if (!dwReady) {
+                    dwReady = true;
+                    window.DesignerWidget.init({
+                        canvasWrap:          'dw-canvasWrap',
+                        btnSplitV:           'dw-btnSplitV',
+                        btnSplitH:           'dw-btnSplitH',
+                        btnUnsplit:          'dw-btnUnsplit',
+                        panelSystem:         'dw-panelSystem',
+                        panelOpening:        'dw-panelOpening',
+                        panelLabel:          'dw-panelLabel',
+                        splitRatio:          'dw-splitRatio',
+                        splitInfo:           'dw-splitInfo',
+                        splitControls:       'dw-splitControls',
+                        panelInfo:           'dw-panelInfo',
+                        leafControls:        'dw-leafControls',
+                        openingRow:          'dw-openingRow',
+                        heightControls:      'dw-heightControls',
+                        panelHeightPct:      'dw-panelHeightPct',
+                        panelHeightPctLabel: 'dw-panelHeightPctLabel',
+                        panelTopPct:         'dw-panelTopPct',
+                        panelTopPctLabel:    'dw-panelTopPctLabel',
+                        panelList:           'dw-panelList',
+                        sysLegend:           'dw-sysLegend',
+                        panelBadge:          'dwPanelBadge',
+                        facadeW:             'dw-facadeW',
+                        facadeH:             'dw-facadeH',
+                        shapeSelect:         'dw-shapeSelect',
+                        slopeRange:          'dw-slopeRange',
+                        slopeLabel:          'dw-slopeLabel',
+                        onSvgChange: (svgStr, tree) => {
+                            if (designerSvgInput) designerSvgInput.value = svgStr;
+                            if (designerTreeJson) designerTreeJson.value = JSON.stringify(tree);
+                        },
+                        facadeW_val: parseInt(fields.widthMm?.value || '1500', 10),
+                        facadeH_val: parseInt(fields.heightMm?.value || '1200', 10),
+                    });
+                } else {
+                    syncDwDimensions();
+                }
+            }
+        });
+
+        dwShapeSelect?.addEventListener('change', () => {
+            if (dwSlopeRow) dwSlopeRow.style.display = dwShapeSelect.value === 'trapezoidal' ? '' : 'none';
+        });
+
+        fields.widthMm?.addEventListener('input', syncDwDimensions);
+        fields.heightMm?.addEventListener('input', syncDwDimensions);
+
+        dwApplySvg?.addEventListener('click', () => {
+            const svg = designerSvgInput?.value;
+            if (svg && drawingWrap) {
+                drawingWrap.innerHTML = svg;
+                if (drawingSvgInput) drawingSvgInput.value = svg;
+            }
+        });
+    }
+
+    // Sync RAL code cuando cambia preset de color
+    const carpentryRalInput = document.getElementById('carpentryRal');
+    fields.profileColorPreset?.addEventListener('change', () => {
+        const opt = fields.profileColorPreset.selectedOptions[0];
+        const ral = opt?.dataset?.ral || '';
+        if (carpentryRalInput) carpentryRalInput.value = ral;
+    });
 }
