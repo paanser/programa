@@ -116,14 +116,22 @@ p {
     justify-content: space-between;
     gap: 1rem;
     align-items: center;
-    padding: 1rem clamp(1rem, 3vw, 1.5rem);
+    padding: 0.85rem clamp(1rem, 3vw, 1.5rem);
     border-bottom: 1px solid rgba(61, 73, 84, 0.12);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .topbar h1 {
     margin: 0;
-    font-size: clamp(1.1rem, 2vw, 1.65rem);
+    font-size: clamp(0.95rem, 1.8vw, 1.3rem);
+    font-weight: 700;
     line-height: 1.15;
+    color: var(--brand-dark);
+    letter-spacing: -0.01em;
 }
 
 .topbar h1 span {
@@ -134,7 +142,7 @@ p {
 
 .topbar nav {
     display: flex;
-    gap: 0.65rem;
+    gap: 0.45rem;
     flex-wrap: wrap;
 }
 
@@ -157,20 +165,30 @@ p {
     width: auto;
     min-width: 110px;
     margin-top: 0;
-    padding: 0.45rem 0.55rem;
+    padding: 0.38rem 0.55rem;
 }
 
 .topbar nav a {
-    padding: 0.55rem 0.85rem;
+    padding: 0.48rem 0.9rem;
     border-radius: 6px;
     text-decoration: none;
+    font-size: 0.86rem;
+    font-weight: 500;
     background: rgba(255, 255, 255, 0.75);
-    border: 1px solid rgba(61, 73, 84, 0.1);
+    border: 1px solid rgba(61, 73, 84, 0.12);
+    color: var(--text);
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.topbar nav a:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(61, 73, 84, 0.22);
 }
 
 .topbar nav a.active {
-    background: rgba(159, 79, 47, 0.12);
-    border-color: rgba(159, 79, 47, 0.28);
+    background: var(--brand);
+    border-color: var(--brand-dark);
+    color: #fff;
 }
 
 .layout {
@@ -376,20 +394,21 @@ p {
 }
 
 .drawing-wrap {
-    min-height: 390px;
+    min-height: 300px;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.9rem;
+    padding: 0.5rem;
     border-radius: 8px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.985), rgba(248, 250, 252, 0.985));
-    border: 1px solid rgba(61, 73, 84, 0.08);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.82);
+    background: #f0f2f4;
+    border: 1px solid rgba(61, 73, 84, 0.12);
 }
 
 .drawing-wrap svg {
     width: 100%;
     height: auto;
+    display: block;
+    border-radius: 2px;
 }
 
 .drawing-wrap--item {
@@ -548,6 +567,133 @@ td {
     .topbar nav a {
         white-space: nowrap;
     }
+}
+
+/* ── Descompuesto por ventana ──────────────────────────────── */
+.quote-item-card__descomp {
+    margin-top: 0.55rem;
+    border-top: 1px solid rgba(61, 73, 84, 0.08);
+    padding-top: 0.45rem;
+}
+
+.descomp-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.32rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid rgba(61, 73, 84, 0.14);
+    background: rgba(255, 255, 255, 0.65);
+    color: var(--muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    box-shadow: none;
+    transition: color 0.15s, background 0.15s;
+}
+
+.descomp-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--text);
+}
+
+.descomp-chevron {
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+
+.descomp-toggle-btn.is-open .descomp-chevron {
+    transform: rotate(180deg);
+}
+
+.descomp-panel {
+    margin-top: 0.65rem;
+    border-radius: 8px;
+    background: rgba(248, 249, 251, 0.95);
+    border: 1px solid rgba(61, 73, 84, 0.1);
+    overflow: hidden;
+}
+
+.descomp-body {
+    padding: 0.75rem;
+}
+
+.descomp-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.65rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(61, 73, 84, 0.08);
+    font-size: 0.82rem;
+    flex-wrap: wrap;
+}
+
+.descomp-meta strong {
+    color: var(--text);
+}
+
+.descomp-meta span {
+    color: var(--muted);
+}
+
+.descomp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    margin-bottom: 0.5rem;
+}
+
+.descomp-table th {
+    padding: 0.35rem 0.45rem;
+    background: rgba(61, 73, 84, 0.06);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    text-align: left;
+    border-bottom: 1px solid rgba(61, 73, 84, 0.12);
+}
+
+.descomp-table td {
+    padding: 0.3rem 0.45rem;
+    border-bottom: 1px solid rgba(61, 73, 84, 0.06);
+    color: var(--text);
+}
+
+.descomp-table tfoot td {
+    background: rgba(61, 73, 84, 0.04);
+    border-top: 1px solid rgba(61, 73, 84, 0.1);
+    border-bottom: 0;
+}
+
+.descomp-table--glass {
+    margin-top: 0.4rem;
+}
+
+.descomp-ref {
+    font-family: 'Courier New', monospace;
+    font-size: 0.73rem;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.descomp-err {
+    color: #b94a2c;
+    font-weight: 700;
+}
+
+.descomp-note {
+    margin: 0.55rem 0 0;
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-style: italic;
+}
+
+.descomp-notice {
+    padding: 0.75rem;
+    font-size: 0.82rem;
+    color: var(--muted);
 }
 
 @media print {
@@ -739,4 +885,3 @@ td {
     font-size: 0.83rem;
 }
 .range-row input[type=range] { flex: 1; margin: 0; padding: 0; min-height: unset; }
-.range-row span { min-width: 36px; text-align: right; color: var(--muted); }
