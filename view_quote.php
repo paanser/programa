@@ -52,7 +52,7 @@ try {
     <h1><?= h(tr('quote', $lang)) ?> <?= h((string)$row['quote_number']) ?></h1>
     <div class="topbar-tools">
         <nav>
-            <a href="<?= h(url_with_lang('index.php', [], $lang)) ?>"><?= h(tr('new', $lang)) ?></a>
+            <a href="<?= h(url_with_lang('index.php', [], $lang)) ?>">Nuevo presupuesto</a>
             <a href="<?= h(url_with_lang('list_quotes.php', [], $lang)) ?>"><?= h(tr('history', $lang)) ?></a>
         </nav>
         <label class="lang-switcher">
