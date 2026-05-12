@@ -1026,6 +1026,7 @@ if (form) {
 
     fields.glassDescription?.addEventListener('input', () => {
         lastSuggestedGlassDescription = fields.glassDescription.value.trim();
+        syncState();
     });
 
     fields.priceGlass?.addEventListener('input', () => {
@@ -1264,6 +1265,8 @@ if (form) {
             v2h_prac: 'V2H Practicable', v3h_prac: 'V3H Practicable', v_fijo: 'Ventana Fija',
         };
 
+        const totalGlassM2 = data.glass.reduce((s, g) => s + (g.W / 1000) * (g.H / 1000) * g.qty * item.quantity, 0);
+
         return `<div class="decomp-block ${isSelected ? 'decomp-block--selected' : ''}">
             <div class="decomp-block-header">
                 <span class="decomp-block-label">${label}</span>
@@ -1280,6 +1283,11 @@ if (form) {
                 <thead><tr><th>Descripción</th><th>Ancho (mm)</th><th>Alto (mm)</th><th>Total piezas</th><th>m²</th></tr></thead>
                 <tbody>${glassHtml}</tbody>
             </table>
+            <div class="decomp-totals-row">
+                <span><em>Aluminio total</em><strong>${totalMl.toFixed(3)} ml</strong></span>
+                <span><em>Vidrio total</em><strong>${totalGlassM2.toFixed(3)} m²</strong></span>
+                <span><em>Unidades</em><strong>${item.quantity} ud.</strong></span>
+            </div>
         </div>`;
     };
 
