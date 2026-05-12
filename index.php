@@ -52,7 +52,6 @@ if ($configExists) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= h(tr('app_title', $lang)) ?></title>
     <link rel="stylesheet" href="assets/styles.css">
-    <link rel="stylesheet" href="assets/designer.css">
 </head>
 <body>
 <div class="background-shape shape-a"></div>
@@ -62,9 +61,7 @@ if ($configExists) {
     <h1><?= h(tr('app_title', $lang)) ?></h1>
     <div class="topbar-tools">
         <nav>
-            <a href="<?= h(url_with_lang('index.php', [], $lang)) ?>" class="active"><?= h(tr('new', $lang)) ?></a>
-            <a href="designer.php">Configurador</a>
-            <a href="descompuesto.php">Descompuesto S28</a>
+            <a href="<?= h(url_with_lang('index.php', [], $lang)) ?>" class="active">Nuevo presupuesto</a>
             <a href="<?= h(url_with_lang('list_quotes.php', [], $lang)) ?>"><?= h(tr('history', $lang)) ?></a>
         </nav>
         <label class="lang-switcher">
@@ -109,7 +106,7 @@ if ($configExists) {
             </div>
             <div class="quote-items-list" id="quoteItemsList"></div>
 
-            <h3><?= h(tr('visual_selector', $lang)) ?></h3>
+            <h3>Configuración de carpintería</h3>
             <div class="grid two">
                 <label><?= h(tr('system', $lang)) ?>
                     <select name="system_type" id="systemType">
@@ -132,8 +129,19 @@ if ($configExists) {
                         <?php endforeach; ?>
                     </select>
                 </label>
+                <label>Serie carpintería
+                    <select name="carpentry_series" id="carpentrySeriesSelect">
+                        <option value="">Sin serie específica</option>
+                        <option value="s28_extrual">S28 · EXTRUAL</option>
+                        <option value="s26_extrual">S26 · EXTRUAL</option>
+                        <option value="cor70_cortizo">COR 70 · CORTIZO</option>
+                        <option value="cor60_cortizo">COR 60 · CORTIZO</option>
+                        <option value="cor60s_cortizo">COR 60 S · CORTIZO</option>
+                        <option value="otra_serie">Otra serie</option>
+                    </select>
+                </label>
                 <label><?= h(tr('reference', $lang)) ?>
-                    <input type="text" name="carpentry_reference" id="carpentryReference" value="" placeholder="Serie concreta, acabado o referencia">
+                    <input type="text" name="carpentry_reference" id="carpentryReference" value="" placeholder="Ref. o acabado concreto">
                 </label>
                 <label><?= h(tr('trim', $lang)) ?>
                     <select name="trim_size" id="trimSize">
