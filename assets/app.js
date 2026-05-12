@@ -17,6 +17,7 @@ if (form) {
         systemType: document.getElementById('systemType'),
         openingType: document.getElementById('openingType'),
         carpentryModel: document.getElementById('carpentryModel'),
+        carpentrySeriesSelect: document.getElementById('carpentrySeriesSelect'),
         carpentryReference: document.getElementById('carpentryReference'),
         trimSize: document.getElementById('trimSize'),
         tiltTurnConfig: document.getElementById('tiltTurnConfig'),
@@ -531,6 +532,9 @@ if (form) {
         const ivaAmount = roundMoney(taxableBase * (ivaPct / 100));
         const total = roundMoney(taxableBase + ivaAmount);
 
+        const carpentrySeriesValue = fields.carpentrySeriesSelect?.value || '';
+        const carpentrySeriesLabel = fields.carpentrySeriesSelect?.selectedOptions?.[0]?.textContent?.trim() || '';
+
         return {
             systemType,
             systemTypeLabel: fields.systemType?.selectedOptions?.[0]?.textContent?.trim() || systemType,
@@ -538,6 +542,8 @@ if (form) {
             openingTypeLabel: fields.openingType?.selectedOptions?.[0]?.textContent?.trim() || '',
             carpentryModelValue: fields.carpentryModel?.value || '',
             carpentryModel: fields.carpentryModel?.selectedOptions?.[0]?.textContent?.trim() || '',
+            carpentrySeriesValue,
+            carpentrySeriesLabel,
             carpentryReference: fields.carpentryReference?.value.trim() || '',
             trimSize: integerValue(fields.trimSize, 0),
             tiltTurnLeaf,
@@ -608,71 +614,80 @@ if (form) {
     };
 
     const renderDrawing = (quote) => {
-        const safeModel = escapeSvgText(quote.carpentryModel || quote.systemTypeLabel || quote.systemType);
-        const safeReference = escapeSvgText(quote.carpentryReference || text('noReference', 'Sin referencia'));
-        const safeColor = escapeSvgText(quote.profileColor);
-        const palette = getProfilePalette(quote.profileColorHex);
-        const glassPalette = getGlassPalette();
+        const PD = 16;
         const frame = {
-            outerX: 160,
-            outerY: 122,
-            outerWidth: 238,
-            outerHeight: 198,
-            innerX: 174,
-            innerY: 136,
-            innerWidth: 210,
-            innerHeight: 170,
+            outerX: 90, outerY: 48,
+            outerWidth: 358, outerHeight: 280,
+            get innerX()     { return this.outerX + PD; },
+            get innerY()     { return this.outerY + PD; },
+            get innerWidth()  { return this.outerWidth - PD * 2; },
+            get innerHeight() { return this.outerHeight - PD * 2; },
         };
-        const { geometry: leaves, barWidth } = getLeafGeometry(quote, frame);
+        const { geometry: leavesGeo, barWidth } = getLeafGeometry(quote, frame);
         const trimOffset = getTrimOffset(quote.trimSize);
-        const trimLabel = quote.trimSize > 0 ? `${quote.trimSize} mm` : text('trimNone', 'Sin');
-        const frameCutLabel = quote.frameCutType === 'mitered' ? text('cutMitered', '45 grados') : text('cutRecto', 'Recto');
         const usesMiterCut = quote.systemType === 'fijo' || quote.frameCutType === 'mitered';
 
-        let leavesMarkup = '';
-        let barsMarkup = '';
-        let markersMarkup = '';
-        let trimMarkup = '';
+        const profFill = mixColor(quote.profileColorHex || '#c0c8d0', '#f4f6f8', 0.82);
+        const fStroke = '#161616';
+
+        const safeModel  = escapeSvgText(quote.carpentryModel || quote.systemTypeLabel || quote.systemType);
+        const safeRef    = escapeSvgText(
+            quote.carpentrySeriesLabel
+                ? `${quote.carpentrySeriesLabel}${quote.carpentryReference ? ' · ' + quote.carpentryReference : ''}`
+                : (quote.carpentryReference || '—')
+        );
+        const safeColor  = escapeSvgText(quote.profileColor || '—');
+        const safeGlass  = escapeSvgText(quote.glassDescription || quote.glassType || '—');
+        const trimLabel  = quote.trimSize > 0 ? `${quote.trimSize} mm` : '—';
+        const cutLabel   = quote.frameCutType === 'mitered' ? '45°' : 'Recto';
+
+        let leavesMarkup   = '';
+        let barsMarkup     = '';
+        let markersMarkup  = '';
+        let trimMarkup     = '';
 
         if (trimOffset > 0) {
-            trimMarkup = `
-                <rect x="${frame.outerX - trimOffset}" y="${frame.outerY - trimOffset}" width="${frame.outerWidth + (trimOffset * 2)}" height="${frame.outerHeight + (trimOffset * 2)}" class="trim-band" />
-                <rect x="${frame.outerX - trimOffset + 3}" y="${frame.outerY - trimOffset + 3}" width="${frame.outerWidth + (trimOffset * 2) - 6}" height="${frame.outerHeight + (trimOffset * 2) - 6}" class="trim-outline" />
-            `;
+            const to = trimOffset * 1.8;
+            trimMarkup = `<rect x="${frame.outerX - to}" y="${frame.outerY - to}" width="${frame.outerWidth + to * 2}" height="${frame.outerHeight + to * 2}" fill="none" stroke="#7a8fa0" stroke-width="0.9" stroke-dasharray="5 3"/>`;
         }
 
-        leaves.forEach((leaf, index) => {
-            const slidingDirection = getSlidingDirection(quote.openingType, index, quote.leaves);
-            const casementHingeSide = getCasementHingeSide(quote.openingType, index, quote.leaves);
-            const isCasementFamily = quote.systemType === 'abatible' || quote.systemType === 'oscilobatiente';
-            const handleSide = quote.systemType === 'corredera'
-                ? (slidingDirection === 1 ? 'left' : 'right')
-                : getCasementHandleSide(quote);
-            const shouldRenderHandle = quote.systemType === 'corredera'
-                || (isCasementFamily && index === getCasementHandleLeafIndex(quote));
+        leavesGeo.forEach((leaf, index) => {
+            const isCasement = quote.systemType === 'abatible' || quote.systemType === 'oscilobatiente';
+            const SD = quote.systemType === 'corredera' ? 10 : 8;
+            const GI = SD + 5;
+            const gx = leaf.x + GI, gy = leaf.y + GI;
+            const gw = leaf.width - GI * 2, gh = leaf.height - GI * 2;
 
             if (quote.systemType === 'fijo') {
-                const gx = leaf.x + 10, gy = leaf.y + 10, gw = leaf.width - 20, gh = leaf.height - 20;
+                const fx2 = leaf.x + 5, fy2 = leaf.y + 5;
+                const fw2 = leaf.width - 10, fh2 = leaf.height - 10;
                 leavesMarkup += `
-                    <rect x="${leaf.x + 4}" y="${leaf.y + 4}" width="${leaf.width - 8}" height="${leaf.height - 8}" class="fixed-lite-frame" />
-                    <rect x="${gx}" y="${gy}" width="${gw}" height="${gh}" class="glass-pane" />
-                    <line x1="${gx}" y1="${gy}" x2="${gx + gw}" y2="${gy + gh}" class="glass-diagonal" />
-                    <line x1="${gx + gw}" y1="${gy}" x2="${gx}" y2="${gy + gh}" class="glass-diagonal" />
+                    <rect x="${fx2}" y="${fy2}" width="${fw2}" height="${fh2}" fill="url(#cad-glass)" stroke="#3a88bb" stroke-width="0.8"/>
+                    <line x1="${fx2}" y1="${fy2}" x2="${fx2 + fw2}" y2="${fy2 + fh2}" stroke="#6aaecc" stroke-width="0.55" opacity="0.5"/>
+                    <line x1="${fx2 + fw2}" y1="${fy2}" x2="${fx2}" y2="${fy2 + fh2}" stroke="#6aaecc" stroke-width="0.55" opacity="0.5"/>
                 `;
             } else {
-                const sashInset = quote.systemType === 'corredera' ? 8 : 6;
-                const glassInsetX = quote.systemType === 'corredera' ? 14 : 12;
-                const glassInsetY = quote.systemType === 'corredera' ? 12 : 10;
-                const gx = leaf.x + glassInsetX, gy = leaf.y + glassInsetY;
-                const gw = leaf.width - (glassInsetX * 2), gh = leaf.height - (glassInsetY * 2);
                 leavesMarkup += `
-                    <rect x="${leaf.x}" y="${leaf.y}" width="${leaf.width}" height="${leaf.height}" class="sash" />
-                    <rect x="${leaf.x + sashInset}" y="${leaf.y + sashInset}" width="${leaf.width - (sashInset * 2)}" height="${leaf.height - (sashInset * 2)}" class="sash-inner" />
-                    <rect x="${gx}" y="${gy}" width="${gw}" height="${gh}" class="glass-pane" />
-                    <line x1="${gx}" y1="${gy}" x2="${gx + gw}" y2="${gy + gh}" class="glass-diagonal" />
-                    <line x1="${gx + gw}" y1="${gy}" x2="${gx}" y2="${gy + gh}" class="glass-diagonal" />
-                    ${shouldRenderHandle ? buildHandles(leaf, handleSide) : ''}
+                    <rect x="${leaf.x}" y="${leaf.y}" width="${leaf.width}" height="${leaf.height}" fill="${profFill}" stroke="${fStroke}" stroke-width="1.1"/>
+                    <rect x="${leaf.x + SD}" y="${leaf.y + SD}" width="${leaf.width - SD * 2}" height="${leaf.height - SD * 2}" fill="none" stroke="${fStroke}" stroke-width="0.45"/>
                 `;
+                if (gw > 4 && gh > 4) {
+                    leavesMarkup += `
+                        <rect x="${gx}" y="${gy}" width="${gw}" height="${gh}" fill="url(#cad-glass)" stroke="#3a88bb" stroke-width="0.7"/>
+                        <line x1="${gx}" y1="${gy}" x2="${gx + gw}" y2="${gy + gh}" stroke="#6aaecc" stroke-width="0.5" opacity="0.45"/>
+                        <line x1="${gx + gw}" y1="${gy}" x2="${gx}" y2="${gy + gh}" stroke="#6aaecc" stroke-width="0.5" opacity="0.45"/>
+                    `;
+                }
+                const showHandle = quote.systemType === 'corredera'
+                    || (isCasement && index === getCasementHandleLeafIndex(quote));
+                if (showHandle) {
+                    const hSide = quote.systemType === 'corredera'
+                        ? (getSlidingDirection(quote.openingType, index, quote.leaves) === 1 ? 'right' : 'left')
+                        : getCasementHandleSide(quote);
+                    const hx = hSide === 'left' ? leaf.x + leaf.width - 9 : leaf.x + 3;
+                    const hy = leaf.y + leaf.height / 2 - 13;
+                    leavesMarkup += `<rect x="${hx}" y="${hy}" width="6" height="26" rx="2" fill="#b0b8c0" stroke="#555" stroke-width="0.7"/>`;
+                }
             }
 
             if (quote.systemType === 'corredera') {
@@ -683,93 +698,121 @@ if (form) {
                 markersMarkup += buildCasementMarker(leaf, index, quote, index === getTiltTurnLeafIndex(quote));
             }
 
-            if (index < leaves.length - 1) {
+            if (index < leavesGeo.length - 1) {
                 const barX = leaf.x + leaf.width;
                 barsMarkup += `
-                    <rect x="${barX}" y="${frame.innerY}" width="${barWidth}" height="${frame.innerHeight}" class="meeting-rail" />
-                    <line x1="${barX + (barWidth / 2)}" y1="${frame.innerY + 4}" x2="${barX + (barWidth / 2)}" y2="${frame.innerY + frame.innerHeight - 4}" class="technical-line" />
+                    <rect x="${barX}" y="${frame.innerY}" width="${barWidth}" height="${frame.innerHeight}" fill="${profFill}" stroke="${fStroke}" stroke-width="0.8"/>
+                    <line x1="${barX + barWidth / 2}" y1="${frame.innerY + 4}" x2="${barX + barWidth / 2}" y2="${frame.innerY + frame.innerHeight - 4}" stroke="#999" stroke-width="0.4"/>
                 `;
             }
         });
 
-        const tiltTurnDetail = quote.systemType === 'oscilobatiente'
-            ? ` · ${text('tiltTurnLeafShort', 'Oscilo')} ${quote.tiltTurnLeafLabel}`
-            : '';
-        const detailsLabel = `${quote.leaves} ${text('leavesShort', 'hojas')} · ${quote.quantity} ${text('unitsShort', 'ud.')} · ${text('sheetTrim', 'Tapajuntas')} ${trimLabel} · ${text('sheetCut', 'Corte')} ${frameCutLabel}${tiltTurnDetail}`;
-        const safeGlass = escapeSvgText(quote.glassDescription || quote.glassType || text('glass', 'Vidrio'));
-        const verticalTextX = frame.outerX + frame.outerWidth + 38;
-        const verticalTextY = frame.outerY + (frame.outerHeight / 2);
+        let miterMarkup = '';
+        if (usesMiterCut) {
+            const cx = frame.outerX, cy = frame.outerY, cw = frame.outerWidth, ch = frame.outerHeight;
+            miterMarkup = `
+                <line x1="${cx}" y1="${cy + PD}" x2="${cx + PD}" y2="${cy}" stroke="#444" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+                <line x1="${cx + cw - PD}" y1="${cy}" x2="${cx + cw}" y2="${cy + PD}" stroke="#444" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+                <line x1="${cx}" y1="${cy + ch - PD}" x2="${cx + PD}" y2="${cy + ch}" stroke="#444" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+                <line x1="${cx + cw - PD}" y1="${cy + ch}" x2="${cx + cw}" y2="${cy + ch - PD}" stroke="#444" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+            `;
+        }
 
-        const svg = `
-            <svg viewBox="0 0 560 430" role="img" aria-label="Dibujo tecnico del cerramiento" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <linearGradient id="frameFill" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="${mixColor(palette.base, '#ffffff', 0.72)}" />
-                        <stop offset="100%" stop-color="${mixColor(palette.base, '#d9e0e6', 0.2)}" />
-                    </linearGradient>
-                    <linearGradient id="glassFill" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="#f6fbfc" />
-                        <stop offset="100%" stop-color="#d9eef0" />
-                    </linearGradient>
-                    <style>
-                        .sheet { fill: #ffffff; }
-                        .title { fill: #111111; font: 700 13px 'Trebuchet MS', Arial, sans-serif; }
-                        .meta { fill: #40454a; font: 11px 'Trebuchet MS', Arial, sans-serif; }
-                        .caption { fill: #40454a; font: 11px 'Trebuchet MS', Arial, sans-serif; }
-                        .trim-band { fill: #fafcfd; stroke: rgba(78, 90, 101, 0.34); stroke-width: 0.8; }
-                        .trim-outline { fill: none; stroke: rgba(78, 90, 101, 0.16); stroke-width: 0.7; }
-                        .profile-frame { fill: url(#frameFill); stroke: rgba(59, 70, 79, 0.86); stroke-width: 1.05; }
-                        .profile-inner-edge { fill: none; stroke: rgba(98, 110, 120, 0.38); stroke-width: 0.7; }
-                        .miter-line { stroke: rgba(95, 104, 112, 0.5); stroke-width: 0.85; fill: none; stroke-linecap: round; }
-                        .sash { fill: url(#frameFill); stroke: rgba(65, 75, 84, 0.84); stroke-width: 0.95; }
-                        .sash-inner { fill: none; stroke: rgba(255,255,255,0.55); stroke-width: 0.55; }
-                        .meeting-rail { fill: #edf2f5; stroke: rgba(77, 88, 98, 0.5); stroke-width: 0.75; }
-                        .fixed-lite-frame { fill: none; stroke: rgba(59, 70, 79, 0.76); stroke-width: 0.9; }
-                        .glass-pane { fill: url(#glassFill); stroke: rgba(100, 154, 159, 0.7); stroke-width: 0.7; }
-                        .glass-diagonal { stroke: rgba(100, 154, 159, 0.55); stroke-width: 0.6; fill: none; stroke-linecap: round; }
-                        .technical-line { stroke: rgba(120, 131, 141, 0.5); stroke-width: 0.55; fill: none; }
-                        .opening-line-strong { stroke: #4c565f; stroke-width: 1.45; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-                        .hinge-line { stroke: #5d666f; stroke-width: 1.3; fill: none; stroke-linecap: round; }
-                        .swing-arc { stroke: #6f7981; stroke-width: 1.15; fill: none; stroke-dasharray: 4 3; }
-                        .tilt-mark { stroke: #5f6972; stroke-width: 1.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-                        .marker-tag { fill: rgba(255,255,255,0.92); stroke: rgba(99, 109, 118, 0.6); stroke-width: 0.8; }
-                        .marker-label { fill: #2d2d2d; font: 700 13px 'Trebuchet MS', Arial, sans-serif; }
-                        .handle { fill: rgba(255,255,255,0.96); stroke: rgba(111, 120, 128, 0.55); stroke-width: 0.8; }
-                        .handle-line { stroke: rgba(111, 120, 128, 0.55); stroke-width: 0.8; }
-                        .dimension { stroke: rgba(76, 86, 95, 0.8); stroke-width: 0.9; fill: none; }
-                        .dimension-text { fill: #222222; font: 400 13px 'Trebuchet MS', Arial, sans-serif; }
-                    </style>
-                </defs>
-                <rect x="0" y="0" width="560" height="430" class="sheet" />
-                <text x="24" y="28" class="title">${safeModel}</text>
-                <text x="24" y="48" class="meta">${text('sheetSeries', 'Serie')}: ${safeReference}</text>
-                <text x="24" y="66" class="meta">${text('sheetColor', 'Color')}: ${safeColor}</text>
-                <text x="24" y="84" class="meta">${text('sheetTrim', 'Tapajuntas')}: ${trimLabel}</text>
-                <text x="24" y="102" class="meta">${text('sheetCut', 'Corte')}: ${frameCutLabel}</text>
-                <text x="24" y="120" class="meta">${text('sheetGlass', 'Vidrio')}: ${safeGlass}</text>
-                <text x="24" y="138" class="meta">${text('sheetSize', 'Medida')}: ${quote.widthMm} x ${quote.heightMm} mm</text>
-                <text x="24" y="156" class="caption">${detailsLabel}</text>
-                ${trimMarkup}
-                <rect x="${frame.outerX}" y="${frame.outerY}" width="${frame.outerWidth}" height="${frame.outerHeight}" class="profile-frame" />
-                <rect x="${frame.innerX}" y="${frame.innerY}" width="${frame.innerWidth}" height="${frame.innerHeight}" class="profile-inner-edge" />
-                ${leavesMarkup}
-                ${barsMarkup}
-                ${markersMarkup}
-                <line x1="${frame.outerX}" y1="${frame.outerY + frame.outerHeight + 24}" x2="${frame.outerX + frame.outerWidth}" y2="${frame.outerY + frame.outerHeight + 24}" class="dimension" />
-                <line x1="${frame.outerX}" y1="${frame.outerY + frame.outerHeight}" x2="${frame.outerX}" y2="${frame.outerY + frame.outerHeight + 24}" class="dimension" />
-                <line x1="${frame.outerX + frame.outerWidth}" y1="${frame.outerY + frame.outerHeight}" x2="${frame.outerX + frame.outerWidth}" y2="${frame.outerY + frame.outerHeight + 24}" class="dimension" />
-                <text x="${frame.outerX + (frame.outerWidth / 2)}" y="${frame.outerY + frame.outerHeight + 42}" text-anchor="middle" class="dimension-text">H1=${quote.widthMm}</text>
-                <line x1="${frame.outerX + frame.outerWidth + 18}" y1="${frame.outerY}" x2="${frame.outerX + frame.outerWidth + 18}" y2="${frame.outerY + frame.outerHeight}" class="dimension" />
-                <line x1="${frame.outerX + frame.outerWidth}" y1="${frame.outerY}" x2="${frame.outerX + frame.outerWidth + 18}" y2="${frame.outerY}" class="dimension" />
-                <line x1="${frame.outerX + frame.outerWidth}" y1="${frame.outerY + frame.outerHeight}" x2="${frame.outerX + frame.outerWidth + 18}" y2="${frame.outerY + frame.outerHeight}" class="dimension" />
-                <text x="${verticalTextX}" y="${verticalTextY}" text-anchor="middle" class="dimension-text" transform="rotate(90 ${verticalTextX} ${verticalTextY})">V1=${quote.heightMm}</text>
-            </svg>
+        const fx = frame.outerX, fy = frame.outerY, fw = frame.outerWidth, fh = frame.outerHeight;
+        const DG = 28, DT = 5;
+
+        const widthDim = `
+            <line x1="${fx}" y1="${fy + fh}" x2="${fx}" y2="${fy + fh + DG + DT}" stroke="#333" stroke-width="0.6"/>
+            <line x1="${fx + fw}" y1="${fy + fh}" x2="${fx + fw}" y2="${fy + fh + DG + DT}" stroke="#333" stroke-width="0.6"/>
+            <line x1="${fx + 4}" y1="${fy + fh + DG}" x2="${fx + fw - 4}" y2="${fy + fh + DG}" stroke="#333" stroke-width="0.85" marker-start="url(#cad-arrL)" marker-end="url(#cad-arrR)"/>
+            <text x="${fx + fw / 2}" y="${fy + fh + DG + 14}" text-anchor="middle" class="cad-dim">L = ${quote.widthMm} mm</text>
         `;
+
+        const hdx = fx + fw + DG;
+        const heightDim = `
+            <line x1="${fx + fw}" y1="${fy}" x2="${hdx + DT}" y2="${fy}" stroke="#333" stroke-width="0.6"/>
+            <line x1="${fx + fw}" y1="${fy + fh}" x2="${hdx + DT}" y2="${fy + fh}" stroke="#333" stroke-width="0.6"/>
+            <line x1="${hdx}" y1="${fy + 4}" x2="${hdx}" y2="${fy + fh - 4}" stroke="#333" stroke-width="0.85" marker-start="url(#cad-arrL)" marker-end="url(#cad-arrR)"/>
+            <text x="${hdx + 19}" y="${fy + fh / 2}" text-anchor="middle" class="cad-dim" transform="rotate(-90,${hdx + 19},${fy + fh / 2})">H = ${quote.heightMm} mm</text>
+        `;
+
+        const TY = 432, TH = 74, TX = 8, TW = 624;
+        const R2 = TY + TH / 2;
+        const titleBlock = `
+            <rect x="${TX}" y="${TY}" width="${TW}" height="${TH}" fill="#f5f6f8" stroke="#222" stroke-width="0.8"/>
+            <line x1="${TX}" y1="${R2}" x2="${TX + TW}" y2="${R2}" stroke="#666" stroke-width="0.4"/>
+            <line x1="${TX + 138}" y1="${TY}" x2="${TX + 138}" y2="${TY + TH}" stroke="#888" stroke-width="0.4"/>
+            <line x1="${TX + 296}" y1="${TY}" x2="${TX + 296}" y2="${TY + TH}" stroke="#888" stroke-width="0.4"/>
+            <line x1="${TX + 422}" y1="${TY}" x2="${TX + 422}" y2="${TY + TH}" stroke="#888" stroke-width="0.4"/>
+            <text x="${TX + 5}" y="${TY + 11}" class="cad-tb-lbl">SISTEMA</text>
+            <text x="${TX + 143}" y="${TY + 11}" class="cad-tb-lbl">SERIE / REFERENCIA</text>
+            <text x="${TX + 301}" y="${TY + 11}" class="cad-tb-lbl">COLOR PERFIL</text>
+            <text x="${TX + 427}" y="${TY + 11}" class="cad-tb-lbl">MEDIDA</text>
+            <text x="${TX + 5}" y="${TY + 27}" class="cad-tb-val">${safeModel}</text>
+            <text x="${TX + 143}" y="${TY + 27}" class="cad-tb-val">${safeRef}</text>
+            <text x="${TX + 301}" y="${TY + 27}" class="cad-tb-val">${safeColor}</text>
+            <text x="${TX + 427}" y="${TY + 27}" class="cad-tb-val">${quote.widthMm} × ${quote.heightMm} mm</text>
+            <line x1="${TX + 72}" y1="${R2}" x2="${TX + 72}" y2="${TY + TH}" stroke="#888" stroke-width="0.4"/>
+            <line x1="${TX + 190}" y1="${R2}" x2="${TX + 190}" y2="${TY + TH}" stroke="#888" stroke-width="0.4"/>
+            <line x1="${TX + 296}" y1="${R2}" x2="${TX + 296}" y2="${TY + TH}" stroke="#888" stroke-width="0.4"/>
+            <line x1="${TX + 400}" y1="${R2}" x2="${TX + 400}" y2="${TY + TH}" stroke="#888" stroke-width="0.4"/>
+            <text x="${TX + 5}" y="${R2 + 13}" class="cad-tb-lbl">HOJAS</text>
+            <text x="${TX + 77}" y="${R2 + 13}" class="cad-tb-lbl">APERTURA</text>
+            <text x="${TX + 195}" y="${R2 + 13}" class="cad-tb-lbl">CORTE</text>
+            <text x="${TX + 301}" y="${R2 + 13}" class="cad-tb-lbl">TAPAJUNTAS</text>
+            <text x="${TX + 405}" y="${R2 + 13}" class="cad-tb-lbl">VIDRIO</text>
+            <text x="${TX + 5}" y="${R2 + 28}" class="cad-tb-val">${quote.leaves} hj.</text>
+            <text x="${TX + 77}" y="${R2 + 28}" class="cad-tb-val">${escapeSvgText(quote.openingTypeLabel || quote.openingType)}</text>
+            <text x="${TX + 195}" y="${R2 + 28}" class="cad-tb-val">${cutLabel}</text>
+            <text x="${TX + 301}" y="${R2 + 28}" class="cad-tb-val">${trimLabel}</text>
+            <text x="${TX + 405}" y="${R2 + 28}" class="cad-tb-val">${safeGlass}</text>
+        `;
+
+        const svg = `<svg viewBox="0 0 640 514" role="img" aria-label="Plano técnico de carpintería de aluminio" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <pattern id="cad-glass" width="14" height="14" patternUnits="userSpaceOnUse">
+                    <rect width="14" height="14" fill="#dceef8"/>
+                    <line x1="0" y1="14" x2="14" y2="0" stroke="#5599cc" stroke-width="0.55" opacity="0.4"/>
+                </pattern>
+                <marker id="cad-arrR" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto">
+                    <polygon points="0,0 6,3 0,6" fill="#222"/>
+                </marker>
+                <marker id="cad-arrL" markerWidth="6" markerHeight="6" refX="0" refY="3" orient="auto-start-reverse">
+                    <polygon points="0,0 6,3 0,6" fill="#222"/>
+                </marker>
+                <style>
+                    .cad-sheet    { fill:#fff; stroke:#111; stroke-width:1.8; }
+                    .cad-inner    { fill:none; stroke:#555; stroke-width:0.4; }
+                    .opening-line-strong { stroke:#111; stroke-width:1.6; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+                    .hinge-line   { stroke:#333; stroke-width:1.4; fill:none; stroke-linecap:round; }
+                    .swing-arc    { stroke:#555; stroke-width:1.1; fill:none; stroke-dasharray:5 3; }
+                    .tilt-mark    { stroke:#222; stroke-width:1.3; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+                    .marker-tag   { fill:rgba(255,255,255,0.92); stroke:#555; stroke-width:0.7; }
+                    .marker-label { fill:#111; font:bold 11px 'Arial Narrow',Arial,sans-serif; }
+                    .cad-dim      { fill:#222; font:10px 'Arial Narrow',Arial,sans-serif; }
+                    .cad-tb-lbl   { fill:#666; font:8px 'Arial Narrow',Arial,sans-serif; letter-spacing:.04em; }
+                    .cad-tb-val   { fill:#111; font:bold 10.5px 'Arial Narrow',Arial,sans-serif; }
+                </style>
+            </defs>
+            <rect x="4" y="4" width="632" height="506" class="cad-sheet"/>
+            <rect x="8" y="8" width="624" height="498" class="cad-inner"/>
+            ${trimMarkup}
+            <rect x="${fx}" y="${fy}" width="${fw}" height="${fh}" fill="${profFill}" stroke="${fStroke}" stroke-width="1.6"/>
+            <rect x="${frame.innerX}" y="${frame.innerY}" width="${frame.innerWidth}" height="${frame.innerHeight}" fill="#fff" stroke="${fStroke}" stroke-width="0.5"/>
+            ${miterMarkup}
+            ${leavesMarkup}
+            ${barsMarkup}
+            ${markersMarkup}
+            ${widthDim}
+            ${heightDim}
+            ${titleBlock}
+        </svg>`;
 
         drawingWrap.innerHTML = svg;
         drawingSvgInput.value = svg.trim();
 
         if (profilePreviewSwatch) {
+            const palette = getProfilePalette(quote.profileColorHex);
             profilePreviewSwatch.style.background = `linear-gradient(135deg, ${palette.light}, ${palette.base} 60%, ${palette.dark})`;
             profilePreviewSwatch.style.borderColor = palette.shadow;
         }
@@ -824,6 +867,7 @@ if (form) {
         system_type: item.systemType,
         opening_type: item.openingType,
         carpentry_model: item.carpentryModelValue,
+        carpentry_series: item.carpentrySeriesValue,
         carpentry_reference: item.carpentryReference,
         trim_size: item.trimSize,
         tilt_turn_leaf: item.tiltTurnLeaf,
@@ -882,6 +926,13 @@ if (form) {
                     <span>${item.leaves} ${text('leavesShort', 'hojas')} · ${item.quantity} ${text('unitsShort', 'ud.')}</span>
                     <strong>${formatMoney(item.total)}</strong>
                 </div>
+                <div class="quote-item-card__descomp">
+                    <button type="button" class="descomp-toggle-btn" data-descomp="${item.id}" aria-expanded="false">
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" class="descomp-chevron"><path d="M2 3.5 L5 6.5 L8 3.5"/></svg>
+                        Ver descompuesto S28
+                    </button>
+                    <div class="descomp-panel" id="descomp-${item.id}" hidden></div>
+                </div>
             </article>
         `).join('');
     };
@@ -895,6 +946,9 @@ if (form) {
         fields.systemType.value = item.systemType;
         fields.openingType.value = item.openingType;
         fields.carpentryModel.value = item.carpentryModelValue;
+        if (fields.carpentrySeriesSelect) {
+            fields.carpentrySeriesSelect.value = item.carpentrySeriesValue || '';
+        }
         fields.carpentryReference.value = item.carpentryReference;
         fields.trimSize.value = String(item.trimSize);
         fields.tiltTurnLeaf.value = item.tiltTurnLeaf === 'derecha' ? 'derecha' : 'izquierda';
@@ -1059,6 +1113,23 @@ if (form) {
                 selectedItemId = nextItem.id;
                 loadItemIntoForm(nextItem);
             }
+            return;
+        }
+
+        const descompBtn = event.target.closest('[data-descomp]');
+        if (descompBtn) {
+            const itemId = descompBtn.getAttribute('data-descomp');
+            const panel = document.getElementById(`descomp-${itemId}`);
+            const item = quoteItems.find((i) => i.id === itemId);
+            if (!panel || !item) { return; }
+            const isOpen = !panel.hidden;
+            panel.hidden = isOpen;
+            descompBtn.setAttribute('aria-expanded', String(!isOpen));
+            descompBtn.classList.toggle('is-open', !isOpen);
+            if (!isOpen && !panel.dataset.loaded) {
+                panel.innerHTML = renderS28Descompuesto(item);
+                panel.dataset.loaded = '1';
+            }
         }
     });
 
@@ -1084,7 +1155,6 @@ if (form) {
         throw error;
     }
 
-    // ── DESIGNER WIDGET ──────────────────────────────────
     const designerEmbed    = document.getElementById('designerEmbed');
     const designerSvgInput = document.getElementById('designerSvg');
     const designerTreeJson = document.getElementById('designerTreeJson');
@@ -1162,11 +1232,165 @@ if (form) {
         });
     }
 
-    // Sync RAL code cuando cambia preset de color
     const carpentryRalInput = document.getElementById('carpentryRal');
     fields.profileColorPreset?.addEventListener('change', () => {
         const opt = fields.profileColorPreset.selectedOptions[0];
         const ral = opt?.dataset?.ral || '';
         if (carpentryRalInput) carpentryRalInput.value = ral;
     });
+}
+
+// ════════════════════════════════════════════════════════════════
+//  DESCOMPUESTO S28 · EXTRUAL — integrado por ventana
+// ════════════════════════════════════════════════════════════════
+
+const S28_PROFILES = {
+    '5.980': 'Marco Ventana',      '5.981': 'Marco Ventana solape 28mm',
+    '5.982': 'Hoja Ventana 47mm',  '5.984': 'Inversor recto',
+    '5.985': 'Pilastra Ventana',   '5.986': 'Marco Puerta',
+    '5.987': 'Hoja Balconera',     '5.988': 'Hoja Balconera Ap.Ext',
+    '5.989': 'Pilastra Puerta',    '5.228': 'Marco Fijo liso',
+    '9.619': 'Vierteaguas hoja',   '9.622': 'Marco bajo Puerta',
+    '3.360': 'Junquillo Recto C-14.5',
+    '5.070': 'Junquillo Curvo grapa C-8.5',  '5.071': 'Junquillo Curvo grapa C-20.5',
+    '5.612': 'Junquillo Redondo grapa C-8.5','5.613': 'Junquillo Redondo grapa C-20.5',
+    '6.179': 'Junquillo Curvo clip C-8.5',   '6.180': 'Junquillo Curvo clip C-20.5',
+    '6.181': 'Junquillo Redondo clip C-8.5', '6.182': 'Junquillo Redondo clip C-20.5',
+};
+
+const S28_K = {
+    MARCO2: 43.6, GLASS_1H: 108, GLASS_H: 108,
+    HOJA: 43.6, HOJA_2H: 26, GLASS_2H: 88,
+    VIERTEG: 5, JUNQ: 12, FIJO: 48,
+};
+
+function s28JunqRef(thick) {
+    return thick > 20 ? '6.180' : '6.179';
+}
+
+function s28SystemId(quote) {
+    const { systemType: st, leaves } = quote;
+    if (st === 'fijo') { return 'v_fijo'; }
+    if (st === 'oscilobatiente') { return 'v1h_osci'; }
+    if (st === 'corredera') { return null; }
+    if (leaves === 1) { return 'v1h_prac'; }
+    if (leaves === 2) { return 'v2h_prac'; }
+    if (leaves === 3) { return 'v3h_prac'; }
+    return 'v1h_prac';
+}
+
+function s28Calc(sysId, L, H) {
+    const K = S28_K;
+    const jRef = s28JunqRef(20);
+    if (sysId === 'v_fijo') {
+        const gW = L - K.FIJO, gH = H - K.FIJO;
+        return { bars: [
+            { ref: '5.980', desc: 'Marco horizontal', cut: L, qty: 2 },
+            { ref: '5.980', desc: 'Marco vertical',   cut: H, qty: 2 },
+            { ref: jRef, desc: 'Junquillo horizontal', cut: gW + K.JUNQ, qty: 2 },
+            { ref: jRef, desc: 'Junquillo vertical',   cut: gH + K.JUNQ, qty: 2 },
+        ], glass: [{ W: gW, H: gH, qty: 1 }] };
+    }
+    if (sysId === 'v1h_prac' || sysId === 'v1h_osci') {
+        const gW = L - K.GLASS_1H, gH = H - K.GLASS_H;
+        const hH = L - K.HOJA, hV = H - K.HOJA;
+        return { bars: [
+            { ref: '5.980', desc: 'Marco horizontal',    cut: L,  qty: 2 },
+            { ref: '5.980', desc: 'Marco vertical',      cut: H,  qty: 2 },
+            { ref: '5.982', desc: 'Hoja horizontal',     cut: hH, qty: 2 },
+            { ref: '5.982', desc: 'Hoja vertical',       cut: hV, qty: 2 },
+            { ref: '9.619', desc: 'Vierteaguas hoja',    cut: hH - K.VIERTEG, qty: 1 },
+            { ref: jRef,    desc: 'Junquillo horizontal', cut: gW + K.JUNQ, qty: 2 },
+            { ref: jRef,    desc: 'Junquillo vertical',   cut: gH + K.JUNQ, qty: 2 },
+        ], glass: [{ W: gW, H: gH, qty: 1 }] };
+    }
+    if (sysId === 'v2h_prac') {
+        const hH = Math.round(L / 2 - K.HOJA_2H), hV = H - K.HOJA;
+        const gW = Math.round(L / 2 - K.GLASS_2H), gH = H - K.GLASS_H;
+        return { bars: [
+            { ref: '5.980', desc: 'Marco horizontal',    cut: L,   qty: 2 },
+            { ref: '5.980', desc: 'Marco vertical',      cut: H,   qty: 2 },
+            { ref: '5.984', desc: 'Inversor recto',      cut: hV,  qty: 1 },
+            { ref: '5.982', desc: 'Hoja horizontal',     cut: hH,  qty: 4 },
+            { ref: '5.982', desc: 'Hoja vertical',       cut: hV,  qty: 4 },
+            { ref: '9.619', desc: 'Vierteaguas (×2)',    cut: hH - K.VIERTEG, qty: 2 },
+            { ref: jRef,    desc: 'Junquillo horizontal', cut: gW + K.JUNQ, qty: 4 },
+            { ref: jRef,    desc: 'Junquillo vertical',   cut: gH + K.JUNQ, qty: 4 },
+        ], glass: [{ W: gW, H: gH, qty: 2 }] };
+    }
+    if (sysId === 'v3h_prac') {
+        const hH = Math.round(L / 3 - K.HOJA_2H), hV = H - K.HOJA;
+        const gW = Math.round(L / 3 - K.GLASS_2H), gH = H - K.GLASS_H;
+        return { bars: [
+            { ref: '5.980', desc: 'Marco horizontal',    cut: L,   qty: 2 },
+            { ref: '5.980', desc: 'Marco vertical',      cut: H,   qty: 2 },
+            { ref: '5.984', desc: 'Inversor (×2)',       cut: hV,  qty: 2 },
+            { ref: '5.982', desc: 'Hoja horizontal',     cut: hH,  qty: 6 },
+            { ref: '5.982', desc: 'Hoja vertical',       cut: hV,  qty: 6 },
+            { ref: '9.619', desc: 'Vierteaguas (×3)',    cut: hH - K.VIERTEG, qty: 3 },
+            { ref: jRef,    desc: 'Junquillo horizontal', cut: gW + K.JUNQ, qty: 6 },
+            { ref: jRef,    desc: 'Junquillo vertical',   cut: gH + K.JUNQ, qty: 6 },
+        ], glass: [{ W: gW, H: gH, qty: 3 }] };
+    }
+    return null;
+}
+
+function renderS28Descompuesto(item) {
+    const sysId = s28SystemId(item);
+    if (!sysId) {
+        return `<div class="descomp-notice">El sistema <strong>corredera</strong> no pertenece a la Serie 28. Consulta el catálogo de la serie correspondiente.</div>`;
+    }
+    const result = s28Calc(sysId, item.widthMm, item.heightMm);
+    if (!result) {
+        return `<div class="descomp-notice">No hay descompuesto disponible para este sistema.</div>`;
+    }
+
+    const totalMl = result.bars.reduce((s, b) => s + (b.cut * b.qty / 1000), 0);
+    const systemNames = {
+        v_fijo: 'Ventana Fija', v1h_prac: 'Ventana 1H Practicable',
+        v1h_osci: 'Ventana 1H Oscilobatiente', v2h_prac: 'Ventana 2H Practicable',
+        v3h_prac: 'Ventana 3H Practicable',
+    };
+
+    let barsRows = '';
+    for (const b of result.bars) {
+        const ml = (b.cut * b.qty / 1000).toFixed(3);
+        const errCls = b.cut < 0 ? ' class="descomp-err"' : '';
+        barsRows += `<tr>
+            <td class="descomp-ref">${b.ref}</td>
+            <td>${S28_PROFILES[b.ref] || b.desc}</td>
+            <td${errCls}>${Math.round(b.cut)}</td>
+            <td>${b.qty}</td>
+            <td>${ml}</td>
+        </tr>`;
+    }
+
+    let glassRows = '';
+    for (const g of result.glass) {
+        const errCls = (g.W <= 0 || g.H <= 0) ? ' class="descomp-err"' : '';
+        glassRows += `<tr>
+            <td>Vidrio</td>
+            <td${errCls}>${Math.round(g.W)}</td>
+            <td${errCls}>${Math.round(g.H)}</td>
+            <td>${g.qty}</td>
+            <td>${((g.W / 1000) * (g.H / 1000) * g.qty).toFixed(3)} m²</td>
+        </tr>`;
+    }
+
+    return `<div class="descomp-body">
+        <div class="descomp-meta">
+            <strong>Serie 28 · EXTRUAL</strong>
+            <span>${systemNames[sysId] || sysId} · ${item.widthMm} × ${item.heightMm} mm</span>
+        </div>
+        <table class="descomp-table">
+            <thead><tr><th>Ref.</th><th>Descripción</th><th>Corte mm</th><th>Cant.</th><th>Total ml</th></tr></thead>
+            <tbody>${barsRows}</tbody>
+            <tfoot><tr><td colspan="4"><strong>Total aluminio</strong></td><td><strong>${totalMl.toFixed(3)} ml</strong></td></tr></tfoot>
+        </table>
+        <table class="descomp-table descomp-table--glass">
+            <thead><tr><th>Vidrio</th><th>Ancho mm</th><th>Alto mm</th><th>Cant.</th><th>m²</th></tr></thead>
+            <tbody>${glassRows}</tbody>
+        </table>
+        <p class="descomp-note">Catálogo S28 EXTRUAL · Cara marco 21.8 mm · Descuento hoja 43.6 mm · Verificar siempre con muestra.</p>
+    </div>`;
 }
