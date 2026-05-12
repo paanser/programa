@@ -280,11 +280,17 @@ if ($configExists) {
 
         <h3><?= h(tr('financial_summary', $lang)) ?></h3>
         <div class="totals" id="totalsBox"></div>
-
-        <h3 class="descomp-inline-heading">Descompuesto S28 <span class="descomp-inline-badge" id="descompuestoBadge"></span></h3>
-        <div id="descompuestoBox"></div>
     </section>
 </main>
+
+<!-- Descompuesto S28 – sección completa, sincronizada con el presupuesto -->
+<section class="descomp-inline-section">
+    <div class="descomp-inline-section__head">
+        <h2 class="descomp-inline-section__title">Descompuesto S28 <span class="descomp-inline-badge" id="descompuestoBadge"></span></h2>
+        <p class="field-hint">Barras de corte Serie 28 · EXTRUAL — se actualiza automáticamente con las medidas del presupuesto</p>
+    </div>
+    <div id="descompuestoBox" class="descomp-inline-grid"></div>
+</section>
 
 <script>
 window.APP_LANG = <?= json_encode($lang) ?>;
