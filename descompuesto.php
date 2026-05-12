@@ -20,9 +20,7 @@ $lang = get_current_lang();
     <h1><?= h(tr('app_title', $lang)) ?></h1>
     <div class="topbar-tools">
         <nav>
-            <a href="<?= h(url_with_lang('index.php', [], $lang)) ?>"><?= h(tr('new', $lang)) ?></a>
-            <a href="designer.php">Configurador</a>
-            <a href="descompuesto.php" class="active">Descompuesto S28</a>
+            <a href="<?= h(url_with_lang('index.php', [], $lang)) ?>">Nuevo presupuesto</a>
             <a href="<?= h(url_with_lang('list_quotes.php', [], $lang)) ?>"><?= h(tr('history', $lang)) ?></a>
         </nav>
     </div>
@@ -141,9 +139,9 @@ $lang = get_current_lang();
 </main>
 
 <script>
-// ══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 //  DATOS SERIE 28 · EXTRUAL
-// ══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 
 // Diccionario de perfiles: ref → descripción
 const PROFILES = {
@@ -180,28 +178,22 @@ const PROFILES = {
     '6.182':  'Junquillo Redondo clip C-20.5',
 };
 
-// ── Formulas de corte ──────────────────────────────────────
-// L = ancho hueco, H = alto hueco
-// Constantes geométricas Serie 28
 const K = {
-    MARCO_CARA:     21.8,   // mm que ocupa el marco en cada lateral
-    MARCO_CARA2:    43.6,   // 2 × MARCO_CARA
-    GLASS_OFFSET_1H: 108,   // L - 108 = ancho vidrio en 1 hoja
-    GLASS_OFFSET_H:  108,   // H - 108 = alto vidrio
-    HOJA_OFFSET:    43.6,   // L/n - 43.6 = corte horizontal hoja (1h)
-    HOJA_OFFSET_2H: 26,     // L/2 - 26 = corte horizontal hoja (2h)
-    GLASS_OFFSET_2H: 88,    // L/2 - 88 = ancho vidrio en 2 hojas
-    VIERTEG_EXTRA:   5,     // hoja - 5 = longitud vierteaguas
-    JUNQ_EXTRA:     12,     // vidrio + 12 = longitud junquillo
-    // Puerta
-    PUERTA_H_OFFSET: 73.6,  // L - 73.6 = hoja puerta horizontal
-    PUERTA_H_GLASS:  138,   // L - 138 = vidrio puerta
-    FIJO_OFFSET:    48,     // fijo: L/H - 48 = espacio vidrio
+    MARCO_CARA:     21.8,
+    MARCO_CARA2:    43.6,
+    GLASS_OFFSET_1H: 108,
+    GLASS_OFFSET_H:  108,
+    HOJA_OFFSET:    43.6,
+    HOJA_OFFSET_2H: 26,
+    GLASS_OFFSET_2H: 88,
+    VIERTEG_EXTRA:   5,
+    JUNQ_EXTRA:     12,
+    PUERTA_H_OFFSET: 73.6,
+    PUERTA_H_GLASS:  138,
+    FIJO_OFFSET:    48,
 };
 
-// Junquillo refs según cámara y tipo
 function junquilloRef(glassThick, junqType) {
-    // Cámara ≤ 20.5mm → C-8.5 o C-14.5; > 20.5mm → C-20.5 o C-26.5
     const heavy = glassThick > 20;
     const types = {
         'curvo_grapa':   heavy ? '5.071' : '5.070',
@@ -213,15 +205,8 @@ function junquilloRef(glassThick, junqType) {
     return types[junqType] || '6.179';
 }
 
-// ── Definición de sistemas ─────────────────────────────────
-// Cada sistema devuelve barras y accesorios dado (L, H, qty, opts)
-// bars: [{ ref, desc, cut_formula_str, cut_mm, qty_per_unit }]
-// glass: [{ desc, W, H, qty_per_unit }]
-// accessories: [{ ref, desc, qty_per_unit, qty_note }]
-
 const SYSTEMS = {
 
-    // ────────────────────────────────────────────────────
     v1h_prac: {
         name: 'Ventana 1 Hoja Practicable',
         page: '28-B1',
@@ -238,8 +223,8 @@ const SYSTEMS = {
                     { ref:'5.982', desc:'Hoja horizontal',    cut: hojaH,             qty: 2, formula: 'L − 43.6' },
                     { ref:'5.982', desc:'Hoja vertical',      cut: hojaV,             qty: 2, formula: 'H − 43.6' },
                     { ref:'9.619', desc:'Vierteaguas hoja',   cut: hojaH - K.VIERTEG_EXTRA, qty: 1, formula: 'L − 48.6' },
-                    { ref: jRef,   desc:'Junquillo horizontal', cut: gW + K.JUNQ_EXTRA, qty: 2, formula: `vidrio_L + 12` },
-                    { ref: jRef,   desc:'Junquillo vertical',   cut: gH + K.JUNQ_EXTRA, qty: 2, formula: `vidrio_H + 12` },
+                    { ref: jRef,   desc:'Junquillo horizontal', cut: gW + K.JUNQ_EXTRA, qty: 2, formula: 'vidrio_L + 12' },
+                    { ref: jRef,   desc:'Junquillo vertical',   cut: gH + K.JUNQ_EXTRA, qty: 2, formula: 'vidrio_H + 12' },
                 ],
                 glass: [{ desc: 'Vidrio hoja', W: gW, H: gH, qty: 1 }],
                 accessories: accesorios_v1h_prac(false),
@@ -247,7 +232,6 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
     v1h_osci: {
         name: 'Ventana 1 Hoja Oscilobatiente',
         page: '28-B1',
@@ -273,13 +257,11 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
     v1h_fijo: {
         name: 'Ventana 1 Hoja + Fijo',
         page: '28-B2',
         calc(L, H, qty, opts) {
             const jRef = junquilloRef(opts.glassThick, opts.junquilloType);
-            // Hoja ocupa ~55% del ancho, fijo el 45% (ajustar según diseño)
             const L1 = Math.round(L * 0.55);
             const L2 = L - L1;
             const hojaH = L1 - K.HOJA_OFFSET;
@@ -309,7 +291,6 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
     v2h_prac: {
         name: 'Ventana 2 Hojas Practicable',
         page: '28-B3',
@@ -337,13 +318,11 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
     v2h_fijo: {
         name: 'Ventana 2 Hojas + Fijo',
         page: '28-B4',
         calc(L, H, qty, opts) {
             const jRef = junquilloRef(opts.glassThick, opts.junquilloType);
-            // Las 2 hojas ocupan ~65%, fijo ~35%
             const L_hojas = Math.round(L * 0.65);
             const L_fijo  = L - L_hojas;
             const hojaH = Math.round(L_hojas / 2 - K.HOJA_OFFSET_2H);
@@ -374,7 +353,6 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
     v3h_prac: {
         name: 'Ventana 3 Hojas Practicable',
         page: '28-B5',
@@ -401,7 +379,6 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
     v_abatible: {
         name: 'Ventana Abatible (proyectante)',
         page: '28-B6',
@@ -426,7 +403,6 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
     v_fijo: {
         name: 'Ventana Fija',
         page: '28',
@@ -447,7 +423,6 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
     b1h_prac: {
         name: 'Balconera 1 Hoja Practicable',
         page: '28-B10',
@@ -473,7 +448,6 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
     b2h_prac: {
         name: 'Balconera 2 Hojas Practicable',
         page: '28-B12',
@@ -500,7 +474,6 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
     b1h_ext: {
         name: 'Balconera 1 Hoja Apertura Exterior',
         page: '28-B12',
@@ -526,7 +499,6 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
     p1h_int: {
         name: 'Puerta 1 Hoja Interior',
         page: '28-B17',
@@ -552,7 +524,6 @@ const SYSTEMS = {
         },
     },
 
-    // ────────────────────────────────────────────────────
     p1h_fijo: {
         name: 'Puerta 1 Hoja + Fijo',
         page: '28-B22',
@@ -587,10 +558,6 @@ const SYSTEMS = {
         },
     },
 };
-
-// ══════════════════════════════════════════════════════════
-//  ACCESORIOS por sistema
-// ══════════════════════════════════════════════════════════
 
 function accesorios_v1h_prac(osci) {
     const list = [
@@ -681,7 +648,7 @@ function accesorios_abatible() {
         { ref:'04.JU.004.E',desc:'Junta Exterior EPDM',              qty:'2H+2L' },
         { ref:'04.JU.004.D',desc:'Junta Interior EPDM',              qty:'2H+2L' },
         { ref:'04.JA.001',  desc:'Junta Acristalamiento Ext.',       qty:'2H+2L' },
-        { ref:'SEGÚN VIDRIO',desc:'Junta Acristalamiento Int.',      qty:'2H+2L' },
+        { ref:'SEGÚN VIDRIO',desc:'Junta Acristalamiento Int.',     qty:'2H+2L' },
     ];
 }
 
@@ -755,12 +722,7 @@ function accesorios_puerta() {
     ];
 }
 
-// ══════════════════════════════════════════════════════════
-//  RENDER
-// ══════════════════════════════════════════════════════════
-
 function mm(v) { return Math.round(v); }
-function m3(v) { return (v / 1000).toFixed(3); }
 
 function renderResults() {
     const systemKey = document.getElementById('systemType').value;
@@ -782,7 +744,6 @@ function renderResults() {
     const opts = { glassThick, junquilloType: junqType };
     const result = sys.calc(L, H, qty, opts);
 
-    // Añadir forro si se seleccionó
     if (forroType !== 'none') {
         const forroRefs = { '40': '6.755', '60': '6.756', '85': '6.757' };
         const ref = forroRefs[forroType];
@@ -792,7 +753,6 @@ function renderResults() {
         );
     }
 
-    // Añadir premarco si se seleccionó
     if (premarcoType !== 'none') {
         const premarcoRefs = { '36': '9.213', '122': '9.214', '136': '9.215' };
         const ref = premarcoRefs[premarcoType];
@@ -802,7 +762,6 @@ function renderResults() {
         );
     }
 
-    // Agrupar barras por ref para totales
     const barTotals = {};
     for (const b of result.bars) {
         if (!barTotals[b.ref]) barTotals[b.ref] = { ref: b.ref, desc: b.desc, totalMm: 0, totalQty: 0 };
@@ -811,7 +770,6 @@ function renderResults() {
     }
     const totalAlMm = Object.values(barTotals).reduce((s, r) => s + r.totalMm, 0);
 
-    // ── HTML ──
     let html = `
     <div class="result-header">
         <div>
@@ -861,7 +819,6 @@ function renderResults() {
         </tfoot>
     </table>`;
 
-    // ── Resumen por referencia ──
     html += `
     <h3 class="section-title">Resumen de compra por referencia</h3>
     <table class="result-table compact">
@@ -878,7 +835,6 @@ function renderResults() {
     }
     html += `</tbody></table>`;
 
-    // ── Vidrio ──
     html += `
     <h3 class="section-title">Vidrio</h3>
     <table class="result-table compact">
@@ -905,7 +861,6 @@ function renderResults() {
         <tfoot><tr><td colspan="5"><strong>Total m² vidrio</strong></td><td><strong>${totalM2.toFixed(3)} m²</strong></td></tr></tfoot>
     </table>`;
 
-    // ── Accesorios ──
     html += `
     <h3 class="section-title">Accesorios</h3>
     <table class="result-table compact">
@@ -923,7 +878,6 @@ function renderResults() {
     }
     html += `</tbody></table>`;
 
-    // ── Nota de cotas ──
     html += `
     <div class="formula-note">
         <strong>Cotas utilizadas (Serie 28 · EXTRUAL):</strong>
@@ -936,7 +890,6 @@ function renderResults() {
     document.getElementById('resultsBox').innerHTML = html;
 }
 
-// Sincronizar glasThick con glassType
 document.getElementById('glassType').addEventListener('change', function() {
     const map = {
         '4_6_4': 16, '4_12_4': 20, '4_16_4': 24,
@@ -946,13 +899,11 @@ document.getElementById('glassType').addEventListener('change', function() {
     renderResults();
 });
 
-// Escuchar cambios en todos los campos
 document.querySelectorAll('input, select').forEach(el => {
     el.addEventListener('input', renderResults);
     el.addEventListener('change', renderResults);
 });
 
-// Render inicial
 renderResults();
 </script>
 </body>
