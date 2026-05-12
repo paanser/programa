@@ -1,0 +1,11 @@
+{
+  "name": "Presupuestador PHP",
+  "forwardPorts": [8080],
+  "portsAttributes": {
+    "8080": {
+      "label": "PHP Server",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "postStartCommand": "php -S 0.0.0.0:8080 -t /home/user/programa > /tmp/php-server.log 2>&1 &"
+}

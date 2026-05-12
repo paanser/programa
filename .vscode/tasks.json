@@ -7,6 +7,9 @@
       "command": "php",
       "args": ["-S", "0.0.0.0:8080", "-t", "/home/user/programa"],
       "isBackground": true,
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
       "problemMatcher": []
     }
   ]
