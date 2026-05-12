@@ -324,6 +324,7 @@ function get_carpentry_options(): array
 {
     return [
         'exlabesa' => 'Exlabesa',
+        'serie_s28' => 'Serie S28 EXTRUAL',
         'cortizo' => 'Cortizo',
         'marco_40_40' => 'Marco 40+40',
         'marco_40_20' => 'Marco 40x20',

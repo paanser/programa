@@ -45,6 +45,7 @@ if ($configExists) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= h(tr('app_title', $lang)) ?></title>
     <link rel="stylesheet" href="assets/styles.css">
+    <link rel="stylesheet" href="assets/descompuesto.css">
 </head>
 <body>
 <div class="background-shape shape-a"></div>
@@ -55,8 +56,6 @@ if ($configExists) {
     <div class="topbar-tools">
         <nav>
             <a href="<?= h(url_with_lang('index.php', [], $lang)) ?>" class="active"><?= h(tr('new', $lang)) ?></a>
-            <a href="designer.php">Configurador</a>
-            <a href="descompuesto.php">Descompuesto S28</a>
             <a href="<?= h(url_with_lang('list_quotes.php', [], $lang)) ?>"><?= h(tr('history', $lang)) ?></a>
         </nav>
         <label class="lang-switcher">
@@ -171,6 +170,80 @@ if ($configExists) {
                 <label><?= h(tr('leaves', $lang)) ?>
                     <input type="number" name="leaves" id="leaves" min="1" max="6" value="2" required>
                 </label>
+            </div>
+
+            <!-- ── Descompuesto S28: visible solo cuando carpintería = Serie S28 EXTRUAL ── -->
+            <div id="s28Panel" hidden>
+                <h3>Descompuesto Serie S28 · EXTRUAL</h3>
+                <p class="field-hint">Perfiles, vidrios y accesorios según catálogo 28-B. Se actualiza en tiempo real con las medidas del formulario.</p>
+                <div class="grid two">
+                    <label>Sistema S28
+                        <select id="s28SystemType">
+                            <optgroup label="Ventanas">
+                                <option value="v1h_prac">Ventana 1 Hoja Practicable</option>
+                                <option value="v1h_osci">Ventana 1 Hoja Oscilobatiente</option>
+                                <option value="v1h_fijo">Ventana 1 Hoja + Fijo</option>
+                                <option value="v2h_prac" selected>Ventana 2 Hojas Practicable</option>
+                                <option value="v2h_fijo">Ventana 2 Hojas + Fijo</option>
+                                <option value="v3h_prac">Ventana 3 Hojas Practicable</option>
+                                <option value="v_abatible">Ventana Abatible (proyectante)</option>
+                                <option value="v_fijo">Ventana Fija</option>
+                            </optgroup>
+                            <optgroup label="Balconeras">
+                                <option value="b1h_prac">Balconera 1 Hoja Practicable</option>
+                                <option value="b2h_prac">Balconera 2 Hojas Practicable</option>
+                                <option value="b1h_ext">Balconera 1 Hoja Apertura Exterior</option>
+                            </optgroup>
+                            <optgroup label="Puertas">
+                                <option value="p1h_int">Puerta 1 Hoja Interior</option>
+                                <option value="p1h_fijo">Puerta 1 Hoja + Fijo</option>
+                            </optgroup>
+                        </select>
+                    </label>
+                    <label>Tipo de cámara S28
+                        <select id="s28GlassType">
+                            <option value="4_6_4">4+6+4 (C-16mm)</option>
+                            <option value="4_12_4" selected>4+12+4 (C-20mm)</option>
+                            <option value="4_16_4">4+16+4 (C-24mm)</option>
+                            <option value="4_8_4_8_4">4+8+4+8+4 doble cámara</option>
+                            <option value="laminar_6">Laminado 6mm</option>
+                            <option value="laminar_88">Laminado 8.8mm</option>
+                            <option value="simple_4">Simple 4mm</option>
+                        </select>
+                    </label>
+                    <label>Espesor vidrio (mm)
+                        <input type="number" id="s28GlassThick" min="4" max="50" value="20" step="1">
+                    </label>
+                    <label>Junquillo
+                        <select id="s28JunquilloType">
+                            <option value="curvo_grapa">Curvo grapa (5.070/5.071)</option>
+                            <option value="curvo_clip" selected>Curvo clip (6.179/6.180)</option>
+                            <option value="recto">Recto C-14.5 (3.360)</option>
+                            <option value="redondo_grapa">Redondo grapa (5.612/5.613)</option>
+                            <option value="redondo_clip">Redondo clip (6.181/6.182)</option>
+                        </select>
+                    </label>
+                    <label>Forro/Tapeta
+                        <select id="s28ForroType">
+                            <option value="none">Sin forro</option>
+                            <option value="40">Forro Registro 40mm (6.755)</option>
+                            <option value="60">Forro Registro 60mm (6.756)</option>
+                            <option value="85">Forro Registro 85mm (6.757)</option>
+                        </select>
+                    </label>
+                    <label>Premarco de obra
+                        <select id="s28PremarcoType">
+                            <option value="none">Sin premarco</option>
+                            <option value="36">Premarco Obra 36mm (9.213)</option>
+                            <option value="122">Premarco Obra 122mm (9.214)</option>
+                            <option value="136">Premarco Obra 136mm (9.215)</option>
+                        </select>
+                    </label>
+                </div>
+                <details class="s28-results-details" open>
+                    <summary>Ver descompuesto de barras y accesorios</summary>
+                    <div id="s28ResultsBox"></div>
+                </details>
             </div>
 
             <h3><?= h(tr('glass', $lang)) ?></h3>
@@ -354,6 +427,66 @@ window.APP_UI_TEXT = <?= json_encode([
     'onlyLeaf' => tr('only_leaf', $lang),
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 </script>
+<script src="assets/descompuesto.js"></script>
 <script src="assets/app.js"></script>
+<script>
+(function () {
+    var GLASS_THICK_MAP = {
+        '4_6_4': 16, '4_12_4': 20, '4_16_4': 24,
+        '4_8_4_8_4': 36, 'laminar_6': 6, 'laminar_88': 8.8, 'simple_4': 4,
+    };
+
+    function renderS28Inline() {
+        var panel = document.getElementById('s28Panel');
+        if (!panel || panel.hidden) { return; }
+        renderS28Results(
+            document.getElementById('s28ResultsBox'),
+            document.getElementById('s28SystemType').value,
+            parseFloat(document.getElementById('widthMm').value) || 0,
+            parseFloat(document.getElementById('heightMm').value) || 0,
+            parseInt(document.querySelector('[name="quantity"]').value, 10) || 1,
+            {
+                glassThick:    parseFloat(document.getElementById('s28GlassThick').value) || 20,
+                junquilloType: document.getElementById('s28JunquilloType').value,
+                forroType:     document.getElementById('s28ForroType').value,
+                premarcoType:  document.getElementById('s28PremarcoType').value,
+            }
+        );
+    }
+
+    function updateS28Visibility() {
+        var panel = document.getElementById('s28Panel');
+        var isS28 = document.getElementById('carpentryModel').value === 'serie_s28';
+        panel.hidden = !isS28;
+        if (isS28) { renderS28Inline(); }
+    }
+
+    document.getElementById('s28GlassType').addEventListener('change', function () {
+        if (GLASS_THICK_MAP[this.value]) {
+            document.getElementById('s28GlassThick').value = GLASS_THICK_MAP[this.value];
+        }
+        renderS28Inline();
+    });
+
+    ['s28SystemType', 's28GlassThick', 's28JunquilloType', 's28ForroType', 's28PremarcoType'].forEach(function (id) {
+        var el = document.getElementById(id);
+        el.addEventListener('input', renderS28Inline);
+        el.addEventListener('change', renderS28Inline);
+    });
+
+    ['widthMm', 'heightMm'].forEach(function (id) {
+        var el = document.getElementById(id);
+        el.addEventListener('input', renderS28Inline);
+        el.addEventListener('change', renderS28Inline);
+    });
+
+    var qtyEl = document.querySelector('[name="quantity"]');
+    qtyEl.addEventListener('input', renderS28Inline);
+    qtyEl.addEventListener('change', renderS28Inline);
+
+    document.getElementById('carpentryModel').addEventListener('change', updateS28Visibility);
+    updateS28Visibility();
+}());
+</script>
 </body>
 </html>

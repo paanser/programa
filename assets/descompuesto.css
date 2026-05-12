@@ -200,3 +200,48 @@
         background: white;
     }
 }
+
+/* ── Panel S28 integrado en index.php ────────────────────── */
+
+#s28Panel {
+    margin-top: 1.4rem;
+    padding-top: 1.2rem;
+    border-top: 2px solid var(--panel-border);
+}
+
+#s28Panel h3 {
+    margin: 0 0 0.25rem;
+    color: var(--brand-dark);
+}
+
+.s28-results-details {
+    margin-top: 1rem;
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.s28-results-details summary {
+    padding: 0.65rem 1rem;
+    background: rgba(66, 81, 93, 0.05);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--brand-dark);
+}
+
+.s28-results-details summary::-webkit-details-marker { display: none; }
+.s28-results-details summary::before {
+    content: '▶';
+    font-size: 0.65rem;
+    transition: transform 0.15s;
+}
+.s28-results-details[open] summary::before { transform: rotate(90deg); }
+
+.s28-results-details #s28ResultsBox {
+    padding: 0.5rem 0.75rem 0.75rem;
+}
