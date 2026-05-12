@@ -5,6 +5,28 @@ LOG_FILE="/tmp/php-server.log"
 PID_FILE="/tmp/php-server.pid"
 WATCHDOG_PID_FILE="/tmp/php-watchdog.pid"
 PORT=8080
+DB_SOCKET="/tmp/mysql.sock"
+
+# ── Arrancar MariaDB si no está activo ───────────────────────────
+if ! mariadb -u root -S "$DB_SOCKET" -e "SELECT 1;" >/dev/null 2>&1; then
+    echo "[db] $(date '+%Y-%m-%d %H:%M:%S') Arrancando MariaDB..."
+    mariadbd --user=root --socket="$DB_SOCKET" --pid-file=/tmp/mariadb.pid \
+        --port=3306 --bind-address=127.0.0.1 >> /tmp/mariadb.log 2>&1 &
+    for i in 1 2 3 4 5 6; do
+        sleep 1
+        mariadb -u root -S "$DB_SOCKET" -e "SELECT 1;" >/dev/null 2>&1 && break
+    done
+    if mariadb -u root -S "$DB_SOCKET" -e "SELECT 1;" >/dev/null 2>&1; then
+        echo "[db] MariaDB activo"
+        mariadb -u root -S "$DB_SOCKET" -e "
+            CREATE DATABASE IF NOT EXISTS presupuestos_vidrio CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+            CREATE USER IF NOT EXISTS 'pau'@'%' IDENTIFIED BY 'pau';
+            GRANT ALL ON presupuestos_vidrio.* TO 'pau'@'%';
+            FLUSH PRIVILEGES;" 2>/dev/null
+    else
+        echo "[db] ERROR: MariaDB no respondió" >&2
+    fi
+fi
 
 # ── Función: arrancar PHP ────────────────────────────────────────
 start_php() {
