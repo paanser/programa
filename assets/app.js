@@ -550,8 +550,27 @@ if (form) {
 
         var dwState = (typeof window.DesignerWidget !== 'undefined' && window.DesignerWidget.getState) ? window.DesignerWidget.getState() : null;
 
+        // Detectar composicion de paneles en el disenador
+        var panelTypes = [];
+        var compositeLabel = systemTypeLabel;
+        if (dwState && dwState.tree && dwState.tree.split) {
+            var leafs = (function getLeafs(n) {
+                if (!n) return [];
+                if (!n.split) return [n.system || 'fijo'];
+                return getLeafs(n.split.a).concat(getLeafs(n.split.b));
+            })(dwState.tree);
+            panelTypes = leafs;
+            var uniqueTypes = [...new Set(leafs)];
+            if (uniqueTypes.length > 1) {
+                var typeNames = { fijo: 'Fijo', puerta: 'Puerta', practicable: 'Practicable', oscilobatiente: 'Oscilo', corredera: 'Corredera', abatible: 'Abatible', tubo: 'Tubo' };
+                compositeLabel = leafs.map(function (t) { return typeNames[t] || t; }).join(' + ');
+            }
+        }
+
         return {
             systemType,
+            isComposite: panelTypes.length > 1,
+            compositeLabel: compositeLabel,
             systemTypeLabel: fields.systemType?.selectedOptions?.[0]?.textContent?.trim() || systemType,
             openingType: fields.openingType?.value || 'izquierda',
             openingTypeLabel: fields.openingType?.selectedOptions?.[0]?.textContent?.trim() || '',
@@ -932,12 +951,14 @@ if (form) {
             return;
         }
 
-        quoteItemsList.innerHTML = quoteItems.map((item, index) => `
+        quoteItemsList.innerHTML = quoteItems.map((item, index) => {
+            var itemLabel = item.isComposite ? item.compositeLabel : item.systemTypeLabel;
+            return `
             <article class="quote-item-card ${item.id === selectedItemId ? 'is-selected' : ''}" data-item-id="${item.id}">
                 <div class="quote-item-card__head">
                     <button type="button" class="quote-item-select" data-select-item="${item.id}">
                         <strong>${text('item', 'Partida')} ${index + 1}</strong>
-                        <span>${item.systemTypeLabel} · ${item.widthMm} x ${item.heightMm} mm</span>
+                        <span>${itemLabel} · ${item.widthMm} x ${item.heightMm} mm</span>
                     </button>
                     ${quoteItems.length > 1 ? `<button type="button" class="quote-item-remove" data-remove-item="${item.id}">${text('removeItem', 'Eliminar ventana')}</button>` : ''}
                 </div>
@@ -952,8 +973,8 @@ if (form) {
                     </button>
                     <div class="descomp-panel" id="descomp-${item.id}" hidden></div>
                 </div>
-            </article>
-        `).join('');
+            </article>`;
+        }).join('');
     };
 
     const loadItemIntoForm = (item) => {
@@ -1000,6 +1021,8 @@ if (form) {
         glassPriceWasSuggested = false;
         suppressSync = false;
         syncState();
+        // Restaurar árbol de diseño de la partida
+        reloadDesignerTree(item);
     };
 
     const upsertSelectedItem = (quote) => {
@@ -1174,80 +1197,114 @@ if (form) {
         throw error;
     }
 
-    const designerEmbed    = document.getElementById('designerEmbed');
-    const designerSvgInput = document.getElementById('designerSvg');
-    const designerTreeJson = document.getElementById('designerTreeJson');
-    const dwApplySvg       = document.getElementById('dwApplySvg');
-    const dwSlopeRow       = document.getElementById('dw-slopeRow');
-    const dwShapeSelect    = document.getElementById('dw-shapeSelect');
-    let dwReady = false;
+    // ── DISEÑADOR DE PANELES (siempre visible) ──
+    var designerSvgInput = document.getElementById('designerSvg');
+    var designerTreeJson = document.getElementById('designerTreeJson');
+    var dwApplySvg       = document.getElementById('dwApplySvg');
+    var dwSlopeRow       = document.getElementById('dw-slopeRow');
+    var dwShapeSelect    = document.getElementById('dw-shapeSelect');
+    var dwSection        = document.querySelector('.designer-section');
+    var dwReady = false;
 
-    function syncDwDimensions() {
-        if (dwReady && window.DesignerWidget) {
-            const w = parseInt(fields.widthMm?.value || '1500', 10);
-            const h = parseInt(fields.heightMm?.value || '1200', 10);
-            window.DesignerWidget.setDimensions(w, h);
+    function initDesigner(treeData) {
+        if (!window.DesignerWidget) { return; }
+        var w = parseInt(fields.widthMm?.value || '1500', 10);
+        var h = parseInt(fields.heightMm?.value || '1200', 10);
+        window.DesignerWidget.init({
+            canvasWrap:          'dw-canvasWrap',
+            btnSplitV:           'dw-btnSplitV',
+            btnSplitH:           'dw-btnSplitH',
+            btnUnsplit:          'dw-btnUnsplit',
+            panelSystem:         'dw-panelSystem',
+            panelOpening:        'dw-panelOpening',
+            panelLabel:          'dw-panelLabel',
+            splitRatio:          'dw-splitRatio',
+            splitInfo:           'dw-splitInfo',
+            splitControls:       'dw-splitControls',
+            panelInfo:           'dw-panelInfo',
+            leafControls:        'dw-leafControls',
+            openingRow:          'dw-openingRow',
+            heightControls:      'dw-heightControls',
+            panelHeightPct:      'dw-panelHeightPct',
+            panelHeightPctLabel: 'dw-panelHeightPctLabel',
+            panelTopPct:         'dw-panelTopPct',
+            panelTopPctLabel:    'dw-panelTopPctLabel',
+            panelList:           'dw-panelList',
+            sysLegend:           'dw-sysLegend',
+            panelBadge:          'dwPanelBadge',
+            facadeW:             'dw-facadeW',
+            facadeH:             'dw-facadeH',
+            shapeSelect:         'dw-shapeSelect',
+            slopeRange:          'dw-slopeRange',
+            slopeLabel:          'dw-slopeLabel',
+            onSvgChange: function (svgStr, tree) {
+                if (designerSvgInput) designerSvgInput.value = svgStr;
+                if (designerTreeJson) designerTreeJson.value = JSON.stringify(tree);
+            },
+            facadeW_val: w,
+            facadeH_val: h,
+            tree: treeData || null,
+        });
+        dwReady = true;
+    }
+
+    function reloadDesignerTree(item) {
+        if (!window.DesignerWidget || !dwReady) {
+            if (dwSection) {
+                initDesigner(item ? item.designerTree : null);
+            }
+            return;
+        }
+        if (item && item.designerTree) {
+            window.DesignerWidget.loadState(item.designerTree);
+        } else {
+            var w = parseInt(fields.widthMm?.value || '1500', 10);
+            var h = parseInt(fields.heightMm?.value || '1200', 10);
+            window.DesignerWidget.applyPreset('default', w, h);
         }
     }
 
-    if (designerEmbed && window.DesignerWidget) {
-        designerEmbed.addEventListener('toggle', () => {
-            if (designerEmbed.open) {
-                if (!dwReady) {
-                    dwReady = true;
-                    window.DesignerWidget.init({
-                        canvasWrap:          'dw-canvasWrap',
-                        btnSplitV:           'dw-btnSplitV',
-                        btnSplitH:           'dw-btnSplitH',
-                        btnUnsplit:          'dw-btnUnsplit',
-                        panelSystem:         'dw-panelSystem',
-                        panelOpening:        'dw-panelOpening',
-                        panelLabel:          'dw-panelLabel',
-                        splitRatio:          'dw-splitRatio',
-                        splitInfo:           'dw-splitInfo',
-                        splitControls:       'dw-splitControls',
-                        panelInfo:           'dw-panelInfo',
-                        leafControls:        'dw-leafControls',
-                        openingRow:          'dw-openingRow',
-                        heightControls:      'dw-heightControls',
-                        panelHeightPct:      'dw-panelHeightPct',
-                        panelHeightPctLabel: 'dw-panelHeightPctLabel',
-                        panelTopPct:         'dw-panelTopPct',
-                        panelTopPctLabel:    'dw-panelTopPctLabel',
-                        panelList:           'dw-panelList',
-                        sysLegend:           'dw-sysLegend',
-                        panelBadge:          'dwPanelBadge',
-                        facadeW:             'dw-facadeW',
-                        facadeH:             'dw-facadeH',
-                        shapeSelect:         'dw-shapeSelect',
-                        slopeRange:          'dw-slopeRange',
-                        slopeLabel:          'dw-slopeLabel',
-                        onSvgChange: (svgStr, tree) => {
-                            if (designerSvgInput) designerSvgInput.value = svgStr;
-                            if (designerTreeJson) designerTreeJson.value = JSON.stringify(tree);
-                        },
-                        facadeW_val: parseInt(fields.widthMm?.value || '1500', 10),
-                        facadeH_val: parseInt(fields.heightMm?.value || '1200', 10),
-                    });
-                } else {
-                    syncDwDimensions();
-                }
-            }
-        });
+    if (dwSection && window.DesignerWidget) {
+        // Inicializar inmediatamente (no esperar toggle)
+        var initialTree = null;
+        if (quoteItems.length > 0) {
+            var firstItem = getSelectedItem() || quoteItems[0];
+            if (firstItem) initialTree = firstItem.designerTree;
+        }
+        initDesigner(initialTree);
 
-        dwShapeSelect?.addEventListener('change', () => {
+        dwShapeSelect?.addEventListener('change', function () {
             if (dwSlopeRow) dwSlopeRow.style.display = dwShapeSelect.value === 'trapezoidal' ? '' : 'none';
         });
 
-        fields.widthMm?.addEventListener('input', syncDwDimensions);
-        fields.heightMm?.addEventListener('input', syncDwDimensions);
-
-        dwApplySvg?.addEventListener('click', () => {
-            const svg = designerSvgInput?.value;
-            if (svg && drawingWrap) {
-                drawingWrap.innerHTML = svg;
-                if (drawingSvgInput) drawingSvgInput.value = svg;
+        // Sincronizar dimensiones del hueco con el diseñador
+        fields.widthMm?.addEventListener('input', function () {
+            if (dwReady && window.DesignerWidget) {
+                var w = parseInt(fields.widthMm?.value || '1500', 10);
+                var h = parseInt(fields.heightMm?.value || '1200', 10);
+                window.DesignerWidget.setDimensions(w, h);
             }
+        });
+        fields.heightMm?.addEventListener('input', function () {
+            if (dwReady && window.DesignerWidget) {
+                var w = parseInt(fields.widthMm?.value || '1500', 10);
+                var h = parseInt(fields.heightMm?.value || '1200', 10);
+                window.DesignerWidget.setDimensions(w, h);
+            }
+        });
+
+        // Presets
+        document.getElementById('dwPresetEscaparate')?.addEventListener('click', function () {
+            var w = parseInt(fields.widthMm?.value || '1500', 10);
+            var h = parseInt(fields.heightMm?.value || '1200', 10);
+            if (window.DesignerWidget) window.DesignerWidget.applyPreset('escaparate', w, h);
+            saveDesignerToCurrentItem();
+        });
+        document.getElementById('dwPresetFijoPF')?.addEventListener('click', function () {
+            var w = parseInt(fields.widthMm?.value || '1500', 10);
+            var h = parseInt(fields.heightMm?.value || '1200', 10);
+            if (window.DesignerWidget) window.DesignerWidget.applyPreset('fijo_puerta_fijo', w, h);
+            saveDesignerToCurrentItem();
         });
     }
 

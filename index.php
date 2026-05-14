@@ -285,15 +285,19 @@ if ($configExists) {
             </div>
         </form>
 
-    <!-- ── DISEÑADOR DE PANELES (dentro del panel izquierdo, fuera del form) ── -->
-    <details class="designer-embed" id="designerEmbed">
-        <summary>
-            Diseño de paneles
-            <span class="designer-embed__badge" id="dwPanelBadge"></span>
-        </summary>
+    <!-- ── DISEÑADOR DE PANELES (siempre visible) ── -->
+    <div class="designer-section">
+        <div class="designer-section__toolbar">
+            <h3>Composición de paneles</h3>
+            <div class="designer-section__actions">
+                <button type="button" class="secondary-button" id="dwPresetEscaparate" style="font-size:0.82rem">🏬 Escaparate (puerta + fijo)</button>
+                <button type="button" class="secondary-button" id="dwPresetFijoPF" style="font-size:0.82rem">Fijo + Puerta + Fijo</button>
+                <button type="button" class="secondary-button" id="dwApplySvg" style="white-space:nowrap;padding:0.4rem 0.8rem;font-size:0.82rem">Usar este dibujo →</button>
+                <span class="designer-embed__badge" id="dwPanelBadge"></span>
+            </div>
+        </div>
         <div class="designer-embed__hint">
-            <span>Diseña la distribución de paneles. La serie de carpintería se toma del campo de arriba.</span>
-            <button type="button" class="secondary-button" id="dwApplySvg" style="white-space:nowrap;padding:0.4rem 0.8rem;font-size:0.82rem">Usar este dibujo →</button>
+            <span>Diseña la distribución de paneles. La serie de carpintería se toma del campo de arriba. Cada panel puede tener un tipo distinto (fijo, puerta, practicable...).</span>
         </div>
         <div class="designer-embed__body">
             <!-- CONTROLES -->
@@ -395,7 +399,7 @@ if ($configExists) {
             <!-- CANVAS -->
             <div class="designer-embed__canvas" id="dw-canvasWrap"></div>
         </div>
-    </details>
+    </div>
     </section>
 
     <section class="panel preview-panel">

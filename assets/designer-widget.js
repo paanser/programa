@@ -426,18 +426,69 @@ window.DesignerWidget = (function () {
         });
     }
 
+    // ── PRESETS ────────────────────────────────────────────
+    function applyPreset(preset, facadeW, facadeH) {
+        state.facadeW = facadeW || state.facadeW;
+        state.facadeH = facadeH || state.facadeH;
+        if (el(opts.facadeW)) el(opts.facadeW).value = state.facadeW;
+        if (el(opts.facadeH)) el(opts.facadeH).value = state.facadeH;
+
+        if (preset === 'escaparate') {
+            // Puerta (40%) + Fijo (60%) con división vertical
+            var door = mkLeaf('puerta', 'Puerta', 'izq');
+            var show = mkLeaf('fijo', 'Escaparate');
+            var sp = { dir: 'v', ratio: 0.40, a: door, b: show };
+            state.tree = { id: uid(), split: sp, system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
+            state.sel = door.id;
+        } else if (preset === 'fijo_puerta_fijo') {
+            // Fijo (25%) | Puerta (50%) | Fijo (25%)
+            var f1 = mkLeaf('fijo', 'Fijo', 'izq');
+            var door2 = mkLeaf('puerta', 'Puerta', 'izq');
+            var f2 = mkLeaf('fijo', 'Fijo', 'der');
+            var spR = { dir: 'v', ratio: 0.50, a: door2, b: f2 };
+            state.tree = { id: uid(), split: { dir: 'v', ratio: 0.25, a: f1, b: spR }, system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
+            state.sel = door2.id;
+        } else {
+            state.tree = mkLeaf('practicable');
+            state.sel = state.tree.id;
+        }
+        render();
+    }
+
+    function deepCloneTree(node) {
+        if (!node) return null;
+        var clone = { id: uid(), system: node.system, label: node.label, opening: node.opening, heightPct: node.heightPct, topPct: node.topPct, split: null };
+        if (node.split) {
+            clone.split = { dir: node.split.dir, ratio: node.split.ratio, a: deepCloneTree(node.split.a), b: deepCloneTree(node.split.b) };
+        }
+        return clone;
+    }
+
     // ── API PÚBLICA ───────────────────────────────────────
     function init(options) {
         opts = options || {};
         onSvgChange = opts.onSvgChange || null;
         state.facadeW = opts.facadeW_val || 2400;
         state.facadeH = opts.facadeH_val || 1200;
-        state.tree = mkLeaf('practicable');
-        state.sel  = state.tree.id;
-        // Sincronizar inputs con valores iniciales
+        if (opts.tree) {
+            state.tree = deepCloneTree(opts.tree);
+        } else {
+            state.tree = mkLeaf('practicable');
+        }
+        state.sel = state.tree ? state.tree.id : null;
         if (el(opts.facadeW)) el(opts.facadeW).value = state.facadeW;
         if (el(opts.facadeH)) el(opts.facadeH).value = state.facadeH;
         bindEvents();
+        render();
+    }
+
+    function loadState(treeData) {
+        state.tree = deepCloneTree(treeData);
+        state.sel = state.tree ? state.tree.id : null;
+        if (state.tree) {
+            if (el(opts.facadeW)) el(opts.facadeW).value = state.facadeW;
+            if (el(opts.facadeH)) el(opts.facadeH).value = state.facadeH;
+        }
         render();
     }
 
@@ -451,5 +502,5 @@ window.DesignerWidget = (function () {
 
     function getState() { return { facadeW: state.facadeW, facadeH: state.facadeH, tree: state.tree }; }
 
-    return { init, setDimensions, getState, RAL_COLORS, SYS };
+    return { init, loadState, setDimensions, getState, applyPreset, deepCloneTree, RAL_COLORS, SYS };
 })();
