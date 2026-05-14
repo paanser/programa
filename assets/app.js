@@ -548,6 +548,8 @@ if (form) {
         const carpentrySeriesValue = fields.carpentrySeriesSelect?.value || '';
         const carpentrySeriesLabel = fields.carpentrySeriesSelect?.selectedOptions?.[0]?.textContent?.trim() || '';
 
+        var dwState = (typeof window.DesignerWidget !== 'undefined' && window.DesignerWidget.getState) ? window.DesignerWidget.getState() : null;
+
         return {
             systemType,
             systemTypeLabel: fields.systemType?.selectedOptions?.[0]?.textContent?.trim() || systemType,
@@ -595,6 +597,8 @@ if (form) {
             appliedMarginPct,
             total,
             drawingSvg: '',
+            designerTree: dwState ? dwState.tree : null,
+            designerSvg: (typeof window.DesignerWidget !== 'undefined' && window.designerSvgInput) ? (window.designerSvgInput.value || '') : '',
         };
     };
 
@@ -907,6 +911,8 @@ if (form) {
         glass_height_mm: item.glassHeightMm,
         glass_panels: item.glassPanels,
         drawing_svg: item.drawingSvg,
+        designer_tree: item.designerTree || null,
+        designer_svg: item.designerSvg || '',
     });
 
     const updateSerializedInputs = () => {
@@ -1245,10 +1251,35 @@ if (form) {
         });
     }
 
-    const carpentryRalInput = document.getElementById('carpentryRal');
-    fields.profileColorPreset?.addEventListener('change', () => {
-        const opt = fields.profileColorPreset.selectedOptions[0];
-        const ral = opt?.dataset?.ral || '';
+    function saveDesignerToCurrentItem() {
+        var selected = getSelectedItem();
+        if (!selected) { return; }
+        if (window.designerSvgInput) {
+            selected.designerSvg = window.designerSvgInput.value || '';
+        }
+        if (window.DesignerWidget && window.DesignerWidget.getState) {
+            var st = window.DesignerWidget.getState();
+            selected.designerTree = st ? st.tree : null;
+        }
+        if (selected.designerSvg) {
+            selected.drawingSvg = selected.designerSvg;
+            if (drawingSvgInput) drawingSvgInput.value = selected.designerSvg;
+        }
+    }
+
+    dwApplySvg?.addEventListener('click', function () {
+        saveDesignerToCurrentItem();
+        var selected = getSelectedItem();
+        if (selected && selected.designerSvg && drawingWrap) {
+            drawingWrap.innerHTML = selected.designerSvg;
+        }
+        syncState();
+    });
+
+    var carpentryRalInput = document.getElementById('carpentryRal');
+    fields.profileColorPreset?.addEventListener('change', function () {
+        var opt = fields.profileColorPreset.selectedOptions[0];
+        var ral = opt?.dataset?.ral || '';
         if (carpentryRalInput) carpentryRalInput.value = ral;
     });
 }
