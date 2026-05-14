@@ -84,6 +84,7 @@ if ($configExists) {
 
         <form id="quoteForm" method="post" action="save_quote.php">
             <input type="hidden" name="lang" value="<?= h($lang) ?>">
+            <input type="hidden" name="_csrf_token" value="<?= h(csrf_token()) ?>">
             <div class="grid two">
                 <label><?= h(tr('client', $lang)) ?>
                     <input type="text" name="client_name" required>
@@ -155,6 +156,7 @@ if ($configExists) {
                     <select name="tilt_turn_leaf" id="tiltTurnLeaf">
                         <option value="izquierda"><?= h(tr('left', $lang)) ?></option>
                         <option value="derecha"><?= h(tr('right', $lang)) ?></option>
+                        <option value="unica"><?= h(tr('only_leaf', $lang)) ?></option>
                     </select>
                     <span class="field-hint"><?= h(tr('tilt_turn_leaf_hint', $lang)) ?></span>
                 </label>

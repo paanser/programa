@@ -76,7 +76,17 @@ try {
 
         <h2><?= h(tr('client', $lang)) ?></h2>
         <p><strong><?= h((string)$row['client_name']) ?></strong></p>
-        <p><?= h((string)$row['client_email']) ?> - <?= h((string)$row['client_phone']) ?></p>
+        <p><?php
+            $email = trim((string)$row['client_email']);
+            $phone = trim((string)$row['client_phone']);
+            if ($email !== '' && $phone !== ''): ?>
+                <?= h($email) ?> - <?= h($phone) ?>
+            <?php elseif ($email !== ''): ?>
+                <?= h($email) ?>
+            <?php elseif ($phone !== ''): ?>
+                <?= h($phone) ?>
+            <?php endif; ?>
+        </p>
 
         <h3><?= h(tr('configuration', $lang)) ?></h3>
         <p><?= h(tr('system', $lang)) ?>: <?= h(humanize_system_type((string)$row['system_type'], $lang)) ?></p>
@@ -165,9 +175,9 @@ try {
                             <?php endif; ?>
                         </div>
                         <?php
-                        $itemSvg = (string)($item['drawing_svg'] ?? '');
+                        $itemSvg = render_svg((string)($item['drawing_svg'] ?? ''));
                         if ($itemSvg === '') {
-                            $itemSvg = (string)($row['drawing_svg'] ?? '');
+                            $itemSvg = render_svg((string)($row['drawing_svg'] ?? ''));
                         }
                         if ($itemSvg !== ''): ?>
                         <div class="drawing-wrap drawing-wrap--item">
@@ -178,9 +188,10 @@ try {
                 <?php endforeach; ?>
             </div>
         <?php else: ?>
-            <?php if ((string)($row['drawing_svg'] ?? '') !== ''): ?>
+            <?php $singleSvg = render_svg((string)($row['drawing_svg'] ?? '')); ?>
+            <?php if ($singleSvg !== ''): ?>
             <div class="drawing-wrap">
-                <?= (string)$row['drawing_svg'] ?>
+                <?= $singleSvg ?>
             </div>
             <?php endif; ?>
         <?php endif; ?>

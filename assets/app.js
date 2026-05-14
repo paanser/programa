@@ -300,12 +300,25 @@ if (form) {
         }
 
         const rightOption = Array.from(fields.tiltTurnLeaf.options).find((option) => option.value === 'derecha');
+        const unicaOption = Array.from(fields.tiltTurnLeaf.options).find((option) => option.value === 'unica');
         if (rightOption) {
             rightOption.hidden = systemType !== 'oscilobatiente' || leaves === 1;
         }
+        if (unicaOption) {
+            unicaOption.hidden = true;
+        }
 
-        if (systemType !== 'oscilobatiente' || leaves === 1) {
-            fields.tiltTurnLeaf.value = 'izquierda';
+        if (systemType !== 'oscilobatiente') {
+            fields.tiltTurnLeaf.value = '';
+            fields.tiltTurnLeaf.disabled = true;
+            return;
+        }
+
+        if (leaves === 1) {
+            if (unicaOption) {
+                unicaOption.hidden = false;
+            }
+            fields.tiltTurnLeaf.value = 'unica';
             fields.tiltTurnLeaf.disabled = true;
             return;
         }
@@ -951,7 +964,7 @@ if (form) {
         }
         fields.carpentryReference.value = item.carpentryReference;
         fields.trimSize.value = String(item.trimSize);
-        fields.tiltTurnLeaf.value = item.tiltTurnLeaf === 'derecha' ? 'derecha' : 'izquierda';
+        fields.tiltTurnLeaf.value = item.tiltTurnLeaf === 'derecha' ? 'derecha' : (item.tiltTurnLeaf === 'unica' ? 'unica' : 'izquierda');
         fields.frameCutType.value = item.frameCutType === 'mitered' ? 'mitered' : 'recto';
         fields.glassType.value = item.glassTypeValue;
         fields.glassDescription.value = item.glassDescription;
@@ -1265,7 +1278,15 @@ const S28_K = {
 };
 
 function s28JunqRef(thick) {
-    return thick > 20 ? '6.180' : '6.179';
+    if (thick > 20) { return '6.180'; }
+    if (thick > 12) { return '6.185'; }
+    return '6.179';
+}
+
+function s28GlassThickness(glassTypeValue) {
+    const nums = (glassTypeValue || '').match(/\d+/g);
+    if (!nums) { return 20; }
+    return nums.reduce((sum, n) => sum + parseInt(n, 10), 0);
 }
 
 function s28SystemId(quote) {
@@ -1279,9 +1300,9 @@ function s28SystemId(quote) {
     return 'v1h_prac';
 }
 
-function s28Calc(sysId, L, H) {
+function s28Calc(sysId, L, H, glassThick) {
     const K = S28_K;
-    const jRef = s28JunqRef(20);
+    const jRef = s28JunqRef(glassThick || 20);
     if (sysId === 'v_fijo') {
         const gW = L - K.FIJO, gH = H - K.FIJO;
         return { bars: [
@@ -1340,7 +1361,8 @@ function renderS28Descompuesto(item) {
     if (!sysId) {
         return `<div class="descomp-notice">El sistema <strong>corredera</strong> no pertenece a la Serie 28. Consulta el catálogo de la serie correspondiente.</div>`;
     }
-    const result = s28Calc(sysId, item.widthMm, item.heightMm);
+    const glassThick = s28GlassThickness(item.glassTypeValue);
+    const result = s28Calc(sysId, item.widthMm, item.heightMm, glassThick);
     if (!result) {
         return `<div class="descomp-notice">No hay descompuesto disponible para este sistema.</div>`;
     }

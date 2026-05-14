@@ -12,6 +12,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+$csrfToken = trim((string)($_POST['_csrf_token'] ?? ''));
+if (!validate_csrf_token($csrfToken)) {
+    http_response_code(403);
+    echo h(tr('csrf_invalid', $lang));
+    exit;
+}
+
 $clientName = trim((string)($_POST['client_name'] ?? ''));
 if ($clientName === '') {
     http_response_code(422);

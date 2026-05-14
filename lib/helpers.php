@@ -7,6 +7,32 @@ function h(string $value): string
     return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
+function init_session(): void
+{
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+}
+
+function csrf_token(): string
+{
+    init_session();
+    if (empty($_SESSION['_csrf_token'])) {
+        $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['_csrf_token'];
+}
+
+function validate_csrf_token(string $token): bool
+{
+    init_session();
+    $expected = $_SESSION['_csrf_token'] ?? '';
+    if ($expected === '' || !hash_equals($expected, $token)) {
+        return false;
+    }
+    return true;
+}
+
 function get_current_lang(?array $source = null): string
 {
     $candidate = $source['lang'] ?? $_GET['lang'] ?? $_POST['lang'] ?? 'es';
@@ -159,6 +185,10 @@ function tr(string $key, ?string $lang = null): string
             'save_error' => 'Error guardando presupuesto',
             'duplicate_error' => 'Error duplicando presupuesto',
             'required_client' => 'Cliente obligatorio',
+            'csrf_invalid' => 'Sesión inválida o expirada. Recarga la página e inténtalo de nuevo.',
+            'previous' => 'Anterior',
+            'next' => 'Siguiente',
+            'page' => 'Página',
         ],
         'ca' => [
             'app_title' => 'Presupuestador carpinteria metelica vidres sosa',
@@ -300,6 +330,10 @@ function tr(string $key, ?string $lang = null): string
             'save_error' => 'Error desant pressupost',
             'duplicate_error' => 'Error duplicant pressupost',
             'required_client' => 'Client obligatori',
+            'csrf_invalid' => 'Sessió invàlida o expirada. Recarrega la pàgina i intenta-ho de nou.',
+            'previous' => 'Anterior',
+            'next' => 'Següent',
+            'page' => 'Pàgina',
         ],
     ];
 
@@ -730,6 +764,16 @@ function calculate_quote(array $data): array
         'iva_amount' => round($totals['iva_amount'], 2),
         'total' => round($totals['total'], 2),
     ];
+}
+
+function render_svg(string $svg): string
+{
+    $svg = preg_replace('/<script\b[^>]*>.*?<\/script>/is', '', $svg);
+    $svg = trim($svg);
+    if (str_starts_with($svg, '<svg') || str_starts_with($svg, '<?xml')) {
+        return $svg;
+    }
+    return '';
 }
 
 function build_quote_config(array $data, array $calc): array

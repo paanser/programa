@@ -11,7 +11,17 @@ $rows = [];
 
 try {
     $pdo = get_pdo();
-    $rows = $pdo->query('SELECT id, quote_number, created_at, client_name, system_type, total FROM quotes ORDER BY id DESC LIMIT 200')->fetchAll();
+    $perPage = 50;
+    $page = max(1, (int)($_GET['page'] ?? 1));
+    $totalRows = (int)$pdo->query('SELECT COUNT(*) FROM quotes')->fetchColumn();
+    $totalPages = max(1, (int)ceil($totalRows / $perPage));
+    $page = min($page, $totalPages);
+    $offset = ($page - 1) * $perPage;
+    $stmt = $pdo->prepare("SELECT id, quote_number, created_at, client_name, system_type, total FROM quotes ORDER BY id DESC LIMIT :limit OFFSET :offset");
+    $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->execute();
+    $rows = $stmt->fetchAll();
 } catch (Throwable $e) {
     $error = $e->getMessage();
 }
@@ -79,6 +89,17 @@ try {
                 </tbody>
             </table>
         </div>
+        <?php if ($totalPages > 1): ?>
+        <div class="pagination">
+            <?php if ($page > 1): ?>
+                <a href="<?= h(url_with_lang('list_quotes.php', ['page' => $page - 1], $lang)) ?>" class="link-button">&laquo; <?= h(tr('previous', $lang)) ?></a>
+            <?php endif; ?>
+            <span class="pagination-info"><?= h(tr('page', $lang)) ?> <?= $page ?> / <?= $totalPages ?></span>
+            <?php if ($page < $totalPages): ?>
+                <a href="<?= h(url_with_lang('list_quotes.php', ['page' => $page + 1], $lang)) ?>" class="link-button"><?= h(tr('next', $lang)) ?> &raquo;</a>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
     </section>
 </main>
 </body>
