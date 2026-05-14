@@ -593,6 +593,66 @@ function get_quote_items_from_request(array $data): array
     return [$data];
 }
 
+function calculate_composite_from_tree(array $tree, int $widthMm, int $heightMm): array
+{
+    $alMl = 0.0;
+    $glassM2 = 0.0;
+
+    $flatten = function (array $node, float $x, float $y, float $w, float $h) use (&$flatten): array {
+        $result = [];
+        if (isset($node['split'])) {
+            $sp = $node['split'];
+            $dir = $sp['dir'] ?? 'v';
+            $ratio = (float)($sp['ratio'] ?? 0.5);
+            if ($dir === 'v') {
+                $result = array_merge(
+                    $flatten($sp['a'], $x, $y, $w * $ratio, $h),
+                    $flatten($sp['b'], $x + $w * $ratio, $y, $w * (1 - $ratio), $h)
+                );
+            } else {
+                $result = array_merge(
+                    $flatten($sp['a'], $x, $y, $w, $h * $ratio),
+                    $flatten($sp['b'], $x, $y + $h * $ratio, $w, $h * (1 - $ratio))
+                );
+            }
+        } else {
+            $result[] = ['node' => $node, 'x' => $x, 'y' => $y, 'w' => $w, 'h' => $h];
+        }
+        return $result;
+    };
+
+    $panels = $flatten($tree, 0.0, 0.0, 1.0, 1.0);
+    $widthM = $widthMm / 1000;
+    $heightM = $heightMm / 1000;
+    $frameMl = ($widthM * 2) + ($heightM * 2);
+
+    foreach ($panels as $panel) {
+        $sys = (string)($panel['node']['system'] ?? 'fijo');
+        $pW = max(100, $widthMm * $panel['w']);
+        $pH = max(100, $heightMm * $panel['h'] * ((int)($panel['node']['heightPct'] ?? 100) / 100));
+        $pWM = $pW / 1000;
+        $pHM = $pH / 1000;
+        $leafMl = 0.0;
+        if ($sys === 'puerta') {
+            $leafMl = ($pWM * 1.5 + $pHM * 2) * 1.2;
+        } elseif (!in_array($sys, ['fijo', 'tubo'], true)) {
+            $leafMl = ($pWM * 2 + $pHM * 2) * 0.35;
+        }
+        $alMl += $leafMl;
+        $glassM2 += $pWM * $pHM;
+    }
+
+    return [
+        'aluminum_ml' => round(($frameMl + $alMl), 3),
+        'glass_m2' => round($glassM2, 3),
+        'panels' => array_map(function ($p) use ($widthMm, $heightMm) {
+            $pw = (int)round($widthMm * $p['w']);
+            $ph = (int)round($heightMm * $p['h'] * ((int)($p['node']['heightPct'] ?? 100) / 100));
+            return ['system' => $p['node']['system'] ?? 'fijo', 'label' => $p['node']['label'] ?? '', 'width_mm' => $pw, 'height_mm' => $ph];
+        }, $panels),
+    ];
+}
+
 function calculate_quote_item(array $data): array
 {
     $widthMm = max(300, (int)($data['width_mm'] ?? 0));
@@ -624,16 +684,35 @@ function calculate_quote_item(array $data): array
     $pricingMode = (string)($data['pricing_mode'] ?? 'fabricada');
     $purchasedUnitCost = max(0.0, (float)($data['purchased_unit_cost'] ?? 0));
 
-    $widthM = $widthMm / 1000;
-    $heightM = $heightMm / 1000;
+    $isComposite = !empty($data['is_composite']) && !empty($data['designer_tree']);
+    $compositeData = null;
 
-    $frameMl = ($widthM * 2) + ($heightM * 2);
-    $leafDividerMl = max(0, $leaves - 1) * $heightM;
-    $leafPerimeterMl = $leaves * ((($widthM / $leaves) * 2) + ($heightM * 2));
-    $aluminumMl = round(($frameMl + $leafDividerMl + ($leafPerimeterMl * 0.35)) * $quantity, 3);
+    if ($isComposite) {
+        $tree = $data['designer_tree'];
+        if (is_string($tree)) {
+            $tree = json_decode($tree, true);
+        }
+        if (is_array($tree) && isset($tree['split'])) {
+            $compositeData = calculate_composite_from_tree($tree, $widthMm, $heightMm);
+        } else {
+            $isComposite = false;
+        }
+    }
 
-    $glassPieceAreaM2 = round(($glassWidthMm / 1000) * ($glassHeightMm / 1000), 3);
-    $glassM2 = round($glassPieceAreaM2 * $glassPanels * $quantity, 3);
+    if ($isComposite && $compositeData !== null) {
+        $aluminumMl = round($compositeData['aluminum_ml'] * $quantity, 3);
+        $glassM2 = round($compositeData['glass_m2'] * $quantity, 3);
+        $glassPieceAreaM2 = round($glassM2 / max(1, $quantity), 3);
+    } else {
+        $widthM = $widthMm / 1000;
+        $heightM = $heightMm / 1000;
+        $frameMl = ($widthM * 2) + ($heightM * 2);
+        $leafDividerMl = max(0, $leaves - 1) * $heightM;
+        $leafPerimeterMl = $leaves * ((($widthM / $leaves) * 2) + ($heightM * 2));
+        $aluminumMl = round(($frameMl + $leafDividerMl + ($leafPerimeterMl * 0.35)) * $quantity, 3);
+        $glassPieceAreaM2 = round(($glassWidthMm / 1000) * ($glassHeightMm / 1000), 3);
+        $glassM2 = round($glassPieceAreaM2 * $glassPanels * $quantity, 3);
+    }
 
     $aluminumCost = $aluminumMl * $aluminumPriceMl;
     $glassCost = $glassM2 * $glassPriceM2;
@@ -652,13 +731,13 @@ function calculate_quote_item(array $data): array
     return [
         'width_mm' => $widthMm,
         'height_mm' => $heightMm,
-        'leaves' => $leaves,
+        'leaves' => $isComposite ? count($compositeData['panels'] ?? []) : $leaves,
         'quantity' => $quantity,
         'glass_width_mm' => $glassWidthMm,
         'glass_height_mm' => $glassHeightMm,
         'glass_panels' => $glassPanels,
         'tilt_turn_leaf' => $tiltTurnLeaf,
-        'glass_piece_area_m2' => $glassPieceAreaM2,
+        'glass_piece_area_m2' => $glassPieceAreaM2 ?? 0,
         'aluminum_price_ml' => round($aluminumPriceMl, 2),
         'glass_price_m2' => round($glassPriceM2, 2),
         'glass_cost' => round($glassCost, 2),

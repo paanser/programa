@@ -529,12 +529,76 @@ if (form) {
 
         const widthM = widthMm / 1000;
         const heightM = heightMm / 1000;
-        const frameMl = (widthM * 2) + (heightM * 2);
-        const dividerMl = Math.max(0, leaves - 1) * heightM;
-        const leafPerimeterMl = leaves * (((widthM / leaves) * 2) + (heightM * 2));
-        const aluminumMl = roundMetric(((frameMl + dividerMl) + (leafPerimeterMl * 0.35)) * quantity);
-        const glassPieceAreaM2 = roundMetric((glassWidthMm / 1000) * (glassHeightMm / 1000));
-        const glassM2 = roundMetric(glassPieceAreaM2 * glassPanels * quantity);
+        const carpentrySeriesValue = fields.carpentrySeriesSelect?.value || '';
+        const carpentrySeriesLabel = fields.carpentrySeriesSelect?.selectedOptions?.[0]?.textContent?.trim() || '';
+
+        // ── COMPOSITE: calcular por panel del diseñador ──
+        var dwState = (typeof window.DesignerWidget !== 'undefined' && window.DesignerWidget.getState) ? window.DesignerWidget.getState() : null;
+
+        function flattenTreePanels(node, x, y, w, h) {
+            x = x || 0; y = y || 0; w = w || 1; h = h || 1;
+            if (!node) return [];
+            if (!node.split) return [{ node: node, x: x, y: y, w: w, h: h }];
+            var sp = node.split;
+            if (sp.dir === 'v') return flattenTreePanels(sp.a, x, y, w * sp.ratio, h).concat(flattenTreePanels(sp.b, x + w * sp.ratio, y, w * (1 - sp.ratio), h));
+            return flattenTreePanels(sp.a, x, y, w, h * sp.ratio).concat(flattenTreePanels(sp.b, x, y + h * sp.ratio, w, h * (1 - sp.ratio)));
+        }
+
+        var panelTypes = [];
+        var compositeLabel = systemTypeLabel;
+        var isComposite = false;
+        var compAlMl = 0, compGlassM2 = 0;
+
+        if (dwState && dwState.tree && dwState.tree.split) {
+            var panels = flattenTreePanels(dwState.tree);
+            panelTypes = panels.map(function (p) { return p.node.system || 'fijo'; });
+            var uniqueTypes = [];
+            panelTypes.forEach(function (t) { if (uniqueTypes.indexOf(t) === -1) uniqueTypes.push(t); });
+            if (uniqueTypes.length > 1) {
+                isComposite = true;
+                var typeNames = { fijo: 'Fijo', puerta: 'Puerta', practicable: 'Practicable', oscilobatiente: 'Oscilo', corredera: 'Corredera', abatible: 'Abatible', tubo: 'Tubo' };
+                compositeLabel = panelTypes.map(function (t) { return typeNames[t] || t; }).join(' + ');
+
+                // Frame compartido (perimetro total)
+                var frameMl = (widthM * 2) + (heightM * 2);
+
+                // Calcular por panel
+                panels.forEach(function (panel) {
+                    var sys = panel.node.system || 'fijo';
+                    var pW = Math.max(100, widthMm * panel.w);
+                    var pH = Math.max(100, heightMm * panel.h * ((panel.node.heightPct || 100) / 100));
+                    var pWM = pW / 1000, pHM = pH / 1000;
+                    var leafMl = 0;
+                    if (sys === 'fijo' || sys === 'tubo') {
+                        leafMl = 0;
+                    } else if (sys === 'puerta') {
+                        leafMl = (pWM * 1.5 + pHM * 2) * 1.2;
+                    } else {
+                        leafMl = (pWM * 2 + pHM * 2) * 0.35;
+                    }
+                    compAlMl += leafMl;
+                    compGlassM2 += (pWM * pHM);
+                });
+
+                compAlMl = roundMetric((frameMl + compAlMl) * quantity);
+                compGlassM2 = roundMetric(compGlassM2 * quantity);
+            }
+        }
+
+        // ── CALCULO ESTANDAR o COMPOSITE ──
+        var aluminumMl, glassPieceAreaM2, glassM2;
+        if (isComposite) {
+            aluminumMl = compAlMl;
+            glassM2 = compGlassM2;
+            glassPieceAreaM2 = roundMetric(glassM2 / quantity);
+        } else {
+            var fMl = (widthM * 2) + (heightM * 2);
+            var dMl = Math.max(0, leaves - 1) * heightM;
+            var lpMl = leaves * (((widthM / leaves) * 2) + (heightM * 2));
+            aluminumMl = roundMetric(((fMl + dMl) + (lpMl * 0.35)) * quantity);
+            glassPieceAreaM2 = roundMetric((glassWidthMm / 1000) * (glassHeightMm / 1000));
+            glassM2 = roundMetric(glassPieceAreaM2 * glassPanels * quantity);
+        }
         const glassCost = roundMoney(glassM2 * glassPriceM2);
         const fabricatedBase = (aluminumMl * aluminumPriceMl) + glassCost + laborCost + internalExtraCost;
         const purchasedBase = (purchasedUnitCost * quantity) + internalExtraCost;
@@ -545,32 +609,18 @@ if (form) {
         const ivaAmount = roundMoney(taxableBase * (ivaPct / 100));
         const total = roundMoney(taxableBase + ivaAmount);
 
-        const carpentrySeriesValue = fields.carpentrySeriesSelect?.value || '';
-        const carpentrySeriesLabel = fields.carpentrySeriesSelect?.selectedOptions?.[0]?.textContent?.trim() || '';
-
-        var dwState = (typeof window.DesignerWidget !== 'undefined' && window.DesignerWidget.getState) ? window.DesignerWidget.getState() : null;
-
-        // Detectar composicion de paneles en el disenador
-        var panelTypes = [];
-        var compositeLabel = systemTypeLabel;
-        if (dwState && dwState.tree && dwState.tree.split) {
-            var leafs = (function getLeafs(n) {
-                if (!n) return [];
-                if (!n.split) return [n.system || 'fijo'];
-                return getLeafs(n.split.a).concat(getLeafs(n.split.b));
-            })(dwState.tree);
-            panelTypes = leafs;
-            var uniqueTypes = [...new Set(leafs)];
-            if (uniqueTypes.length > 1) {
-                var typeNames = { fijo: 'Fijo', puerta: 'Puerta', practicable: 'Practicable', oscilobatiente: 'Oscilo', corredera: 'Corredera', abatible: 'Abatible', tubo: 'Tubo' };
-                compositeLabel = leafs.map(function (t) { return typeNames[t] || t; }).join(' + ');
-            }
-        }
-
         return {
             systemType,
-            isComposite: panelTypes.length > 1,
+            isComposite: isComposite,
             compositeLabel: compositeLabel,
+            panels: isComposite ? (function getPanelData(t, w, h) {
+                if (!t || !t.split) return [];
+                return flattenTreePanels(t).map(function (p) {
+                    var pw = Math.round(w * p.w);
+                    var ph = Math.round(h * p.h * ((p.node.heightPct || 100) / 100));
+                    return { system: p.node.system || 'fijo', label: p.node.label || '', widthMm: pw, heightMm: ph };
+                });
+            })(dwState.tree, widthMm, heightMm) : [],
             systemTypeLabel: fields.systemType?.selectedOptions?.[0]?.textContent?.trim() || systemType,
             openingType: fields.openingType?.value || 'izquierda',
             openingTypeLabel: fields.openingType?.selectedOptions?.[0]?.textContent?.trim() || '',
@@ -616,6 +666,11 @@ if (form) {
             appliedMarginPct,
             total,
             drawingSvg: '',
+            supplyCost: 0,
+            installationCost: 0,
+            hardwareCost: 0,
+            extraLabor: 0,
+            itemNotes: '',
             designerTree: dwState ? dwState.tree : null,
             designerSvg: (typeof window.DesignerWidget !== 'undefined' && window.designerSvgInput) ? (window.designerSvgInput.value || '') : '',
         };
@@ -899,6 +954,16 @@ if (form) {
         `;
     };
 
+    const editableFields = ['supply_cost', 'installation_cost', 'hardware_cost', 'extra_labor', 'item_notes'];
+
+    const getItemEditable = (item) => ({
+        supply_cost: item.supplyCost || 0,
+        installation_cost: item.installationCost || 0,
+        hardware_cost: item.hardwareCost || 0,
+        extra_labor: item.extraLabor || 0,
+        item_notes: item.itemNotes || '',
+    });
+
     const serializeItemForSubmit = (item) => ({
         system_type: item.systemType,
         opening_type: item.openingType,
@@ -930,6 +995,14 @@ if (form) {
         glass_height_mm: item.glassHeightMm,
         glass_panels: item.glassPanels,
         drawing_svg: item.drawingSvg,
+        is_composite: item.isComposite ? 1 : 0,
+        composite_label: item.compositeLabel || '',
+        panels: item.panels || [],
+        supply_cost: item.supplyCost || 0,
+        installation_cost: item.installationCost || 0,
+        hardware_cost: item.hardwareCost || 0,
+        extra_labor: item.extraLabor || 0,
+        item_notes: item.itemNotes || '',
         designer_tree: item.designerTree || null,
         designer_svg: item.designerSvg || '',
     });
@@ -1172,6 +1245,28 @@ if (form) {
                 panel.innerHTML = renderS28Descompuesto(item);
                 panel.dataset.loaded = '1';
             }
+            return;
+        }
+
+        const saveBtn = event.target.closest('.de-save-btn');
+        if (saveBtn) {
+            var container = saveBtn.closest('.descomp-editable');
+            if (!container) { return; }
+            var itemId = container.getAttribute('data-item-id');
+            var item = quoteItems.find(function (i) { return i.id === itemId; });
+            if (!item) { return; }
+            container.querySelectorAll('.de-field').forEach(function (field) {
+                var fName = field.getAttribute('data-field');
+                if (!fName) { return; }
+                if (fName === 'itemNotes') {
+                    item.itemNotes = field.value;
+                } else {
+                    item[fName] = parseFloat(field.value) || 0;
+                }
+            });
+            syncState();
+            saveBtn.textContent = '\u2713 Guardado';
+            setTimeout(function () { saveBtn.textContent = 'Guardar costes de partida'; }, 1500);
         }
     });
 
@@ -1360,42 +1455,76 @@ function s28SystemId(quote) {
 }
 
 function renderS28Descompuesto(item) {
+    var itemId = item.id || '';
     var sysId = s28SystemId(item);
-    if (!sysId) {
-        return '<div class="descomp-notice">El sistema <strong>corredera</strong> no pertenece a la Serie 28. Consulta el catalogo de la serie correspondiente.</div>';
-    }
-    var glassThick = S28.thickFromGlassType(item.glassTypeValue);
-    var result = S28.calculate(sysId, item.widthMm, item.heightMm, 1, { glassThick: glassThick, junquilloType: 'curvo_clip' });
-    if (!result) {
-        return '<div class="descomp-notice">No hay descompuesto disponible para este sistema.</div>';
-    }
-
-    var totalMl = 0;
-    var barsRows = '';
-    for (var i = 0; i < result.bars.length; i++) {
-        var b = result.bars[i];
-        var ml = (b.cut * b.qty / 1000).toFixed(3);
-        totalMl += b.cut * b.qty / 1000;
-        var errCls = b.cut < 0 ? ' class="descomp-err"' : '';
-        barsRows += '<tr><td class="descomp-ref">' + b.ref + '</td><td>' + (S28.PROFILES[b.ref] || b.desc) +
-            '</td><td' + errCls + '>' + Math.round(b.cut) + '</td><td>' + b.qty + '</td><td>' + ml + '</td></tr>';
-    }
-
-    var glassRows = '';
-    for (var j = 0; j < result.glass.length; j++) {
-        var g = result.glass[j];
-        var errClsG = (g.W <= 0 || g.H <= 0) ? ' class="descomp-err"' : '';
-        glassRows += '<tr><td>Vidrio</td><td' + errClsG + '>' + Math.round(g.W) + '</td><td' + errClsG + '>' +
-            Math.round(g.H) + '</td><td>' + g.qty + '</td><td>' + ((g.W / 1000) * (g.H / 1000) * g.qty).toFixed(3) + ' m\u00b2</td></tr>';
-    }
-
     var sysNames = { v_fijo: 'Ventana Fija', v1h_prac: 'Ventana 1H Practicable', v1h_osci: 'Ventana 1H Oscilobatiente', v2h_prac: 'Ventana 2H Practicable', v3h_prac: 'Ventana 3H Practicable' };
+    var systemName = sysNames[sysId] || sysId || 'Compuesto';
+    var isComposite = item.isComposite;
 
-    return '<div class="descomp-body"><div class="descomp-meta"><strong>Serie 28 \u00b7 EXTRUAL</strong>' +
-        '<span>' + (sysNames[sysId] || sysId) + ' \u00b7 ' + item.widthMm + ' \u00d7 ' + item.heightMm + ' mm</span></div>' +
-        '<table class="descomp-table"><thead><tr><th>Ref.</th><th>Descripcion</th><th>Corte mm</th><th>Cant.</th><th>Total ml</th></tr></thead><tbody>' +
-        barsRows + '</tbody><tfoot><tr><td colspan="4"><strong>Total aluminio</strong></td><td><strong>' + totalMl.toFixed(3) + ' ml</strong></td></tr></tfoot></table>' +
-        '<table class="descomp-table descomp-table--glass"><thead><tr><th>Vidrio</th><th>Ancho mm</th><th>Alto mm</th><th>Cant.</th><th>m\u00b2</th></tr></thead><tbody>' +
-        glassRows + '</tbody></table>' +
-        '<p class="descomp-note">Catalogo S28 EXTRUAL \u00b7 Cara marco 21.8 mm \u00b7 Descuento hoja 43.6 mm \u00b7 Verificar siempre con muestra.</p></div>';
+    var s28html = '';
+    if (sysId && !isComposite) {
+        var glassThick = S28.thickFromGlassType(item.glassTypeValue);
+        var result = S28.calculate(sysId, item.widthMm, item.heightMm, 1, { glassThick: glassThick, junquilloType: 'curvo_clip' });
+        if (result) {
+            var totalMl = 0;
+            var barsRows = '';
+            for (var i = 0; i < result.bars.length; i++) {
+                var b = result.bars[i];
+                var ml = (b.cut * b.qty / 1000).toFixed(3);
+                totalMl += b.cut * b.qty / 1000;
+                var errCls = b.cut < 0 ? ' class="descomp-err"' : '';
+                barsRows += '<tr><td class="descomp-ref">' + b.ref + '</td><td>' + (S28.PROFILES[b.ref] || b.desc) +
+                    '</td><td' + errCls + '>' + Math.round(b.cut) + '</td><td>' + b.qty + '</td><td>' + ml + '</td></tr>';
+            }
+            var glassRows = '';
+            for (var j = 0; j < result.glass.length; j++) {
+                var g = result.glass[j];
+                var errClsG = (g.W <= 0 || g.H <= 0) ? ' class="descomp-err"' : '';
+                glassRows += '<tr><td>Vidrio</td><td' + errClsG + '>' + Math.round(g.W) + '</td><td' + errClsG + '>' +
+                    Math.round(g.H) + '</td><td>' + g.qty + '</td><td>' + ((g.W / 1000) * (g.H / 1000) * g.qty).toFixed(3) + ' m\u00b2</td></tr>';
+            }
+            s28html = '<div class="descomp-meta"><strong>Serie 28 \u00b7 EXTRUAL</strong>' +
+                '<span>' + systemName + ' \u00b7 ' + item.widthMm + ' \u00d7 ' + item.heightMm + ' mm</span></div>' +
+                '<table class="descomp-table"><thead><tr><th>Ref.</th><th>Descripcion</th><th>Corte mm</th><th>Cant.</th><th>Total ml</th></tr></thead><tbody>' +
+                barsRows + '</tbody><tfoot><tr><td colspan="4"><strong>Total aluminio</strong></td><td><strong>' + totalMl.toFixed(3) + ' ml</strong></td></tr></tfoot></table>' +
+                '<table class="descomp-table descomp-table--glass"><thead><tr><th>Vidrio</th><th>Ancho mm</th><th>Alto mm</th><th>Cant.</th><th>m\u00b2</th></tr></thead><tbody>' +
+                glassRows + '</tbody></table>' +
+                '<p class="descomp-note">Catalogo S28 EXTRUAL \u00b7 Cara marco 21.8 mm \u00b7 Descuento hoja 43.6 mm \u00b7 Verificar siempre con muestra.</p>';
+        }
+    } else if (isComposite && item.panels && item.panels.length > 0) {
+        var compRows = '';
+        for (var pi = 0; pi < item.panels.length; pi++) {
+            var p = item.panels[pi];
+            compRows += '<tr><td>' + (p.label || (p.system || '')) + '</td><td>' + (p.system || '') + '</td><td>' + p.widthMm + '</td><td>' + p.heightMm + '</td><td>' + ((p.widthMm * p.heightMm) / 1000000).toFixed(3) + ' m\u00b2</td></tr>';
+        }
+        s28html = '<div class="descomp-meta"><strong>Composicion de paneles</strong>' +
+            '<span>' + systemName + ' \u00b7 ' + item.widthMm + ' \u00d7 ' + item.heightMm + ' mm</span></div>' +
+            '<table class="descomp-table"><thead><tr><th>Panel</th><th>Tipo</th><th>Ancho</th><th>Alto</th><th>Superficie</th></tr></thead><tbody>' +
+            compRows + '</tbody></table>';
+    } else {
+        s28html = '<p class="field-hint" style="padding:0.5rem">S28 no disponible para este sistema.</p>';
+    }
+
+    // ── CAMPOS EDITABLES POR PARTIDA ──
+    var sc = item.supplyCost || 0, ic = item.installationCost || 0;
+    var hc = item.hardwareCost || 0, el = item.extraLabor || 0;
+    var inotes = item.itemNotes || '';
+
+    var editableHtml = '<div class="descomp-editable" data-item-id="' + itemId + '">' +
+        '<h4 style="margin:0.5rem 0 0.3rem;font-size:0.82rem;color:var(--muted)">Costes internos por partida</h4>' +
+        '<div class="descomp-editable__grid">' +
+        '<label>Suministro (€)<input type="number" class="de-field" data-field="supplyCost" value="' + sc.toFixed(2) + '" min="0" step="0.01"></label>' +
+        '<label>Colocacion (€)<input type="number" class="de-field" data-field="installationCost" value="' + ic.toFixed(2) + '" min="0" step="0.01"></label>' +
+        '<label>Herrajes (€)<input type="number" class="de-field" data-field="hardwareCost" value="' + hc.toFixed(2) + '" min="0" step="0.01"></label>' +
+        '<label>Mano de obra extra (€)<input type="number" class="de-field" data-field="extraLabor" value="' + el.toFixed(2) + '" min="0" step="0.01"></label>' +
+        '</div>' +
+        '<label style="margin-top:0.3rem">Observaciones<textarea class="de-field" data-field="itemNotes" rows="2" style="font-size:0.82rem">' + escHtml(inotes) + '</textarea></label>' +
+        '<button type="button" class="secondary-button de-save-btn" style="margin-top:0.4rem;font-size:0.82rem">Guardar costes de partida</button>' +
+        '</div>';
+
+    return '<div class="descomp-body">' + s28html + editableHtml + '</div>';
+}
+
+function escHtml(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
