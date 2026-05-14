@@ -1428,12 +1428,25 @@ if (form) {
         syncState();
     });
 
+    // Unificar actualizacion de RAL en el change del preset de color
     var carpentryRalInput = document.getElementById('carpentryRal');
-    fields.profileColorPreset?.addEventListener('change', function () {
-        var opt = fields.profileColorPreset.selectedOptions[0];
-        var ral = opt?.dataset?.ral || '';
-        if (carpentryRalInput) carpentryRalInput.value = ral;
-    });
+    var origProfileChange = fields.profileColorPreset?.addEventListener;
+    if (origProfileChange) {
+        // Reemplazar listener existente por uno que tambien actualice RAL
+        var ralHandler = function () {
+            syncProfileColorInputs();
+            var opt = fields.profileColorPreset?.selectedOptions?.[0];
+            var ral = opt?.dataset?.ral || '';
+            if (carpentryRalInput) carpentryRalInput.value = ral;
+            syncState();
+        };
+        // Quitar listener anterior reemplazando el elemento
+        var oldSelect = fields.profileColorPreset;
+        var newSelect = oldSelect.cloneNode(true);
+        oldSelect.parentNode.replaceChild(newSelect, oldSelect);
+        fields.profileColorPreset = newSelect;
+        fields.profileColorPreset.addEventListener('change', ralHandler);
+    }
 }
 
 // ════════════════════════════════════════════════════════════════
