@@ -148,7 +148,8 @@
         height: auto;
     }
     .canvas-wrap { padding: 0; }
-    .canvas-wrap svg { width: 100% !important; height: auto !important; }
+    .canvas-wrap svg { max-width: 100%; max-height: 160mm; height: auto; }
+    body { background: #fff; }
 }
 
 @media (max-width: 800px) {

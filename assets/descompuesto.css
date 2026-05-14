@@ -173,6 +173,11 @@
 /* ── Print ───────────────────────────────────────────────── */
 
 @media print {
+    @page {
+        size: A4;
+        margin: 12mm 15mm;
+    }
+
     .descomp-form-panel,
     .topbar,
     .background-shape,
@@ -182,6 +187,10 @@
     .descomp-layout {
         grid-template-columns: 1fr;
         padding: 0;
+    }
+    .result-table {
+        break-inside: avoid;
+        page-break-inside: avoid;
     }
     .result-table th {
         background: #2f3942 !important;
@@ -198,5 +207,8 @@
     }
     body {
         background: white;
+        font-size: 9.5pt;
     }
+    h2 { font-size: 12pt; }
+    h3 { font-size: 10pt; }
 }

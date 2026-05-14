@@ -1255,42 +1255,13 @@ if (form) {
 
 // ════════════════════════════════════════════════════════════════
 //  DESCOMPUESTO S28 · EXTRUAL — integrado por ventana
+//  Usa S28Engine compartido (s28-engine.js)
 // ════════════════════════════════════════════════════════════════
 
-const S28_PROFILES = {
-    '5.980': 'Marco Ventana',      '5.981': 'Marco Ventana solape 28mm',
-    '5.982': 'Hoja Ventana 47mm',  '5.984': 'Inversor recto',
-    '5.985': 'Pilastra Ventana',   '5.986': 'Marco Puerta',
-    '5.987': 'Hoja Balconera',     '5.988': 'Hoja Balconera Ap.Ext',
-    '5.989': 'Pilastra Puerta',    '5.228': 'Marco Fijo liso',
-    '9.619': 'Vierteaguas hoja',   '9.622': 'Marco bajo Puerta',
-    '3.360': 'Junquillo Recto C-14.5',
-    '5.070': 'Junquillo Curvo grapa C-8.5',  '5.071': 'Junquillo Curvo grapa C-20.5',
-    '5.612': 'Junquillo Redondo grapa C-8.5','5.613': 'Junquillo Redondo grapa C-20.5',
-    '6.179': 'Junquillo Curvo clip C-8.5',   '6.180': 'Junquillo Curvo clip C-20.5',
-    '6.181': 'Junquillo Redondo clip C-8.5', '6.182': 'Junquillo Redondo clip C-20.5',
-};
-
-const S28_K = {
-    MARCO2: 43.6, GLASS_1H: 108, GLASS_H: 108,
-    HOJA: 43.6, HOJA_2H: 26, GLASS_2H: 88,
-    VIERTEG: 5, JUNQ: 12, FIJO: 48,
-};
-
-function s28JunqRef(thick) {
-    if (thick > 20) { return '6.180'; }
-    if (thick > 12) { return '6.185'; }
-    return '6.179';
-}
-
-function s28GlassThickness(glassTypeValue) {
-    const nums = (glassTypeValue || '').match(/\d+/g);
-    if (!nums) { return 20; }
-    return nums.reduce((sum, n) => sum + parseInt(n, 10), 0);
-}
+var S28 = window.S28Engine;
 
 function s28SystemId(quote) {
-    const { systemType: st, leaves } = quote;
+    var st = quote.systemType, leaves = quote.leaves;
     if (st === 'fijo') { return 'v_fijo'; }
     if (st === 'oscilobatiente') { return 'v1h_osci'; }
     if (st === 'corredera') { return null; }
@@ -1300,119 +1271,43 @@ function s28SystemId(quote) {
     return 'v1h_prac';
 }
 
-function s28Calc(sysId, L, H, glassThick) {
-    const K = S28_K;
-    const jRef = s28JunqRef(glassThick || 20);
-    if (sysId === 'v_fijo') {
-        const gW = L - K.FIJO, gH = H - K.FIJO;
-        return { bars: [
-            { ref: '5.980', desc: 'Marco horizontal', cut: L, qty: 2 },
-            { ref: '5.980', desc: 'Marco vertical',   cut: H, qty: 2 },
-            { ref: jRef, desc: 'Junquillo horizontal', cut: gW + K.JUNQ, qty: 2 },
-            { ref: jRef, desc: 'Junquillo vertical',   cut: gH + K.JUNQ, qty: 2 },
-        ], glass: [{ W: gW, H: gH, qty: 1 }] };
-    }
-    if (sysId === 'v1h_prac' || sysId === 'v1h_osci') {
-        const gW = L - K.GLASS_1H, gH = H - K.GLASS_H;
-        const hH = L - K.HOJA, hV = H - K.HOJA;
-        return { bars: [
-            { ref: '5.980', desc: 'Marco horizontal',    cut: L,  qty: 2 },
-            { ref: '5.980', desc: 'Marco vertical',      cut: H,  qty: 2 },
-            { ref: '5.982', desc: 'Hoja horizontal',     cut: hH, qty: 2 },
-            { ref: '5.982', desc: 'Hoja vertical',       cut: hV, qty: 2 },
-            { ref: '9.619', desc: 'Vierteaguas hoja',    cut: hH - K.VIERTEG, qty: 1 },
-            { ref: jRef,    desc: 'Junquillo horizontal', cut: gW + K.JUNQ, qty: 2 },
-            { ref: jRef,    desc: 'Junquillo vertical',   cut: gH + K.JUNQ, qty: 2 },
-        ], glass: [{ W: gW, H: gH, qty: 1 }] };
-    }
-    if (sysId === 'v2h_prac') {
-        const hH = Math.round(L / 2 - K.HOJA_2H), hV = H - K.HOJA;
-        const gW = Math.round(L / 2 - K.GLASS_2H), gH = H - K.GLASS_H;
-        return { bars: [
-            { ref: '5.980', desc: 'Marco horizontal',    cut: L,   qty: 2 },
-            { ref: '5.980', desc: 'Marco vertical',      cut: H,   qty: 2 },
-            { ref: '5.984', desc: 'Inversor recto',      cut: hV,  qty: 1 },
-            { ref: '5.982', desc: 'Hoja horizontal',     cut: hH,  qty: 4 },
-            { ref: '5.982', desc: 'Hoja vertical',       cut: hV,  qty: 4 },
-            { ref: '9.619', desc: 'Vierteaguas (×2)',    cut: hH - K.VIERTEG, qty: 2 },
-            { ref: jRef,    desc: 'Junquillo horizontal', cut: gW + K.JUNQ, qty: 4 },
-            { ref: jRef,    desc: 'Junquillo vertical',   cut: gH + K.JUNQ, qty: 4 },
-        ], glass: [{ W: gW, H: gH, qty: 2 }] };
-    }
-    if (sysId === 'v3h_prac') {
-        const hH = Math.round(L / 3 - K.HOJA_2H), hV = H - K.HOJA;
-        const gW = Math.round(L / 3 - K.GLASS_2H), gH = H - K.GLASS_H;
-        return { bars: [
-            { ref: '5.980', desc: 'Marco horizontal',    cut: L,   qty: 2 },
-            { ref: '5.980', desc: 'Marco vertical',      cut: H,   qty: 2 },
-            { ref: '5.984', desc: 'Inversor (×2)',       cut: hV,  qty: 2 },
-            { ref: '5.982', desc: 'Hoja horizontal',     cut: hH,  qty: 6 },
-            { ref: '5.982', desc: 'Hoja vertical',       cut: hV,  qty: 6 },
-            { ref: '9.619', desc: 'Vierteaguas (×3)',    cut: hH - K.VIERTEG, qty: 3 },
-            { ref: jRef,    desc: 'Junquillo horizontal', cut: gW + K.JUNQ, qty: 6 },
-            { ref: jRef,    desc: 'Junquillo vertical',   cut: gH + K.JUNQ, qty: 6 },
-        ], glass: [{ W: gW, H: gH, qty: 3 }] };
-    }
-    return null;
-}
-
 function renderS28Descompuesto(item) {
-    const sysId = s28SystemId(item);
+    var sysId = s28SystemId(item);
     if (!sysId) {
-        return `<div class="descomp-notice">El sistema <strong>corredera</strong> no pertenece a la Serie 28. Consulta el catálogo de la serie correspondiente.</div>`;
+        return '<div class="descomp-notice">El sistema <strong>corredera</strong> no pertenece a la Serie 28. Consulta el catalogo de la serie correspondiente.</div>';
     }
-    const glassThick = s28GlassThickness(item.glassTypeValue);
-    const result = s28Calc(sysId, item.widthMm, item.heightMm, glassThick);
+    var glassThick = S28.thickFromGlassType(item.glassTypeValue);
+    var result = S28.calculate(sysId, item.widthMm, item.heightMm, 1, { glassThick: glassThick, junquilloType: 'curvo_clip' });
     if (!result) {
-        return `<div class="descomp-notice">No hay descompuesto disponible para este sistema.</div>`;
+        return '<div class="descomp-notice">No hay descompuesto disponible para este sistema.</div>';
     }
 
-    const totalMl = result.bars.reduce((s, b) => s + (b.cut * b.qty / 1000), 0);
-    const systemNames = {
-        v_fijo: 'Ventana Fija', v1h_prac: 'Ventana 1H Practicable',
-        v1h_osci: 'Ventana 1H Oscilobatiente', v2h_prac: 'Ventana 2H Practicable',
-        v3h_prac: 'Ventana 3H Practicable',
-    };
-
-    let barsRows = '';
-    for (const b of result.bars) {
-        const ml = (b.cut * b.qty / 1000).toFixed(3);
-        const errCls = b.cut < 0 ? ' class="descomp-err"' : '';
-        barsRows += `<tr>
-            <td class="descomp-ref">${b.ref}</td>
-            <td>${S28_PROFILES[b.ref] || b.desc}</td>
-            <td${errCls}>${Math.round(b.cut)}</td>
-            <td>${b.qty}</td>
-            <td>${ml}</td>
-        </tr>`;
+    var totalMl = 0;
+    var barsRows = '';
+    for (var i = 0; i < result.bars.length; i++) {
+        var b = result.bars[i];
+        var ml = (b.cut * b.qty / 1000).toFixed(3);
+        totalMl += b.cut * b.qty / 1000;
+        var errCls = b.cut < 0 ? ' class="descomp-err"' : '';
+        barsRows += '<tr><td class="descomp-ref">' + b.ref + '</td><td>' + (S28.PROFILES[b.ref] || b.desc) +
+            '</td><td' + errCls + '>' + Math.round(b.cut) + '</td><td>' + b.qty + '</td><td>' + ml + '</td></tr>';
     }
 
-    let glassRows = '';
-    for (const g of result.glass) {
-        const errCls = (g.W <= 0 || g.H <= 0) ? ' class="descomp-err"' : '';
-        glassRows += `<tr>
-            <td>Vidrio</td>
-            <td${errCls}>${Math.round(g.W)}</td>
-            <td${errCls}>${Math.round(g.H)}</td>
-            <td>${g.qty}</td>
-            <td>${((g.W / 1000) * (g.H / 1000) * g.qty).toFixed(3)} m²</td>
-        </tr>`;
+    var glassRows = '';
+    for (var j = 0; j < result.glass.length; j++) {
+        var g = result.glass[j];
+        var errClsG = (g.W <= 0 || g.H <= 0) ? ' class="descomp-err"' : '';
+        glassRows += '<tr><td>Vidrio</td><td' + errClsG + '>' + Math.round(g.W) + '</td><td' + errClsG + '>' +
+            Math.round(g.H) + '</td><td>' + g.qty + '</td><td>' + ((g.W / 1000) * (g.H / 1000) * g.qty).toFixed(3) + ' m\u00b2</td></tr>';
     }
 
-    return `<div class="descomp-body">
-        <div class="descomp-meta">
-            <strong>Serie 28 · EXTRUAL</strong>
-            <span>${systemNames[sysId] || sysId} · ${item.widthMm} × ${item.heightMm} mm</span>
-        </div>
-        <table class="descomp-table">
-            <thead><tr><th>Ref.</th><th>Descripción</th><th>Corte mm</th><th>Cant.</th><th>Total ml</th></tr></thead>
-            <tbody>${barsRows}</tbody>
-            <tfoot><tr><td colspan="4"><strong>Total aluminio</strong></td><td><strong>${totalMl.toFixed(3)} ml</strong></td></tr></tfoot>
-        </table>
-        <table class="descomp-table descomp-table--glass">
-            <thead><tr><th>Vidrio</th><th>Ancho mm</th><th>Alto mm</th><th>Cant.</th><th>m²</th></tr></thead>
-            <tbody>${glassRows}</tbody>
-        </table>
-        <p class="descomp-note">Catálogo S28 EXTRUAL · Cara marco 21.8 mm · Descuento hoja 43.6 mm · Verificar siempre con muestra.</p>
-    </div>`;
+    var sysNames = { v_fijo: 'Ventana Fija', v1h_prac: 'Ventana 1H Practicable', v1h_osci: 'Ventana 1H Oscilobatiente', v2h_prac: 'Ventana 2H Practicable', v3h_prac: 'Ventana 3H Practicable' };
+
+    return '<div class="descomp-body"><div class="descomp-meta"><strong>Serie 28 \u00b7 EXTRUAL</strong>' +
+        '<span>' + (sysNames[sysId] || sysId) + ' \u00b7 ' + item.widthMm + ' \u00d7 ' + item.heightMm + ' mm</span></div>' +
+        '<table class="descomp-table"><thead><tr><th>Ref.</th><th>Descripcion</th><th>Corte mm</th><th>Cant.</th><th>Total ml</th></tr></thead><tbody>' +
+        barsRows + '</tbody><tfoot><tr><td colspan="4"><strong>Total aluminio</strong></td><td><strong>' + totalMl.toFixed(3) + ' ml</strong></td></tr></tfoot></table>' +
+        '<table class="descomp-table descomp-table--glass"><thead><tr><th>Vidrio</th><th>Ancho mm</th><th>Alto mm</th><th>Cant.</th><th>m\u00b2</th></tr></thead><tbody>' +
+        glassRows + '</tbody></table>' +
+        '<p class="descomp-note">Catalogo S28 EXTRUAL \u00b7 Cara marco 21.8 mm \u00b7 Descuento hoja 43.6 mm \u00b7 Verificar siempre con muestra.</p></div>';
 }
