@@ -132,9 +132,9 @@ try {
         <h3><?= h(tr('amounts', $lang)) ?></h3>
         <div class="totals">
             <div class="total-row"><span><?= h(tr('aluminum_price', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['aluminum_ml'] ?? $row['aluminum_ml']), 3, ',', '.') ?> ml</strong></div>
-            <div class="total-row"><span><?= h(tr('glass', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['glass_m2'] ?? $row['glass_m2']), 3, ',', '.') ?> m2</strong></div>
+            <div class="total-row no-print"><span><?= h(tr('glass', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['glass_m2'] ?? $row['glass_m2']), 3, ',', '.') ?> m2</strong></div>
             <?php if (isset($quoteTotals['glass_cost']) || isset($config['glass_cost'])): ?>
-                <div class="total-row"><span><?= h(tr('glass_cost', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['glass_cost'] ?? $config['glass_cost']), 2, ',', '.') ?> EUR</strong></div>
+                <div class="total-row no-print"><span><?= h(tr('glass_cost', $lang)) ?></span><strong><?= number_format((float)($quoteTotals['glass_cost'] ?? $config['glass_cost']), 2, ',', '.') ?> EUR</strong></div>
             <?php endif; ?>
             <?php if (($config['pricing_mode'] ?? 'fabricada') === 'comprada'): ?>
                 <div class="total-row"><span><?= h(tr('purchase_cost_me', $lang)) ?></span><strong><?= number_format((float)($config['purchased_unit_cost'] ?? 0), 2, ',', '.') ?> EUR/ud</strong></div>

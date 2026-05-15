@@ -448,6 +448,43 @@ window.DesignerWidget = (function () {
             var spR = { dir: 'v', ratio: 0.50, a: door2, b: f2 };
             state.tree = { id: uid(), split: { dir: 'v', ratio: 0.25, a: f1, b: spR }, system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
             state.sel = door2.id;
+        } else if (preset === 'puerta_tacha') {
+            // [ TACHA ] / [ PUERTA ] — tacha superior (22%) + puerta (78%)
+            var tachaPT   = mkLeaf('fijo',   'Tacha',   null);
+            var doorPT    = mkLeaf('puerta', 'Puerta',  'izq');
+            state.tree = { id: uid(), split: { dir: 'h', ratio: 0.22, a: tachaPT, b: doorPT },
+                           system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
+            state.sel = doorPT.id;
+        } else if (preset === 'fijo_puerta_tacha') {
+            // [ FIJO ] [ PUERTA + TACHA ] — fijo lateral (35%) + tacha arriba + puerta abajo
+            var fijoFPT   = mkLeaf('fijo',   'Fijo lateral', null);
+            var tachFPT   = mkLeaf('fijo',   'Tacha',        null);
+            var doorFPT   = mkLeaf('puerta', 'Puerta',       'izq');
+            var doorSect  = { id: uid(), split: { dir: 'h', ratio: 0.22, a: tachFPT, b: doorFPT },
+                              system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
+            state.tree = { id: uid(), split: { dir: 'v', ratio: 0.35, a: fijoFPT, b: doorSect },
+                           system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
+            state.sel = doorFPT.id;
+        } else if (preset === 'fijo_corredera') {
+            // [ FIJO ] [ CORREDERA ] — fijo lateral (35%) + corredera (65%)
+            var fijoFC    = mkLeaf('fijo',      'Fijo lateral', null);
+            var corrFC    = mkLeaf('corredera', 'Corredera',    'der');
+            state.tree = { id: uid(), split: { dir: 'v', ratio: 0.35, a: fijoFC, b: corrFC },
+                           system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
+            state.sel = corrFC.id;
+        } else if (preset === 'escaparate_completo') {
+            // [ TACHA CORRIDA ] / [ FIJO | PUERTA | FIJO ] — escaparate 4 módulos
+            var tachaEC   = mkLeaf('fijo',   'Tacha corrida',  null);
+            var fijoECL   = mkLeaf('fijo',   'Fijo lateral',   null);
+            var doorEC    = mkLeaf('puerta', 'Puerta',         'izq');
+            var fijoECR   = mkLeaf('fijo',   'Fijo lateral',   null);
+            var rowRight  = { id: uid(), split: { dir: 'v', ratio: 0.50, a: doorEC, b: fijoECR },
+                              system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
+            var rowBase   = { id: uid(), split: { dir: 'v', ratio: 0.25, a: fijoECL, b: rowRight },
+                              system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
+            state.tree = { id: uid(), split: { dir: 'h', ratio: 0.20, a: tachaEC, b: rowBase },
+                           system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
+            state.sel = doorEC.id;
         } else {
             state.tree = mkLeaf('practicable');
             state.sel = state.tree.id;
