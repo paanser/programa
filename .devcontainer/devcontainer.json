@@ -7,6 +7,8 @@
       "label": "PHP App",
       "onAutoForward": "openBrowser",
       "visibility": "public"
-    }
+    },
+    "2024": { "onAutoForward": "ignore" },
+    "2025": { "onAutoForward": "ignore" }
   }
 }
