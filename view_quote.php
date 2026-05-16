@@ -159,21 +159,59 @@ try {
                         <div class="quote-detail-card__header">
                             <div>
                                 <h3><?= h(tr('item', $lang)) ?> <?= $index + 1 ?></h3>
-                                <p><?= h(humanize_system_type((string)($item['system_type'] ?? 'corredera'), $lang)) ?> · <?= (int)($item['width_mm'] ?? 0) ?> x <?= (int)($item['height_mm'] ?? 0) ?> mm</p>
+                                <?php
+                                $itemLabel = !empty($item['is_composite']) && ($item['composite_label'] ?? '') !== ''
+                                    ? h((string)$item['composite_label'])
+                                    : h(humanize_system_type((string)($item['system_type'] ?? 'corredera'), $lang));
+                                ?>
+                                <p><?= $itemLabel ?> · <?= (int)($item['width_mm'] ?? 0) ?> x <?= (int)($item['height_mm'] ?? 0) ?> mm</p>
                             </div>
                             <strong><?= number_format((float)($item['total'] ?? 0), 2, ',', '.') ?> EUR</strong>
                         </div>
                         <div class="quote-detail-card__meta">
-                            <span><?= h(tr('opening', $lang)) ?>: <?= h(humanize_opening_type((string)($item['opening_type'] ?? 'izquierda'), $lang)) ?></span>
-                            <?php if ((string)($item['system_type'] ?? '') === 'oscilobatiente' && ($item['tilt_turn_leaf'] ?? '') !== ''): ?>
-                                <span><?= h(tr('tilt_turn_leaf', $lang)) ?>: <?= h(humanize_tilt_turn_leaf((string)$item['tilt_turn_leaf'], $lang)) ?></span>
+                            <?php if (!empty($item['is_composite']) && !empty($item['composite_label'])): ?>
+                                <span><strong>Composición:</strong> <?= h((string)$item['composite_label']) ?></span>
+                            <?php else: ?>
+                                <span><?= h(tr('opening', $lang)) ?>: <?= h(humanize_opening_type((string)($item['opening_type'] ?? 'izquierda'), $lang)) ?></span>
+                                <?php if ((string)($item['system_type'] ?? '') === 'oscilobatiente' && ($item['tilt_turn_leaf'] ?? '') !== ''): ?>
+                                    <span><?= h(tr('tilt_turn_leaf', $lang)) ?>: <?= h(humanize_tilt_turn_leaf((string)$item['tilt_turn_leaf'], $lang)) ?></span>
+                                <?php endif; ?>
+                                <span><?= h(tr('leaves', $lang)) ?>: <?= (int)($item['leaves'] ?? 1) ?></span>
                             <?php endif; ?>
-                            <span><?= h(tr('leaves', $lang)) ?>: <?= (int)($item['leaves'] ?? 1) ?></span>
                             <span><?= h(tr('quantity', $lang)) ?>: <?= (int)($item['quantity'] ?? 1) ?></span>
                             <?php if (($item['glass_description'] ?? '') !== ''): ?>
                                 <span><?= h(tr('glass_composition', $lang)) ?>: <?= h((string)$item['glass_description']) ?></span>
                             <?php endif; ?>
                         </div>
+                        <?php
+                        $itemPanels = is_array($item['panels'] ?? null) ? $item['panels'] : [];
+                        if (!empty($item['is_composite']) && count($itemPanels) > 0):
+                        ?>
+                        <div class="composite-panel-table no-print" style="margin:0.6rem 0;font-size:0.82rem">
+                            <table style="width:100%;border-collapse:collapse">
+                                <thead>
+                                    <tr style="background:#f0f4f8;font-size:0.75rem;color:#5a6b7a">
+                                        <th style="text-align:left;padding:4px 6px;border-bottom:1px solid #d0dce6">Panel</th>
+                                        <th style="text-align:left;padding:4px 6px;border-bottom:1px solid #d0dce6">Tipo</th>
+                                        <th style="text-align:right;padding:4px 6px;border-bottom:1px solid #d0dce6">Ancho</th>
+                                        <th style="text-align:right;padding:4px 6px;border-bottom:1px solid #d0dce6">Alto</th>
+                                        <th style="text-align:right;padding:4px 6px;border-bottom:1px solid #d0dce6">m²</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                <?php foreach ($itemPanels as $pi => $panel): ?>
+                                    <tr style="border-bottom:1px solid #eaf0f6">
+                                        <td style="padding:4px 6px"><?= h((string)($panel['label'] ?? ('Panel ' . ($pi + 1)))) ?></td>
+                                        <td style="padding:4px 6px;color:#4a80b0"><?= h((string)($panel['system'] ?? 'fijo')) ?></td>
+                                        <td style="padding:4px 6px;text-align:right"><?= (int)($panel['width_mm'] ?? 0) ?> mm</td>
+                                        <td style="padding:4px 6px;text-align:right"><?= (int)($panel['height_mm'] ?? 0) ?> mm</td>
+                                        <td style="padding:4px 6px;text-align:right"><?= number_format(((int)($panel['width_mm'] ?? 0) * (int)($panel['height_mm'] ?? 0)) / 1000000, 3, ',', '.') ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <?php endif; ?>
                         <?php
                         $itemSvg = render_svg((string)($item['drawing_svg'] ?? ''));
                         if ($itemSvg === '') {

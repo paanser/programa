@@ -290,8 +290,11 @@ if ($configExists) {
         <div class="designer-section__toolbar">
             <h3>Composición de paneles</h3>
             <div class="designer-section__actions">
-                <button type="button" class="secondary-button" id="dwPresetEscaparate" style="font-size:0.82rem">🏬 Escaparate (puerta + fijo)</button>
+                <button type="button" class="secondary-button" id="dwPresetEscaparate" style="font-size:0.82rem">Puerta + Fijo</button>
+                <button type="button" class="secondary-button" id="dwPresetFijoPuerta" style="font-size:0.82rem">Fijo + Puerta</button>
                 <button type="button" class="secondary-button" id="dwPresetFijoPF" style="font-size:0.82rem">Fijo + Puerta + Fijo</button>
+                <button type="button" class="secondary-button" id="dwPresetPuertaTacha" style="font-size:0.82rem">Puerta + Tacha</button>
+                <button type="button" class="secondary-button" id="dwPresetDosPuertas" style="font-size:0.82rem">2 Puertas</button>
                 <button type="button" class="secondary-button" id="dwApplySvg" style="white-space:nowrap;padding:0.4rem 0.8rem;font-size:0.82rem">Usar este dibujo →</button>
                 <span class="designer-embed__badge" id="dwPanelBadge"></span>
             </div>

@@ -448,6 +448,27 @@ window.DesignerWidget = (function () {
             var spR = { dir: 'v', ratio: 0.50, a: door2, b: f2 };
             state.tree = { id: uid(), split: { dir: 'v', ratio: 0.25, a: f1, b: spR }, system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
             state.sel = door2.id;
+        } else if (preset === 'fijo_puerta') {
+            // Fijo lateral izq (35%) + Puerta der (65%)
+            var fijoL = mkLeaf('fijo', 'Fijo', 'izq');
+            var doorFP = mkLeaf('puerta', 'Puerta', 'izq');
+            var spFP = { dir: 'v', ratio: 0.35, a: fijoL, b: doorFP };
+            state.tree = { id: uid(), split: spFP, system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
+            state.sel = doorFP.id;
+        } else if (preset === 'puerta_tacha') {
+            // Tacha/fijo superior (25%) + Puerta inferior (75%) — división horizontal
+            var tacha = mkLeaf('fijo', 'Fijo sup.', 'izq');
+            var doorT = mkLeaf('puerta', 'Puerta', 'izq');
+            var spT = { dir: 'h', ratio: 0.25, a: tacha, b: doorT };
+            state.tree = { id: uid(), split: spT, system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
+            state.sel = doorT.id;
+        } else if (preset === 'dos_puertas') {
+            // Dos puertas enfrentadas (50% / 50%)
+            var doorD1 = mkLeaf('puerta', 'Puerta 1', 'der');
+            var doorD2 = mkLeaf('puerta', 'Puerta 2', 'izq');
+            var spD = { dir: 'v', ratio: 0.50, a: doorD1, b: doorD2 };
+            state.tree = { id: uid(), split: spD, system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
+            state.sel = doorD1.id;
         } else {
             state.tree = mkLeaf('practicable');
             state.sel = state.tree.id;

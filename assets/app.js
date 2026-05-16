@@ -1,3 +1,18 @@
+// ── Utilidad compartida: aplana árbol binario de paneles ─────────────────────
+// Devuelve lista de { node, x, y, w, h } con posición normalizada [0-1]
+function flattenTreePanels(node, x, y, w, h) {
+    x = x || 0; y = y || 0; w = (w === undefined ? 1 : w); h = (h === undefined ? 1 : h);
+    if (!node) return [];
+    if (!node.split) return [{ node: node, x: x, y: y, w: w, h: h }];
+    const sp = node.split;
+    if (sp.dir === 'v') {
+        return flattenTreePanels(sp.a, x, y, w * sp.ratio, h)
+            .concat(flattenTreePanels(sp.b, x + w * sp.ratio, y, w * (1 - sp.ratio), h));
+    }
+    return flattenTreePanels(sp.a, x, y, w, h * sp.ratio)
+        .concat(flattenTreePanels(sp.b, x, y + h * sp.ratio, w, h * (1 - sp.ratio)));
+}
+
 const form = document.getElementById('quoteForm');
 
 if (form) {
@@ -533,47 +548,35 @@ if (form) {
         const carpentrySeriesLabel = fields.carpentrySeriesSelect?.selectedOptions?.[0]?.textContent?.trim() || '';
 
         // ── COMPOSITE: calcular por panel del diseñador ──
-        var dwState = (typeof window.DesignerWidget !== 'undefined' && window.DesignerWidget.getState) ? window.DesignerWidget.getState() : null;
+        const dwState = (typeof window.DesignerWidget !== 'undefined' && window.DesignerWidget.getState) ? window.DesignerWidget.getState() : null;
+        const systemTypeLabel = fields.systemType?.selectedOptions?.[0]?.textContent?.trim() || systemType;
+        const TYPE_NAMES = { fijo: 'Fijo', puerta: 'Puerta', practicable: 'Practicable', oscilobatiente: 'Oscilo', corredera: 'Corredera', abatible: 'Abatible', tubo: 'Tubo' };
 
-        function flattenTreePanels(node, x, y, w, h) {
-            x = x || 0; y = y || 0; w = w || 1; h = h || 1;
-            if (!node) return [];
-            if (!node.split) return [{ node: node, x: x, y: y, w: w, h: h }];
-            var sp = node.split;
-            if (sp.dir === 'v') return flattenTreePanels(sp.a, x, y, w * sp.ratio, h).concat(flattenTreePanels(sp.b, x + w * sp.ratio, y, w * (1 - sp.ratio), h));
-            return flattenTreePanels(sp.a, x, y, w, h * sp.ratio).concat(flattenTreePanels(sp.b, x, y + h * sp.ratio, w, h * (1 - sp.ratio)));
-        }
-
-        var panelTypes = [];
-        var compositeLabel = systemTypeLabel;
-        var isComposite = false;
-        var compAlMl = 0, compGlassM2 = 0;
+        let panelTypes = [];
+        let compositeLabel = systemTypeLabel;
+        let isComposite = false;
+        let compAlMl = 0;
+        let compGlassM2 = 0;
 
         if (dwState && dwState.tree && dwState.tree.split) {
-            var panels = flattenTreePanels(dwState.tree);
-            panelTypes = panels.map(function (p) { return p.node.system || 'fijo'; });
-            var uniqueTypes = [];
-            panelTypes.forEach(function (t) { if (uniqueTypes.indexOf(t) === -1) uniqueTypes.push(t); });
+            const panels = flattenTreePanels(dwState.tree);
+            panelTypes = panels.map((p) => p.node.system || 'fijo');
+            const uniqueTypes = [...new Set(panelTypes)];
             if (uniqueTypes.length > 1) {
                 isComposite = true;
-                var typeNames = { fijo: 'Fijo', puerta: 'Puerta', practicable: 'Practicable', oscilobatiente: 'Oscilo', corredera: 'Corredera', abatible: 'Abatible', tubo: 'Tubo' };
-                compositeLabel = panelTypes.map(function (t) { return typeNames[t] || t; }).join(' + ');
+                compositeLabel = panelTypes.map((t) => TYPE_NAMES[t] || t).join(' + ');
 
-                // Frame compartido (perimetro total)
-                var frameMl = (widthM * 2) + (heightM * 2);
-
-                // Calcular por panel
-                panels.forEach(function (panel) {
-                    var sys = panel.node.system || 'fijo';
-                    var pW = Math.max(100, widthMm * panel.w);
-                    var pH = Math.max(100, heightMm * panel.h * ((panel.node.heightPct || 100) / 100));
-                    var pWM = pW / 1000, pHM = pH / 1000;
-                    var leafMl = 0;
-                    if (sys === 'fijo' || sys === 'tubo') {
-                        leafMl = 0;
-                    } else if (sys === 'puerta') {
+                const frameMl = (widthM * 2) + (heightM * 2);
+                panels.forEach((panel) => {
+                    const sys = panel.node.system || 'fijo';
+                    const pW = Math.max(100, widthMm * panel.w);
+                    const pH = Math.max(100, heightMm * panel.h * ((panel.node.heightPct || 100) / 100));
+                    const pWM = pW / 1000;
+                    const pHM = pH / 1000;
+                    let leafMl = 0;
+                    if (sys === 'puerta') {
                         leafMl = (pWM * 1.5 + pHM * 2) * 1.2;
-                    } else {
+                    } else if (sys !== 'fijo' && sys !== 'tubo') {
                         leafMl = (pWM * 2 + pHM * 2) * 0.35;
                     }
                     compAlMl += leafMl;
@@ -586,15 +589,15 @@ if (form) {
         }
 
         // ── CALCULO ESTANDAR o COMPOSITE ──
-        var aluminumMl, glassPieceAreaM2, glassM2;
+        let aluminumMl, glassPieceAreaM2, glassM2;
         if (isComposite) {
             aluminumMl = compAlMl;
             glassM2 = compGlassM2;
             glassPieceAreaM2 = roundMetric(glassM2 / quantity);
         } else {
-            var fMl = (widthM * 2) + (heightM * 2);
-            var dMl = Math.max(0, leaves - 1) * heightM;
-            var lpMl = leaves * (((widthM / leaves) * 2) + (heightM * 2));
+            const fMl = (widthM * 2) + (heightM * 2);
+            const dMl = Math.max(0, leaves - 1) * heightM;
+            const lpMl = leaves * (((widthM / leaves) * 2) + (heightM * 2));
             aluminumMl = roundMetric(((fMl + dMl) + (lpMl * 0.35)) * quantity);
             glassPieceAreaM2 = roundMetric((glassWidthMm / 1000) * (glassHeightMm / 1000));
             glassM2 = roundMetric(glassPieceAreaM2 * glassPanels * quantity);
@@ -621,7 +624,7 @@ if (form) {
                     return { system: p.node.system || 'fijo', label: p.node.label || '', widthMm: pw, heightMm: ph };
                 });
             })(dwState.tree, widthMm, heightMm) : [],
-            systemTypeLabel: fields.systemType?.selectedOptions?.[0]?.textContent?.trim() || systemType,
+            systemTypeLabel,
             openingType: fields.openingType?.value || 'izquierda',
             openingTypeLabel: fields.openingType?.selectedOptions?.[0]?.textContent?.trim() || '',
             carpentryModelValue: fields.carpentryModel?.value || '',
@@ -704,7 +707,214 @@ if (form) {
         `;
     };
 
+    // ── COMPOSITE CAD DRAWING ─────────────────────────────────────────────────
+    // Renders a proper CAD-quality technical drawing for multi-panel compositions.
+    const renderCompositeDrawing = (quote) => {
+        const tree = quote.designerTree;
+        if (!tree) return null;
+
+        const panels = flattenTreePanels(tree);
+        const profFill = mixColor(quote.profileColorHex || '#c0c8d0', '#f4f6f8', 0.82);
+        const fStroke = '#161616';
+
+        // Drawing area constants
+        const OX = 72, OY = 36, OW = 390, OH = 288;
+        const FRAME_W = 14;
+
+        const safeModel = escapeSvgText(quote.compositeLabel || quote.systemTypeLabel || quote.systemType);
+        const safeRef = escapeSvgText(
+            quote.carpentrySeriesLabel
+                ? `${quote.carpentrySeriesLabel}${quote.carpentryReference ? ' · ' + quote.carpentryReference : ''}`
+                : (quote.carpentryReference || '—')
+        );
+        const safeColor = escapeSvgText(quote.profileColor || '—');
+        const safeGlass = escapeSvgText(quote.glassDescription || quote.glassType || '—');
+
+        let panelsMarkup = '';
+        let cotas = '';
+
+        panels.forEach((p) => {
+            const sys = p.node.system || 'fijo';
+            const hp = (p.node.heightPct ?? 100) / 100;
+            const tp = (p.node.topPct ?? 0) / 100;
+            const safeHp = Math.min(hp, 1 - tp);
+
+            const px = OX + p.x * OW;
+            const pw = p.w * OW;
+            const cellY = OY + p.y * OH;
+            const cellH = p.h * OH;
+            const py = cellY + tp * cellH;
+            const ph = safeHp * cellH;
+
+            const gi = FRAME_W * 0.55;
+            const gx = px + gi, gy = py + gi, gw = pw - gi * 2, gh = ph - gi * 2;
+
+            // Outer frame fill
+            panelsMarkup += `<rect x="${px.toFixed(1)}" y="${py.toFixed(1)}" width="${pw.toFixed(1)}" height="${ph.toFixed(1)}" fill="${profFill}" stroke="${fStroke}" stroke-width="1.4"/>`;
+
+            if (gw > 6 && gh > 6) {
+                // Glass pane
+                panelsMarkup += `<rect x="${gx.toFixed(1)}" y="${gy.toFixed(1)}" width="${gw.toFixed(1)}" height="${gh.toFixed(1)}" fill="url(#cad-glass)" stroke="#3a88bb" stroke-width="0.7"/>`;
+
+                if (sys === 'fijo') {
+                    panelsMarkup += `<line x1="${gx.toFixed(1)}" y1="${gy.toFixed(1)}" x2="${(gx+gw).toFixed(1)}" y2="${(gy+gh).toFixed(1)}" stroke="#6aaecc" stroke-width="0.5" opacity="0.45"/>
+                    <line x1="${(gx+gw).toFixed(1)}" y1="${gy.toFixed(1)}" x2="${gx.toFixed(1)}" y2="${(gy+gh).toFixed(1)}" stroke="#6aaecc" stroke-width="0.5" opacity="0.45"/>`;
+                } else if (sys === 'puerta') {
+                    const op = p.node.opening || 'izq';
+                    const der = op === 'der';
+                    const hx = der ? px + pw - FRAME_W : px + FRAME_W;
+                    const sw2 = Math.min(gw * 0.7, gh * 0.7);
+                    const ex = der ? hx - sw2 : hx + sw2;
+                    panelsMarkup += `<line x1="${hx.toFixed(1)}" y1="${gy.toFixed(1)}" x2="${hx.toFixed(1)}" y2="${(gy+gh-6).toFixed(1)}" stroke="${fStroke}" stroke-width="2" pointer-events="none"/>
+                    <path d="M${hx.toFixed(1)},${gy.toFixed(1)} A${sw2.toFixed(1)},${sw2.toFixed(1)} 0 0 ${der ? 0 : 1} ${ex.toFixed(1)},${gy.toFixed(1)}" fill="none" stroke="#555" stroke-width="0.9" stroke-dasharray="5,3"/>
+                    <rect x="${(px+4).toFixed(1)}" y="${(py+ph-10).toFixed(1)}" width="${(pw-8).toFixed(1)}" height="6" fill="${profFill}" stroke="${fStroke}" stroke-width="0.8" rx="1"/>`;
+                } else if (sys === 'practicable' || sys === 'oscilobatiente') {
+                    const op = p.node.opening || 'izq';
+                    const der = op === 'der';
+                    const hx = der ? gx + gw - 3 : gx + 3;
+                    const tx = der ? gx + 3 : gx + gw - 3;
+                    panelsMarkup += `<path d="M${hx},${gy+3} L${hx},${gy+gh-3} L${tx},${gy+gh/2} Z" fill="#1616160c" stroke="${fStroke}" stroke-width="1" stroke-linejoin="round"/>`;
+                    if (sys === 'oscilobatiente') {
+                        panelsMarkup += `<path d="M${gx+3},${gy+gh-3} L${gx+gw-3},${gy+gh-3} L${gx+gw/2},${gy+gh*0.45} Z" fill="#1616160c" stroke="${fStroke}" stroke-width="1" stroke-linejoin="round"/>`;
+                    }
+                } else if (sys === 'abatible') {
+                    panelsMarkup += `<path d="M${gx+3},${gy+3} L${gx+gw-3},${gy+3} L${gx+gw/2},${gy+gh*0.55} Z" fill="#1616160c" stroke="${fStroke}" stroke-width="1" stroke-linejoin="round"/>`;
+                } else if (sys === 'corredera') {
+                    const cx = gx + gw / 2, cy = gy + gh / 2;
+                    const a = Math.min(22, gw * 0.25);
+                    panelsMarkup += `<line x1="${cx-a}" y1="${cy}" x2="${cx+a}" y2="${cy}" stroke="${fStroke}" stroke-width="1.1"/>
+                    <polyline points="${cx+a*0.5},${cy-5} ${cx+a},${cy} ${cx+a*0.5},${cy+5}" fill="none" stroke="${fStroke}" stroke-width="1"/>`;
+                }
+
+                // Panel label
+                const panW = Math.round(quote.widthMm * p.w);
+                const panH = Math.round(quote.heightMm * p.h * safeHp);
+                const labelName = p.node.label || sys.charAt(0).toUpperCase() + sys.slice(1);
+                const fs = Math.min(10, gw * 0.1, gh * 0.13);
+                if (fs > 4 && gw > 25 && gh > 18) {
+                    const cx = px + pw / 2, cy = py + ph / 2;
+                    panelsMarkup += `<text x="${cx.toFixed(1)}" y="${(cy - (gh > 40 ? 7 : 0)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${fs.toFixed(1)}" font-family="Arial Narrow,Arial,sans-serif" fill="#111" font-weight="600">${escapeSvgText(labelName)}</text>`;
+                    if (gh > 38) {
+                        const fsm = Math.min(8, fs * 0.78);
+                        panelsMarkup += `<text x="${cx.toFixed(1)}" y="${(cy + 10).toFixed(1)}" text-anchor="middle" font-size="${fsm.toFixed(1)}" font-family="monospace,sans-serif" fill="#48606e">${panW}×${panH}</text>`;
+                    }
+                }
+            }
+
+            // Panel-level width cota (only for non-trivial widths)
+            if (gw > 30) {
+                const cotaY = py - 16;
+                const cx2 = px + pw / 2;
+                const panWmm = Math.round(quote.widthMm * p.w);
+                cotas += `<line x1="${(px+2).toFixed(1)}" y1="${(py).toFixed(1)}" x2="${(px+2).toFixed(1)}" y2="${(cotaY-3).toFixed(1)}" stroke="#555" stroke-width="0.5"/>
+                <line x1="${(px+pw-2).toFixed(1)}" y1="${(py).toFixed(1)}" x2="${(px+pw-2).toFixed(1)}" y2="${(cotaY-3).toFixed(1)}" stroke="#555" stroke-width="0.5"/>
+                <line x1="${(px+4).toFixed(1)}" y1="${(cotaY).toFixed(1)}" x2="${(px+pw-4).toFixed(1)}" y2="${(cotaY).toFixed(1)}" stroke="#555" stroke-width="0.7" marker-start="url(#cad-arrL)" marker-end="url(#cad-arrR)"/>
+                <text x="${cx2.toFixed(1)}" y="${(cotaY-5).toFixed(1)}" text-anchor="middle" class="cad-dim">${panWmm}</text>`;
+            }
+        });
+
+        // Total dimension lines
+        const DG = 24, DT = 4;
+        const widthDim = `
+            <line x1="${OX}" y1="${OY+OH}" x2="${OX}" y2="${OY+OH+DG+DT}" stroke="#333" stroke-width="0.6"/>
+            <line x1="${OX+OW}" y1="${OY+OH}" x2="${OX+OW}" y2="${OY+OH+DG+DT}" stroke="#333" stroke-width="0.6"/>
+            <line x1="${OX+4}" y1="${OY+OH+DG}" x2="${OX+OW-4}" y2="${OY+OH+DG}" stroke="#333" stroke-width="0.85" marker-start="url(#cad-arrL)" marker-end="url(#cad-arrR)"/>
+            <text x="${OX+OW/2}" y="${OY+OH+DG+12}" text-anchor="middle" class="cad-dim">L = ${quote.widthMm} mm</text>`;
+        const hdx = OX + OW + DG;
+        const heightDim = `
+            <line x1="${OX+OW}" y1="${OY}" x2="${hdx+DT}" y2="${OY}" stroke="#333" stroke-width="0.6"/>
+            <line x1="${OX+OW}" y1="${OY+OH}" x2="${hdx+DT}" y2="${OY+OH}" stroke="#333" stroke-width="0.6"/>
+            <line x1="${hdx}" y1="${OY+4}" x2="${hdx}" y2="${OY+OH-4}" stroke="#333" stroke-width="0.85" marker-start="url(#cad-arrL)" marker-end="url(#cad-arrR)"/>
+            <text x="${hdx+16}" y="${OY+OH/2}" text-anchor="middle" class="cad-dim" transform="rotate(-90,${hdx+16},${OY+OH/2})">H = ${quote.heightMm} mm</text>`;
+
+        // Outer frame
+        const outerFrame = `<rect x="${OX}" y="${OY}" width="${OW}" height="${OH}" fill="${profFill}" stroke="${fStroke}" stroke-width="2"/>
+        <rect x="${OX+FRAME_W}" y="${OY+FRAME_W}" width="${OW-FRAME_W*2}" height="${OH-FRAME_W*2}" fill="none" stroke="${fStroke}" stroke-width="0.5"/>`;
+
+        // Title block
+        const TY = 432, TH = 74, TX = 8, TW = 624;
+        const R2 = TY + TH / 2;
+        const panelCount = panels.length;
+        const titleBlock = `
+            <rect x="${TX}" y="${TY}" width="${TW}" height="${TH}" fill="#f5f6f8" stroke="#222" stroke-width="0.8"/>
+            <line x1="${TX}" y1="${R2}" x2="${TX+TW}" y2="${R2}" stroke="#666" stroke-width="0.4"/>
+            <line x1="${TX+180}" y1="${TY}" x2="${TX+180}" y2="${TY+TH}" stroke="#888" stroke-width="0.4"/>
+            <line x1="${TX+360}" y1="${TY}" x2="${TX+360}" y2="${TY+TH}" stroke="#888" stroke-width="0.4"/>
+            <line x1="${TX+480}" y1="${TY}" x2="${TX+480}" y2="${TY+TH}" stroke="#888" stroke-width="0.4"/>
+            <text x="${TX+5}" y="${TY+11}" class="cad-tb-lbl">COMPOSICIÓN</text>
+            <text x="${TX+185}" y="${TY+11}" class="cad-tb-lbl">SERIE / REFERENCIA</text>
+            <text x="${TX+365}" y="${TY+11}" class="cad-tb-lbl">COLOR PERFIL</text>
+            <text x="${TX+485}" y="${TY+11}" class="cad-tb-lbl">MEDIDA TOTAL</text>
+            <text x="${TX+5}" y="${TY+27}" class="cad-tb-val">${safeModel}</text>
+            <text x="${TX+185}" y="${TY+27}" class="cad-tb-val">${safeRef}</text>
+            <text x="${TX+365}" y="${TY+27}" class="cad-tb-val">${safeColor}</text>
+            <text x="${TX+485}" y="${TY+27}" class="cad-tb-val">${quote.widthMm} × ${quote.heightMm} mm</text>
+            <line x1="${TX+90}" y1="${R2}" x2="${TX+90}" y2="${TY+TH}" stroke="#888" stroke-width="0.4"/>
+            <line x1="${TX+240}" y1="${R2}" x2="${TX+240}" y2="${TY+TH}" stroke="#888" stroke-width="0.4"/>
+            <line x1="${TX+360}" y1="${R2}" x2="${TX+360}" y2="${TY+TH}" stroke="#888" stroke-width="0.4"/>
+            <line x1="${TX+460}" y1="${R2}" x2="${TX+460}" y2="${TY+TH}" stroke="#888" stroke-width="0.4"/>
+            <text x="${TX+5}" y="${R2+13}" class="cad-tb-lbl">PANELES</text>
+            <text x="${TX+95}" y="${R2+13}" class="cad-tb-lbl">ALUMINIO</text>
+            <text x="${TX+245}" y="${R2+13}" class="cad-tb-lbl">VIDRIO</text>
+            <text x="${TX+365}" y="${R2+13}" class="cad-tb-lbl">VIDRIO TIPO</text>
+            <text x="${TX+465}" y="${R2+13}" class="cad-tb-lbl">CANTIDAD</text>
+            <text x="${TX+5}" y="${R2+28}" class="cad-tb-val">${panelCount} pnl.</text>
+            <text x="${TX+95}" y="${R2+28}" class="cad-tb-val">${quote.aluminumMl.toFixed(3)} ml</text>
+            <text x="${TX+245}" y="${R2+28}" class="cad-tb-val">${quote.glassM2.toFixed(3)} m²</text>
+            <text x="${TX+365}" y="${R2+28}" class="cad-tb-val">${safeGlass}</text>
+            <text x="${TX+465}" y="${R2+28}" class="cad-tb-val">${quote.quantity} ud.</text>`;
+
+        const svg = `<svg viewBox="0 0 640 514" role="img" aria-label="Plano técnico composición carpintería" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <pattern id="cad-glass" width="14" height="14" patternUnits="userSpaceOnUse">
+                    <rect width="14" height="14" fill="#dceef8"/>
+                    <line x1="0" y1="14" x2="14" y2="0" stroke="#5599cc" stroke-width="0.55" opacity="0.4"/>
+                </pattern>
+                <marker id="cad-arrR" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto">
+                    <polygon points="0,0 6,3 0,6" fill="#222"/>
+                </marker>
+                <marker id="cad-arrL" markerWidth="6" markerHeight="6" refX="0" refY="3" orient="auto-start-reverse">
+                    <polygon points="0,0 6,3 0,6" fill="#222"/>
+                </marker>
+                <style>
+                    .cad-sheet    { fill:#fff; stroke:#111; stroke-width:1.8; }
+                    .cad-inner    { fill:none; stroke:#555; stroke-width:0.4; }
+                    .cad-dim      { fill:#222; font:10px 'Arial Narrow',Arial,sans-serif; }
+                    .cad-tb-lbl   { fill:#666; font:8px 'Arial Narrow',Arial,sans-serif; letter-spacing:.04em; }
+                    .cad-tb-val   { fill:#111; font:bold 10.5px 'Arial Narrow',Arial,sans-serif; }
+                </style>
+            </defs>
+            <rect x="4" y="4" width="632" height="506" class="cad-sheet"/>
+            <rect x="8" y="8" width="624" height="498" class="cad-inner"/>
+            ${outerFrame}
+            ${panelsMarkup}
+            ${cotas}
+            ${widthDim}
+            ${heightDim}
+            ${titleBlock}
+        </svg>`;
+
+        drawingWrap.innerHTML = svg;
+        drawingSvgInput.value = svg.trim();
+
+        if (profilePreviewSwatch) {
+            const palette = getProfilePalette(quote.profileColorHex);
+            profilePreviewSwatch.style.background = `linear-gradient(135deg, ${palette.light}, ${palette.base} 60%, ${palette.dark})`;
+            profilePreviewSwatch.style.borderColor = palette.shadow;
+        }
+        if (profilePreviewLabel) {
+            profilePreviewLabel.textContent = quote.profileColor;
+        }
+
+        return svg.trim();
+    };
+
     const renderDrawing = (quote) => {
+        // Composite designs get their own CAD renderer
+        if (quote.isComposite && quote.designerTree) {
+            return renderCompositeDrawing(quote);
+        }
+
         const PD = 16;
         const frame = {
             outerX: 90, outerY: 48,
@@ -1335,6 +1545,13 @@ if (form) {
             onSvgChange: function (svgStr, tree) {
                 if (designerSvgInput) designerSvgInput.value = svgStr;
                 if (designerTreeJson) designerTreeJson.value = JSON.stringify(tree);
+                // Auto-sync al item seleccionado: actualiza árbol y SVG sin necesitar el botón manual
+                var sel = getSelectedItem();
+                if (sel) {
+                    sel.designerTree = tree;
+                    sel.designerSvg = svgStr;
+                }
+                if (!suppressSync) { syncState(); }
             },
             facadeW_val: w,
             facadeH_val: h,
@@ -1388,19 +1605,18 @@ if (form) {
             }
         });
 
-        // Presets
-        document.getElementById('dwPresetEscaparate')?.addEventListener('click', function () {
+        // Presets — helper local
+        function applyDesignerPreset(presetName) {
             var w = parseInt(fields.widthMm?.value || '1500', 10);
             var h = parseInt(fields.heightMm?.value || '1200', 10);
-            if (window.DesignerWidget) window.DesignerWidget.applyPreset('escaparate', w, h);
-            saveDesignerToCurrentItem();
-        });
-        document.getElementById('dwPresetFijoPF')?.addEventListener('click', function () {
-            var w = parseInt(fields.widthMm?.value || '1500', 10);
-            var h = parseInt(fields.heightMm?.value || '1200', 10);
-            if (window.DesignerWidget) window.DesignerWidget.applyPreset('fijo_puerta_fijo', w, h);
-            saveDesignerToCurrentItem();
-        });
+            if (window.DesignerWidget) window.DesignerWidget.applyPreset(presetName, w, h);
+        }
+
+        document.getElementById('dwPresetEscaparate')?.addEventListener('click', function () { applyDesignerPreset('escaparate'); });
+        document.getElementById('dwPresetFijoPuerta')?.addEventListener('click', function () { applyDesignerPreset('fijo_puerta'); });
+        document.getElementById('dwPresetFijoPF')?.addEventListener('click', function () { applyDesignerPreset('fijo_puerta_fijo'); });
+        document.getElementById('dwPresetPuertaTacha')?.addEventListener('click', function () { applyDesignerPreset('puerta_tacha'); });
+        document.getElementById('dwPresetDosPuertas')?.addEventListener('click', function () { applyDesignerPreset('dos_puertas'); });
     }
 
     function saveDesignerToCurrentItem() {
@@ -1428,25 +1644,13 @@ if (form) {
         syncState();
     });
 
-    // Unificar actualizacion de RAL en el change del preset de color
+    // Sincroniza el campo RAL al cambiar el preset de color de perfil
     var carpentryRalInput = document.getElementById('carpentryRal');
-    var origProfileChange = fields.profileColorPreset?.addEventListener;
-    if (origProfileChange) {
-        // Reemplazar listener existente por uno que tambien actualice RAL
-        var ralHandler = function () {
-            syncProfileColorInputs();
-            var opt = fields.profileColorPreset?.selectedOptions?.[0];
-            var ral = opt?.dataset?.ral || '';
-            if (carpentryRalInput) carpentryRalInput.value = ral;
-            syncState();
-        };
-        // Quitar listener anterior reemplazando el elemento
-        var oldSelect = fields.profileColorPreset;
-        var newSelect = oldSelect.cloneNode(true);
-        oldSelect.parentNode.replaceChild(newSelect, oldSelect);
-        fields.profileColorPreset = newSelect;
-        fields.profileColorPreset.addEventListener('change', ralHandler);
-    }
+    fields.profileColorPreset?.addEventListener('change', function () {
+        var opt = fields.profileColorPreset?.selectedOptions?.[0];
+        var ral = opt?.dataset?.ral || '';
+        if (carpentryRalInput) carpentryRalInput.value = ral;
+    });
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1476,44 +1680,60 @@ function renderS28Descompuesto(item) {
 
     var s28html = '';
     if (sysId && !isComposite) {
-        var glassThick = S28.thickFromGlassType(item.glassTypeValue);
-        var result = S28.calculate(sysId, item.widthMm, item.heightMm, 1, { glassThick: glassThick, junquilloType: 'curvo_clip' });
-        if (result) {
-            var totalMl = 0;
-            var barsRows = '';
-            for (var i = 0; i < result.bars.length; i++) {
-                var b = result.bars[i];
-                var ml = (b.cut * b.qty / 1000).toFixed(3);
-                totalMl += b.cut * b.qty / 1000;
-                var errCls = b.cut < 0 ? ' class="descomp-err"' : '';
-                barsRows += '<tr><td class="descomp-ref">' + b.ref + '</td><td>' + (S28.PROFILES[b.ref] || b.desc) +
-                    '</td><td' + errCls + '>' + Math.round(b.cut) + '</td><td>' + b.qty + '</td><td>' + ml + '</td></tr>';
+        try {
+            var glassThick = S28.thickFromGlassType(item.glassTypeValue);
+            var result = S28.calculate(sysId, item.widthMm, item.heightMm, 1, { glassThick: glassThick, junquilloType: 'curvo_clip' });
+            if (result) {
+                var totalMl = 0;
+                var barsRows = '';
+                for (var i = 0; i < result.bars.length; i++) {
+                    var b = result.bars[i];
+                    var ml = (b.cut * b.qty / 1000).toFixed(3);
+                    totalMl += b.cut * b.qty / 1000;
+                    var errCls = b.cut < 0 ? ' class="descomp-err"' : '';
+                    barsRows += '<tr><td class="descomp-ref">' + b.ref + '</td><td>' + (S28.PROFILES[b.ref] || b.desc) +
+                        '</td><td' + errCls + '>' + Math.round(b.cut) + '</td><td>' + b.qty + '</td><td>' + ml + '</td></tr>';
+                }
+                var glassRows = '';
+                for (var j = 0; j < result.glass.length; j++) {
+                    var g = result.glass[j];
+                    var errClsG = (g.W <= 0 || g.H <= 0) ? ' class="descomp-err"' : '';
+                    glassRows += '<tr><td>Vidrio</td><td' + errClsG + '>' + Math.round(g.W) + '</td><td' + errClsG + '>' +
+                        Math.round(g.H) + '</td><td>' + g.qty + '</td><td>' + ((g.W / 1000) * (g.H / 1000) * g.qty).toFixed(3) + ' m\u00b2</td></tr>';
+                }
+                s28html = '<div class="descomp-meta"><strong>Serie 28 \u00b7 EXTRUAL</strong>' +
+                    '<span>' + systemName + ' \u00b7 ' + item.widthMm + ' \u00d7 ' + item.heightMm + ' mm</span></div>' +
+                    '<table class="descomp-table"><thead><tr><th>Ref.</th><th>Descripcion</th><th>Corte mm</th><th>Cant.</th><th>Total ml</th></tr></thead><tbody>' +
+                    barsRows + '</tbody><tfoot><tr><td colspan="4"><strong>Total aluminio</strong></td><td><strong>' + totalMl.toFixed(3) + ' ml</strong></td></tr></tfoot></table>' +
+                    '<table class="descomp-table descomp-table--glass"><thead><tr><th>Vidrio</th><th>Ancho mm</th><th>Alto mm</th><th>Cant.</th><th>m\u00b2</th></tr></thead><tbody>' +
+                    glassRows + '</tbody></table>' +
+                    '<p class="descomp-note">Catalogo S28 EXTRUAL \u00b7 Cara marco 21.8 mm \u00b7 Descuento hoja 43.6 mm \u00b7 Verificar siempre con muestra.</p>';
+            } else {
+                s28html = '<p class="field-hint" style="padding:0.5rem">S28 no disponible para este sistema o dimensiones.</p>';
             }
-            var glassRows = '';
-            for (var j = 0; j < result.glass.length; j++) {
-                var g = result.glass[j];
-                var errClsG = (g.W <= 0 || g.H <= 0) ? ' class="descomp-err"' : '';
-                glassRows += '<tr><td>Vidrio</td><td' + errClsG + '>' + Math.round(g.W) + '</td><td' + errClsG + '>' +
-                    Math.round(g.H) + '</td><td>' + g.qty + '</td><td>' + ((g.W / 1000) * (g.H / 1000) * g.qty).toFixed(3) + ' m\u00b2</td></tr>';
-            }
-            s28html = '<div class="descomp-meta"><strong>Serie 28 \u00b7 EXTRUAL</strong>' +
-                '<span>' + systemName + ' \u00b7 ' + item.widthMm + ' \u00d7 ' + item.heightMm + ' mm</span></div>' +
-                '<table class="descomp-table"><thead><tr><th>Ref.</th><th>Descripcion</th><th>Corte mm</th><th>Cant.</th><th>Total ml</th></tr></thead><tbody>' +
-                barsRows + '</tbody><tfoot><tr><td colspan="4"><strong>Total aluminio</strong></td><td><strong>' + totalMl.toFixed(3) + ' ml</strong></td></tr></tfoot></table>' +
-                '<table class="descomp-table descomp-table--glass"><thead><tr><th>Vidrio</th><th>Ancho mm</th><th>Alto mm</th><th>Cant.</th><th>m\u00b2</th></tr></thead><tbody>' +
-                glassRows + '</tbody></table>' +
-                '<p class="descomp-note">Catalogo S28 EXTRUAL \u00b7 Cara marco 21.8 mm \u00b7 Descuento hoja 43.6 mm \u00b7 Verificar siempre con muestra.</p>';
+        } catch (e) {
+            s28html = '<p class="field-hint descomp-err" style="padding:0.5rem">Error en c\u00e1lculo S28: ' + escHtml(String(e.message || e)) + '</p>';
         }
     } else if (isComposite && item.panels && item.panels.length > 0) {
+        // Descompuesto por paneles: muestra cada panel con sus dimensiones y superficie
         var compRows = '';
+        var totalM2 = 0;
         for (var pi = 0; pi < item.panels.length; pi++) {
             var p = item.panels[pi];
-            compRows += '<tr><td>' + (p.label || (p.system || '')) + '</td><td>' + (p.system || '') + '</td><td>' + p.widthMm + '</td><td>' + p.heightMm + '</td><td>' + ((p.widthMm * p.heightMm) / 1000000).toFixed(3) + ' m\u00b2</td></tr>';
+            var pM2 = (p.widthMm * p.heightMm) / 1000000;
+            totalM2 += pM2;
+            var panelSysId = s28SystemId({ systemType: p.system, leaves: 1 });
+            var s28Note = panelSysId ? ' <span style="color:#4a80b0;font-size:0.78rem">(S28: ' + panelSysId + ')</span>' : '';
+            compRows += '<tr><td><strong>' + (p.label || ('Panel ' + (pi + 1))) + '</strong>' + s28Note + '</td>' +
+                '<td>' + (p.system || 'fijo') + '</td><td>' + p.widthMm + '</td><td>' + p.heightMm + '</td>' +
+                '<td>' + pM2.toFixed(3) + ' m\u00b2</td></tr>';
         }
-        s28html = '<div class="descomp-meta"><strong>Composicion de paneles</strong>' +
-            '<span>' + systemName + ' \u00b7 ' + item.widthMm + ' \u00d7 ' + item.heightMm + ' mm</span></div>' +
-            '<table class="descomp-table"><thead><tr><th>Panel</th><th>Tipo</th><th>Ancho</th><th>Alto</th><th>Superficie</th></tr></thead><tbody>' +
-            compRows + '</tbody></table>';
+        s28html = '<div class="descomp-meta"><strong>Composici\u00f3n de paneles</strong>' +
+            '<span>' + item.widthMm + ' \u00d7 ' + item.heightMm + ' mm \u00b7 ' + item.panels.length + ' paneles</span></div>' +
+            '<table class="descomp-table"><thead><tr><th>Panel</th><th>Tipo</th><th>Ancho mm</th><th>Alto mm</th><th>Superficie</th></tr></thead><tbody>' +
+            compRows + '</tbody>' +
+            '<tfoot><tr><td colspan="4"><strong>Total vidrio</strong></td><td><strong>' + totalM2.toFixed(3) + ' m\u00b2</strong></td></tr></tfoot></table>' +
+            '<p class="descomp-note">Descompuesto S28 por panel no disponible en modo compuesto. Usar descompuesto.php para c\u00e1lculo detallado de perfiles.</p>';
     } else {
         s28html = '<p class="field-hint" style="padding:0.5rem">S28 no disponible para este sistema.</p>';
     }
