@@ -46,14 +46,14 @@ try {
     $pdo = get_pdo();
 
     $sql = 'INSERT INTO quotes (
-        quote_number, created_at, client_name, client_email, client_phone,
+        quote_number, created_at, client_name, client_email, client_phone, client_address,
         system_type, opening_type, profile_color, glass_type,
         width_mm, height_mm, leaves, quantity,
         aluminum_price_ml, glass_price_m2, labor_cost, margin_pct, iva_pct,
         aluminum_ml, glass_m2, subtotal, margin_amount, taxable_base, iva_amount, total,
         drawing_svg, config_json, notes
     ) VALUES (
-        :quote_number, :created_at, :client_name, :client_email, :client_phone,
+        :quote_number, :created_at, :client_name, :client_email, :client_phone, :client_address,
         :system_type, :opening_type, :profile_color, :glass_type,
         :width_mm, :height_mm, :leaves, :quantity,
         :aluminum_price_ml, :glass_price_m2, :labor_cost, :margin_pct, :iva_pct,
@@ -68,6 +68,7 @@ try {
         ':client_name' => $clientName,
         ':client_email' => trim((string)($_POST['client_email'] ?? '')),
         ':client_phone' => trim((string)($_POST['client_phone'] ?? '')),
+        ':client_address' => trim((string)($_POST['client_address'] ?? '')),
         ':system_type' => (string)$calc['system_type'],
         ':opening_type' => (string)$calc['opening_type'],
         ':profile_color' => (string)$calc['profile_color'],

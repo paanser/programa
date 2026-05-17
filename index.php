@@ -95,6 +95,9 @@ if ($configExists) {
                 <label><?= h(tr('phone', $lang)) ?>
                     <input type="text" name="client_phone">
                 </label>
+                <label><?= h(tr('address', $lang)) ?>
+                    <input type="text" name="client_address">
+                </label>
                 <label><?= h(tr('quantity', $lang)) ?>
                     <input type="number" name="quantity" min="1" value="1" required>
                 </label>

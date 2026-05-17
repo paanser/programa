@@ -87,6 +87,9 @@ try {
                 <?= h($phone) ?>
             <?php endif; ?>
         </p>
+        <?php $address = trim((string)$row['client_address']); if ($address !== ''): ?>
+        <p><?= h($address) ?></p>
+        <?php endif; ?>
 
         <h3><?= h(tr('configuration', $lang)) ?></h3>
         <p><?= h(tr('system', $lang)) ?>: <?= h(humanize_system_type((string)$row['system_type'], $lang)) ?></p>

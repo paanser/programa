@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS quotes (
     client_name VARCHAR(150) NOT NULL,
     client_email VARCHAR(150) DEFAULT NULL,
     client_phone VARCHAR(50) DEFAULT NULL,
+    client_address TEXT DEFAULT NULL,
     system_type VARCHAR(50) NOT NULL,
     opening_type VARCHAR(50) DEFAULT NULL,
     profile_color VARCHAR(80) DEFAULT NULL,

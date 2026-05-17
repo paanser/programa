@@ -31,14 +31,14 @@ try {
     $createdAt = date('Y-m-d H:i:s');
 
     $insertSql = 'INSERT INTO quotes (
-        quote_number, created_at, client_name, client_email, client_phone,
+        quote_number, created_at, client_name, client_email, client_phone, client_address,
         system_type, opening_type, profile_color, glass_type,
         width_mm, height_mm, leaves, quantity,
         aluminum_price_ml, glass_price_m2, labor_cost, margin_pct, iva_pct,
         aluminum_ml, glass_m2, subtotal, margin_amount, taxable_base, iva_amount, total,
         drawing_svg, config_json, notes
     ) VALUES (
-        :quote_number, :created_at, :client_name, :client_email, :client_phone,
+        :quote_number, :created_at, :client_name, :client_email, :client_phone, :client_address,
         :system_type, :opening_type, :profile_color, :glass_type,
         :width_mm, :height_mm, :leaves, :quantity,
         :aluminum_price_ml, :glass_price_m2, :labor_cost, :margin_pct, :iva_pct,
@@ -53,6 +53,7 @@ try {
         ':client_name' => (string)$row['client_name'],
         ':client_email' => (string)$row['client_email'],
         ':client_phone' => (string)$row['client_phone'],
+        ':client_address' => (string)$row['client_address'],
         ':system_type' => (string)$row['system_type'],
         ':opening_type' => (string)$row['opening_type'],
         ':profile_color' => (string)$row['profile_color'],
