@@ -499,8 +499,9 @@ window.APP_UI_TEXT = <?= json_encode([
     'onlyLeaf' => tr('only_leaf', $lang),
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 </script>
-<script src="assets/s28-engine.js"></script>
-<script src="assets/designer-widget.js"></script>
-<script src="assets/app.js"></script>
+<?php $v = filemtime(__DIR__ . '/assets/app.js'); ?>
+<script src="assets/s28-engine.js?v=<?= $v ?>"></script>
+<script src="assets/designer-widget.js?v=<?= $v ?>"></script>
+<script src="assets/app.js?v=<?= $v ?>"></script>
 </body>
 </html>
