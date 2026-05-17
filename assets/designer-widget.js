@@ -442,12 +442,26 @@ window.DesignerWidget = (function () {
             state.sel = door.id;
         } else if (preset === 'fijo_puerta_fijo') {
             // Fijo (25%) | Puerta (50%) | Fijo (25%)
+            // El nodo derecho agrupa puerta+fijo; ratio interno 0.667 = 50/75
             var f1 = mkLeaf('fijo', 'Fijo', 'izq');
             var door2 = mkLeaf('puerta', 'Puerta', 'izq');
             var f2 = mkLeaf('fijo', 'Fijo', 'der');
-            var spR = { dir: 'v', ratio: 0.50, a: door2, b: f2 };
-            state.tree = { id: uid(), split: { dir: 'v', ratio: 0.25, a: f1, b: spR }, system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
+            var rightNode = { id: uid(), split: { dir: 'v', ratio: 0.6667, a: door2, b: f2 }, system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
+            state.tree = { id: uid(), split: { dir: 'v', ratio: 0.25, a: f1, b: rightNode }, system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
             state.sel = door2.id;
+        } else if (preset === 'fijo_lateral') {
+            // Practicable (65%) + Fijo lateral (35%) — montante vertical
+            var main = mkLeaf('practicable', 'Ventana', 'izq');
+            var lat  = mkLeaf('fijo', 'Fijo lateral');
+            state.tree = { id: uid(), split: { dir: 'v', ratio: 0.65, a: main, b: lat }, system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
+            state.sel = main.id;
+        } else if (preset === 'puerta_tacha') {
+            // Puerta (78%) + Fijo transom superior (22%) — travesaño horizontal
+            var door3 = mkLeaf('puerta', 'Puerta', 'izq');
+            var trans  = mkLeaf('fijo', 'Fijo superior');
+            // split horizontal: superior=fijo (22%), inferior=puerta (78%) → ratio 0.22 para el top
+            state.tree = { id: uid(), split: { dir: 'h', ratio: 0.22, a: trans, b: door3 }, system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
+            state.sel = door3.id;
         } else {
             state.tree = mkLeaf('practicable');
             state.sel = state.tree.id;

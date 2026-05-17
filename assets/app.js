@@ -1,3 +1,32 @@
+// ── UTILIDADES DE COLOR (scope de archivo — accesibles desde cualquier función) ──
+function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
+
+function hexToRgb(hex) {
+    var normalized = ((hex != null ? hex : '')).trim().replace('#', '');
+    if (!/^[0-9a-fA-F]{6}$/.test(normalized)) { return { r: 242, g: 239, b: 232 }; }
+    return {
+        r: parseInt(normalized.slice(0, 2), 16),
+        g: parseInt(normalized.slice(2, 4), 16),
+        b: parseInt(normalized.slice(4, 6), 16),
+    };
+}
+
+function rgbToHex(rgb) {
+    return '#' + [rgb.r, rgb.g, rgb.b]
+        .map(function (v) { return clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0'); })
+        .join('');
+}
+
+function mixColor(hex, targetHex, amount) {
+    var base   = hexToRgb(hex);
+    var target = hexToRgb(targetHex);
+    return rgbToHex({
+        r: base.r + (target.r - base.r) * amount,
+        g: base.g + (target.g - base.g) * amount,
+        b: base.b + (target.b - base.b) * amount,
+    });
+}
+
 const form = document.getElementById('quoteForm');
 
 if (form) {
@@ -63,7 +92,7 @@ if (form) {
     const formatMoney = (value) => `${Number(value).toFixed(2).replace('.', ',')} EUR`;
     const text = (key, fallback) => uiText[key] || fallback;
     const customColorPrefix = () => `${text('customColorLabel', 'Personalizado')} `;
-    const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+    // clamp, hexToRgb, rgbToHex, mixColor definidas a nivel de archivo (ver arriba)
 
     let glassPriceWasSuggested = true;
     let lastSuggestedGlassDescription = fields.glassDescription?.value.trim() || '';
@@ -71,34 +100,6 @@ if (form) {
     let selectedItemId = null;
     let suppressSync = false;
     let itemSequence = 0;
-
-    const hexToRgb = (hex) => {
-        const normalized = (hex ?? '').trim().replace('#', '');
-        if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
-            return { r: 242, g: 239, b: 232 };
-        }
-
-        return {
-            r: Number.parseInt(normalized.slice(0, 2), 16),
-            g: Number.parseInt(normalized.slice(2, 4), 16),
-            b: Number.parseInt(normalized.slice(4, 6), 16),
-        };
-    };
-
-    const rgbToHex = ({ r, g, b }) => `#${[r, g, b]
-        .map((value) => clamp(Math.round(value), 0, 255).toString(16).padStart(2, '0'))
-        .join('')}`;
-
-    const mixColor = (hex, targetHex, amount) => {
-        const base = hexToRgb(hex);
-        const target = hexToRgb(targetHex);
-
-        return rgbToHex({
-            r: base.r + ((target.r - base.r) * amount),
-            g: base.g + ((target.g - base.g) * amount),
-            b: base.b + ((target.b - base.b) * amount),
-        });
-    };
 
     const formatHexLabel = (hex) => (hex ?? '').toUpperCase();
     const createItemId = () => {
@@ -705,6 +706,20 @@ if (form) {
     };
 
     const renderDrawing = (quote) => {
+        // Composición modular: usar el SVG del diseñador como plano técnico
+        if (quote.isComposite && quote.designerSvg) {
+            const svg = quote.designerSvg;
+            if (drawingWrap) drawingWrap.innerHTML = svg;
+            if (drawingSvgInput) drawingSvgInput.value = svg.trim();
+            if (profilePreviewSwatch) {
+                const palette = getProfilePalette(quote.profileColorHex);
+                profilePreviewSwatch.style.background = `linear-gradient(135deg, ${palette.light}, ${palette.base} 60%, ${palette.dark})`;
+                profilePreviewSwatch.style.borderColor = palette.shadow;
+            }
+            if (profilePreviewLabel) profilePreviewLabel.textContent = quote.profileColor;
+            return svg.trim();
+        }
+
         const PD = 16;
         const frame = {
             outerX: 90, outerY: 48,
@@ -899,8 +914,8 @@ if (form) {
             ${titleBlock}
         </svg>`;
 
-        drawingWrap.innerHTML = svg;
-        drawingSvgInput.value = svg.trim();
+        if (drawingWrap) drawingWrap.innerHTML = svg;
+        if (drawingSvgInput) drawingSvgInput.value = svg.trim();
 
         if (profilePreviewSwatch) {
             const palette = getProfilePalette(quote.profileColorHex);
@@ -1399,6 +1414,18 @@ if (form) {
             var w = parseInt(fields.widthMm?.value || '1500', 10);
             var h = parseInt(fields.heightMm?.value || '1200', 10);
             if (window.DesignerWidget) window.DesignerWidget.applyPreset('fijo_puerta_fijo', w, h);
+            saveDesignerToCurrentItem();
+        });
+        document.getElementById('dwPresetFijoLateral')?.addEventListener('click', function () {
+            var w = parseInt(fields.widthMm?.value || '1500', 10);
+            var h = parseInt(fields.heightMm?.value || '1200', 10);
+            if (window.DesignerWidget) window.DesignerWidget.applyPreset('fijo_lateral', w, h);
+            saveDesignerToCurrentItem();
+        });
+        document.getElementById('dwPresetPuertaTacha')?.addEventListener('click', function () {
+            var w = parseInt(fields.widthMm?.value || '1500', 10);
+            var h = parseInt(fields.heightMm?.value || '1200', 10);
+            if (window.DesignerWidget) window.DesignerWidget.applyPreset('puerta_tacha', w, h);
             saveDesignerToCurrentItem();
         });
     }
