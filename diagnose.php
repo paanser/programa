@@ -19,11 +19,11 @@ $addCheck(
     'La pagina se ha ejecutado en el servidor. Version detectada: ' . PHP_VERSION
 );
 
-$isPhpCompatible = version_compare(PHP_VERSION, '7.4.0', '>=');
+$isPhpCompatible = version_compare(PHP_VERSION, '8.0.0', '>=');
 $addCheck(
     'Version minima de PHP',
     $isPhpCompatible,
-    $isPhpCompatible ? 'Compatible con esta aplicacion.' : 'Se requiere PHP 7.4 o superior.'
+    $isPhpCompatible ? 'Compatible con esta aplicacion.' : 'Se requiere PHP 8.0 o superior (tienes ' . PHP_VERSION . ').'
 );
 
 $helpersPath = $root . '/lib/helpers.php';

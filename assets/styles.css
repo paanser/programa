@@ -201,7 +201,6 @@ p {
 
 .panel {
     position: relative;
-    overflow: hidden;
     padding: 1rem;
     border-radius: 10px;
     background: var(--panel);

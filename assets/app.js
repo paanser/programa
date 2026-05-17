@@ -1,3 +1,35 @@
+var __clamp = function (value, min, max) { return Math.min(max, Math.max(min, value)); };
+
+var hexToRgb = function (hex) {
+    var normalized = (hex || '').trim().replace('#', '');
+    if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
+        return { r: 242, g: 239, b: 232 };
+    }
+
+    return {
+        r: parseInt(normalized.slice(0, 2), 16),
+        g: parseInt(normalized.slice(2, 4), 16),
+        b: parseInt(normalized.slice(4, 6), 16),
+    };
+};
+
+var rgbToHex = function (rgb) {
+    return '#' + [rgb.r, rgb.g, rgb.b]
+        .map(function (value) { return __clamp(Math.round(value), 0, 255).toString(16).padStart(2, '0'); })
+        .join('');
+};
+
+var mixColor = function (hex, targetHex, amount) {
+    var base = hexToRgb(hex);
+    var target = hexToRgb(targetHex);
+
+    return rgbToHex({
+        r: base.r + ((target.r - base.r) * amount),
+        g: base.g + ((target.g - base.g) * amount),
+        b: base.b + ((target.b - base.b) * amount),
+    });
+};
+
 const form = document.getElementById('quoteForm');
 
 if (form) {
@@ -65,7 +97,6 @@ if (form) {
     const roundGlassArea = (areaM2) => (Math.ceil(areaM2 * 100 / 6) * 6) / 100;
     const text = (key, fallback) => uiText[key] || fallback;
     const customColorPrefix = () => `${text('customColorLabel', 'Personalizado')} `;
-    const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
     let glassPriceWasSuggested = true;
     let lastSuggestedGlassDescription = fields.glassDescription?.value.trim() || '';
@@ -73,34 +104,6 @@ if (form) {
     let selectedItemId = null;
     let suppressSync = false;
     let itemSequence = 0;
-
-    const hexToRgb = (hex) => {
-        const normalized = (hex ?? '').trim().replace('#', '');
-        if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
-            return { r: 242, g: 239, b: 232 };
-        }
-
-        return {
-            r: Number.parseInt(normalized.slice(0, 2), 16),
-            g: Number.parseInt(normalized.slice(2, 4), 16),
-            b: Number.parseInt(normalized.slice(4, 6), 16),
-        };
-    };
-
-    const rgbToHex = ({ r, g, b }) => `#${[r, g, b]
-        .map((value) => clamp(Math.round(value), 0, 255).toString(16).padStart(2, '0'))
-        .join('')}`;
-
-    const mixColor = (hex, targetHex, amount) => {
-        const base = hexToRgb(hex);
-        const target = hexToRgb(targetHex);
-
-        return rgbToHex({
-            r: base.r + ((target.r - base.r) * amount),
-            g: base.g + ((target.g - base.g) * amount),
-            b: base.b + ((target.b - base.b) * amount),
-        });
-    };
 
     const formatHexLabel = (hex) => (hex ?? '').toUpperCase();
     const createItemId = () => {
