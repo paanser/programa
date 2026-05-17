@@ -472,6 +472,13 @@ window.DesignerWidget = (function () {
             state.tree = { id: uid(), split: { dir: 'v', ratio: 0.35, a: fijoFC, b: corrFC },
                            system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
             state.sel = corrFC.id;
+        } else if (preset === 'escaparate_vitrina') {
+            // Puerta estrecha (~15%) + Gran vitrina fija (~85%) — ej. 1000 + 5500 = 6500 mm
+            var doorEV = mkLeaf('puerta', 'Puerta', 'izq');
+            var vitrEV = mkLeaf('fijo', 'Vitrina');
+            var spEV = { dir: 'v', ratio: Math.round(1000 / 6500 * 1000) / 1000, a: doorEV, b: vitrEV };
+            state.tree = { id: uid(), split: spEV, system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
+            state.sel = vitrEV.id;
         } else if (preset === 'escaparate_completo') {
             // [ TACHA CORRIDA ] / [ FIJO | PUERTA | FIJO ] — escaparate 4 módulos
             var tachaEC   = mkLeaf('fijo',   'Tacha corrida',  null);

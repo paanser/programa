@@ -291,6 +291,7 @@ if ($configExists) {
             <h3>Composición de paneles</h3>
             <div class="designer-section__actions">
                 <button type="button" class="secondary-button" id="dwPresetEscaparate" style="font-size:0.82rem">🏬 Escaparate (puerta + fijo)</button>
+                <button type="button" class="secondary-button" id="dwPresetEscaparateVitrina" style="font-size:0.82rem">🏪 Escaparate vitrina (puerta estrecha + gran fijo)</button>
                 <button type="button" class="secondary-button" id="dwPresetFijoPF" style="font-size:0.82rem">Fijo + Puerta + Fijo</button>
                 <button type="button" class="secondary-button" id="dwPresetPuertaTacha" style="font-size:0.82rem">🚪 Puerta + Tacha</button>
                 <button type="button" class="secondary-button" id="dwPresetFijoPuertaTacha" style="font-size:0.82rem">Fijo + Puerta + Tacha</button>
