@@ -21,6 +21,8 @@ $lang = get_current_lang();
     <div class="topbar-tools">
         <nav>
             <a href="<?= h(url_with_lang('index.php', [], $lang)) ?>">Nuevo presupuesto</a>
+            <a href="<?= h(url_with_lang('designer.php', [], $lang)) ?>" class="active">Diseñador</a>
+            <a href="<?= h(url_with_lang('escaparate.php', [], $lang)) ?>">Escaparate</a>
             <a href="<?= h(url_with_lang('list_quotes.php', [], $lang)) ?>"><?= h(tr('history', $lang)) ?></a>
         </nav>
     </div>
