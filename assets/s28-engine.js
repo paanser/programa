@@ -231,10 +231,6 @@ window.S28Engine = (function () {
         ];
     }
 
-    function vBase(L, H, qty, opts, extraBars) {
-        return { bars: extraBars, glass: [], accessories: [] };
-    }
-
     var SYSTEMS = {
         v1h_prac: {
             name: 'Ventana 1 Hoja Practicable', page: '28-B1',

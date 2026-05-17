@@ -62,9 +62,8 @@ window.DesignerWidget = (function () {
 
     // Devuelve hojas con bbox normalizada [0-1] + heightPct/topPct
     function leaves(node, x, y, w, h) {
-        x = x || 0; y = y || 0;
-        w = w === undefined ? 1 : w;
-        h = h === undefined ? 1 : h;
+        x = x ?? 0; y = y ?? 0;
+        w = w ?? 1; h = h ?? 1;
         if (!node.split) return [{ node, x, y, w, h }];
         const sp = node.split;
         if (sp.dir === 'v') {
@@ -501,7 +500,7 @@ window.DesignerWidget = (function () {
 
     function deepCloneTree(node) {
         if (!node) return null;
-        var clone = { id: uid(), system: node.system, label: node.label, opening: node.opening, heightPct: node.heightPct, topPct: node.topPct, split: null };
+        var clone = { id: node.id, system: node.system, label: node.label, opening: node.opening, heightPct: node.heightPct, topPct: node.topPct, split: null };
         if (node.split) {
             clone.split = { dir: node.split.dir, ratio: node.split.ratio, a: deepCloneTree(node.split.a), b: deepCloneTree(node.split.b) };
         }
@@ -546,5 +545,5 @@ window.DesignerWidget = (function () {
 
     function getState() { return { facadeW: state.facadeW, facadeH: state.facadeH, tree: state.tree }; }
 
-    return { init, loadState, setDimensions, getState, applyPreset, deepCloneTree, RAL_COLORS, SYS };
+    return { init, loadState, setDimensions, getState, applyPreset, deepCloneTree, leaves, RAL_COLORS, SYS };
 })();

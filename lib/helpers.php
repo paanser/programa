@@ -189,6 +189,13 @@ function tr(string $key, ?string $lang = null): string
             'previous' => 'Anterior',
             'next' => 'Siguiente',
             'page' => 'Página',
+            'preset_storefront' => '🏬 Escaparate (puerta + fijo)',
+            'preset_storefront_vitrina' => '🏪 Escaparate vitrina (puerta estrecha + gran fijo)',
+            'preset_fixed_door_fixed' => 'Fijo + Puerta + Fijo',
+            'preset_door_tacha' => '🚪 Puerta + Tacha',
+            'preset_fixed_door_tacha' => 'Fijo + Puerta + Tacha',
+            'preset_fixed_sliding' => 'Fijo + Corredera',
+            'preset_storefront_full' => '🏬 Escaparate completo',
         ],
         'ca' => [
             'app_title' => 'Presupuestador carpinteria metelica vidres sosa',
@@ -334,6 +341,13 @@ function tr(string $key, ?string $lang = null): string
             'previous' => 'Anterior',
             'next' => 'Següent',
             'page' => 'Pàgina',
+            'preset_storefront' => '🏬 Aparador (porta + fix)',
+            'preset_storefront_vitrina' => '🏪 Aparador vitrina (porta estreta + gran fix)',
+            'preset_fixed_door_fixed' => 'Fix + Porta + Fix',
+            'preset_door_tacha' => '🚪 Porta + Tatxa',
+            'preset_fixed_door_tacha' => 'Fix + Porta + Tatxa',
+            'preset_fixed_sliding' => 'Fix + Corredissa',
+            'preset_storefront_full' => '🏬 Aparador complet',
         ],
     ];
 

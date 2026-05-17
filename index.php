@@ -290,13 +290,13 @@ if ($configExists) {
         <div class="designer-section__toolbar">
             <h3>Composición de paneles</h3>
             <div class="designer-section__actions">
-                <button type="button" class="secondary-button" id="dwPresetEscaparate" style="font-size:0.82rem">🏬 Escaparate (puerta + fijo)</button>
-                <button type="button" class="secondary-button" id="dwPresetEscaparateVitrina" style="font-size:0.82rem">🏪 Escaparate vitrina (puerta estrecha + gran fijo)</button>
-                <button type="button" class="secondary-button" id="dwPresetFijoPF" style="font-size:0.82rem">Fijo + Puerta + Fijo</button>
-                <button type="button" class="secondary-button" id="dwPresetPuertaTacha" style="font-size:0.82rem">🚪 Puerta + Tacha</button>
-                <button type="button" class="secondary-button" id="dwPresetFijoPuertaTacha" style="font-size:0.82rem">Fijo + Puerta + Tacha</button>
-                <button type="button" class="secondary-button" id="dwPresetFijoCorredera" style="font-size:0.82rem">Fijo + Corredera</button>
-                <button type="button" class="secondary-button" id="dwPresetEscaparateCompleto" style="font-size:0.82rem">🏬 Escaparate completo</button>
+                <button type="button" class="secondary-button" id="dwPresetEscaparate" style="font-size:0.82rem"><?= h(tr('preset_storefront', $lang)) ?></button>
+                <button type="button" class="secondary-button" id="dwPresetEscaparateVitrina" style="font-size:0.82rem"><?= h(tr('preset_storefront_vitrina', $lang)) ?></button>
+                <button type="button" class="secondary-button" id="dwPresetFijoPF" style="font-size:0.82rem"><?= h(tr('preset_fixed_door_fixed', $lang)) ?></button>
+                <button type="button" class="secondary-button" id="dwPresetPuertaTacha" style="font-size:0.82rem"><?= h(tr('preset_door_tacha', $lang)) ?></button>
+                <button type="button" class="secondary-button" id="dwPresetFijoPuertaTacha" style="font-size:0.82rem"><?= h(tr('preset_fixed_door_tacha', $lang)) ?></button>
+                <button type="button" class="secondary-button" id="dwPresetFijoCorredera" style="font-size:0.82rem"><?= h(tr('preset_fixed_sliding', $lang)) ?></button>
+                <button type="button" class="secondary-button" id="dwPresetEscaparateCompleto" style="font-size:0.82rem"><?= h(tr('preset_storefront_full', $lang)) ?></button>
                 <button type="button" class="secondary-button" id="dwApplySvg" style="white-space:nowrap;padding:0.4rem 0.8rem;font-size:0.82rem">Usar este dibujo →</button>
                 <span class="designer-embed__badge" id="dwPanelBadge"></span>
             </div>

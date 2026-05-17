@@ -540,22 +540,13 @@ if (form) {
         // ── COMPOSITE: calcular por panel del diseñador ──
         var dwState = (typeof window.DesignerWidget !== 'undefined' && window.DesignerWidget.getState) ? window.DesignerWidget.getState() : null;
 
-        function flattenTreePanels(node, x, y, w, h) {
-            x = x || 0; y = y || 0; w = w || 1; h = h || 1;
-            if (!node) return [];
-            if (!node.split) return [{ node: node, x: x, y: y, w: w, h: h }];
-            var sp = node.split;
-            if (sp.dir === 'v') return flattenTreePanels(sp.a, x, y, w * sp.ratio, h).concat(flattenTreePanels(sp.b, x + w * sp.ratio, y, w * (1 - sp.ratio), h));
-            return flattenTreePanels(sp.a, x, y, w, h * sp.ratio).concat(flattenTreePanels(sp.b, x, y + h * sp.ratio, w, h * (1 - sp.ratio)));
-        }
-
         var panelTypes = [];
         var compositeLabel = systemTypeLabel;
         var isComposite = false;
         var compAlMl = 0, compGlassM2 = 0;
 
         if (dwState && dwState.tree && dwState.tree.split) {
-            var panels = flattenTreePanels(dwState.tree);
+            var panels = window.DesignerWidget.leaves(dwState.tree);
             panelTypes = panels.map(function (p) { return p.node.system || 'fijo'; });
             var uniqueTypes = [];
             panelTypes.forEach(function (t) { if (uniqueTypes.indexOf(t) === -1) uniqueTypes.push(t); });
@@ -617,12 +608,12 @@ if (form) {
         const total = roundMoney(taxableBase + ivaAmount);
 
         return {
-            systemType,
+            systemType: isComposite ? 'compuesto' : systemType,
             isComposite: isComposite,
             compositeLabel: compositeLabel,
             panels: isComposite ? (function getPanelData(t, w, h) {
                 if (!t || !t.split) return [];
-                return flattenTreePanels(t).map(function (p) {
+                return window.DesignerWidget.leaves(t).map(function (p) {
                     var pw = Math.round(w * p.w);
                     var ph = Math.round(h * p.h * ((p.node.heightPct || 100) / 100));
                     return { system: p.node.system || 'fijo', label: p.node.label || '', widthMm: pw, heightMm: ph };
@@ -680,7 +671,7 @@ if (form) {
             extraLabor: 0,
             itemNotes: '',
             designerTree: dwState ? dwState.tree : null,
-            designerSvg: (typeof window.DesignerWidget !== 'undefined' && window.designerSvgInput) ? (window.designerSvgInput.value || '') : '',
+            designerSvg: (typeof window.DesignerWidget !== 'undefined' && designerSvgInput) ? (designerSvgInput.value || '') : '',
         };
     };
 
@@ -1448,8 +1439,8 @@ if (form) {
     function saveDesignerToCurrentItem() {
         var selected = getSelectedItem();
         if (!selected) { return; }
-        if (window.designerSvgInput) {
-            selected.designerSvg = window.designerSvgInput.value || '';
+        if (designerSvgInput) {
+            selected.designerSvg = designerSvgInput.value || '';
         }
         if (window.DesignerWidget && window.DesignerWidget.getState) {
             var st = window.DesignerWidget.getState();
