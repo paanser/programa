@@ -61,6 +61,8 @@ if (form) {
     const roundMoney = (value) => Number(value.toFixed(2));
     const roundMetric = (value) => Number(value.toFixed(3));
     const formatMoney = (value) => `${Number(value).toFixed(2).replace('.', ',')} EUR`;
+    // Redondeo profesional: cada pieza se factura al siguiente múltiplo de 6 dm² (estándar sector vidrio España)
+    const roundGlassArea = (areaM2) => (Math.ceil(areaM2 * 100 / 6) * 6) / 100;
     const text = (key, fallback) => uiText[key] || fallback;
     const customColorPrefix = () => `${text('customColorLabel', 'Personalizado')} `;
     const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
@@ -586,17 +588,19 @@ if (form) {
         }
 
         // ── CALCULO ESTANDAR o COMPOSITE ──
-        var aluminumMl, glassPieceAreaM2, glassM2;
+        var aluminumMl, glassPieceAreaM2, glassPieceAreaRaw, glassM2;
         if (isComposite) {
             aluminumMl = compAlMl;
             glassM2 = compGlassM2;
-            glassPieceAreaM2 = roundMetric(glassM2 / quantity);
+            glassPieceAreaRaw = roundMetric(glassM2 / quantity);
+            glassPieceAreaM2 = glassPieceAreaRaw;
         } else {
             var fMl = (widthM * 2) + (heightM * 2);
             var dMl = Math.max(0, leaves - 1) * heightM;
             var lpMl = leaves * (((widthM / leaves) * 2) + (heightM * 2));
             aluminumMl = roundMetric(((fMl + dMl) + (lpMl * 0.35)) * quantity);
-            glassPieceAreaM2 = roundMetric((glassWidthMm / 1000) * (glassHeightMm / 1000));
+            glassPieceAreaRaw = roundMetric((glassWidthMm / 1000) * (glassHeightMm / 1000));
+            glassPieceAreaM2 = roundGlassArea(glassPieceAreaRaw);
             glassM2 = roundMetric(glassPieceAreaM2 * glassPanels * quantity);
         }
         const glassCost = roundMoney(glassM2 * glassPriceM2);
@@ -652,6 +656,7 @@ if (form) {
             glassWidthMm,
             glassHeightMm,
             glassPanels,
+            glassPieceAreaRaw: glassPieceAreaRaw ?? glassPieceAreaM2,
             glassPieceAreaM2,
             glassPriceM2,
             leaves,
@@ -689,12 +694,16 @@ if (form) {
             </div>
             <div class="glass-summary-grid">
                 <div class="glass-stat">
-                    <span>${text('sqmPerPiece', 'm² por pieza')}</span>
-                    <strong>${quote.glassPieceAreaM2.toFixed(3)} m2</strong>
+                    <span>${text('sqmPerPiece', 'm² reales / pieza')}</span>
+                    <strong>${(quote.glassPieceAreaRaw ?? quote.glassPieceAreaM2).toFixed(3)} m²</strong>
                 </div>
                 <div class="glass-stat">
-                    <span>${text('sqmTotal', 'm² totales')}</span>
-                    <strong>${quote.glassM2.toFixed(3)} m2</strong>
+                    <span>m² facturados / pieza <small style="opacity:.65">(×6 dm²)</small></span>
+                    <strong>${quote.glassPieceAreaM2.toFixed(3)} m²</strong>
+                </div>
+                <div class="glass-stat">
+                    <span>${text('sqmTotal', 'm² totales facturados')}</span>
+                    <strong>${quote.glassM2.toFixed(3)} m²</strong>
                 </div>
                 <div class="glass-stat">
                     <span>${text('glassCost', 'Coste vidrio')}</span>
@@ -1399,6 +1408,30 @@ if (form) {
             var w = parseInt(fields.widthMm?.value || '1500', 10);
             var h = parseInt(fields.heightMm?.value || '1200', 10);
             if (window.DesignerWidget) window.DesignerWidget.applyPreset('fijo_puerta_fijo', w, h);
+            saveDesignerToCurrentItem();
+        });
+        document.getElementById('dwPresetPuertaTacha')?.addEventListener('click', function () {
+            var w = parseInt(fields.widthMm?.value || '1000', 10);
+            var h = parseInt(fields.heightMm?.value || '2200', 10);
+            if (window.DesignerWidget) window.DesignerWidget.applyPreset('puerta_tacha', w, h);
+            saveDesignerToCurrentItem();
+        });
+        document.getElementById('dwPresetFijoPuertaTacha')?.addEventListener('click', function () {
+            var w = parseInt(fields.widthMm?.value || '1600', 10);
+            var h = parseInt(fields.heightMm?.value || '2200', 10);
+            if (window.DesignerWidget) window.DesignerWidget.applyPreset('fijo_puerta_tacha', w, h);
+            saveDesignerToCurrentItem();
+        });
+        document.getElementById('dwPresetFijoCorredera')?.addEventListener('click', function () {
+            var w = parseInt(fields.widthMm?.value || '2000', 10);
+            var h = parseInt(fields.heightMm?.value || '1200', 10);
+            if (window.DesignerWidget) window.DesignerWidget.applyPreset('fijo_corredera', w, h);
+            saveDesignerToCurrentItem();
+        });
+        document.getElementById('dwPresetEscaparateCompleto')?.addEventListener('click', function () {
+            var w = parseInt(fields.widthMm?.value || '3000', 10);
+            var h = parseInt(fields.heightMm?.value || '2400', 10);
+            if (window.DesignerWidget) window.DesignerWidget.applyPreset('escaparate_completo', w, h);
             saveDesignerToCurrentItem();
         });
     }

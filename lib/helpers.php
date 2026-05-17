@@ -653,6 +653,13 @@ function calculate_composite_from_tree(array $tree, int $widthMm, int $heightMm)
     ];
 }
 
+function round_glass_area_m2(float $areaM2): float
+{
+    // Redondeo profesional: facturar al siguiente múltiplo de 6 dm² por pieza (estándar sector vidrio España)
+    $dm2 = $areaM2 * 100;
+    return (ceil($dm2 / 6) * 6) / 100;
+}
+
 function calculate_quote_item(array $data): array
 {
     $widthMm = max(300, (int)($data['width_mm'] ?? 0));
@@ -710,7 +717,8 @@ function calculate_quote_item(array $data): array
         $leafDividerMl = max(0, $leaves - 1) * $heightM;
         $leafPerimeterMl = $leaves * ((($widthM / $leaves) * 2) + ($heightM * 2));
         $aluminumMl = round(($frameMl + $leafDividerMl + ($leafPerimeterMl * 0.35)) * $quantity, 3);
-        $glassPieceAreaM2 = round(($glassWidthMm / 1000) * ($glassHeightMm / 1000), 3);
+        $glassPieceAreaRaw = round(($glassWidthMm / 1000) * ($glassHeightMm / 1000), 3);
+        $glassPieceAreaM2  = round_glass_area_m2($glassPieceAreaRaw);
         $glassM2 = round($glassPieceAreaM2 * $glassPanels * $quantity, 3);
     }
 

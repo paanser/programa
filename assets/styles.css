@@ -728,6 +728,7 @@ td {
     .pricing-mode-box,
     .section-toolbar,
     .frontend-alert,
+    .glass-summary-box,
     [class*="__descomp"],
     .alert:not(.print-alert) {
         display: none !important;
