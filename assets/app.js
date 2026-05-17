@@ -1,3 +1,33 @@
+// ── UTILIDADES DE COLOR (nivel módulo, accesibles en todo el archivo) ──────────
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+const hexToRgb = (hex) => {
+    const normalized = (hex ?? '').trim().replace('#', '');
+    if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
+        return { r: 242, g: 239, b: 232 };
+    }
+    return {
+        r: Number.parseInt(normalized.slice(0, 2), 16),
+        g: Number.parseInt(normalized.slice(2, 4), 16),
+        b: Number.parseInt(normalized.slice(4, 6), 16),
+    };
+};
+
+const rgbToHex = ({ r, g, b }) => `#${[r, g, b]
+    .map((v) => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0'))
+    .join('')}`;
+
+const mixColor = (hex, targetHex, amount) => {
+    const base = hexToRgb(hex);
+    const target = hexToRgb(targetHex);
+    return rgbToHex({
+        r: base.r + ((target.r - base.r) * amount),
+        g: base.g + ((target.g - base.g) * amount),
+        b: base.b + ((target.b - base.b) * amount),
+    });
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
 const form = document.getElementById('quoteForm');
 
 if (form) {
@@ -63,7 +93,6 @@ if (form) {
     const formatMoney = (value) => `${Number(value).toFixed(2).replace('.', ',')} EUR`;
     const text = (key, fallback) => uiText[key] || fallback;
     const customColorPrefix = () => `${text('customColorLabel', 'Personalizado')} `;
-    const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
     let glassPriceWasSuggested = true;
     let lastSuggestedGlassDescription = fields.glassDescription?.value.trim() || '';
@@ -71,34 +100,6 @@ if (form) {
     let selectedItemId = null;
     let suppressSync = false;
     let itemSequence = 0;
-
-    const hexToRgb = (hex) => {
-        const normalized = (hex ?? '').trim().replace('#', '');
-        if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
-            return { r: 242, g: 239, b: 232 };
-        }
-
-        return {
-            r: Number.parseInt(normalized.slice(0, 2), 16),
-            g: Number.parseInt(normalized.slice(2, 4), 16),
-            b: Number.parseInt(normalized.slice(4, 6), 16),
-        };
-    };
-
-    const rgbToHex = ({ r, g, b }) => `#${[r, g, b]
-        .map((value) => clamp(Math.round(value), 0, 255).toString(16).padStart(2, '0'))
-        .join('')}`;
-
-    const mixColor = (hex, targetHex, amount) => {
-        const base = hexToRgb(hex);
-        const target = hexToRgb(targetHex);
-
-        return rgbToHex({
-            r: base.r + ((target.r - base.r) * amount),
-            g: base.g + ((target.g - base.g) * amount),
-            b: base.b + ((target.b - base.b) * amount),
-        });
-    };
 
     const formatHexLabel = (hex) => (hex ?? '').toUpperCase();
     const createItemId = () => {
@@ -704,7 +705,26 @@ if (form) {
         `;
     };
 
+    const updateProfilePreview = (profileColorHex, profileColor) => {
+        if (profilePreviewSwatch) {
+            const palette = getProfilePalette(profileColorHex);
+            profilePreviewSwatch.style.background = `linear-gradient(135deg, ${palette.light}, ${palette.base} 60%, ${palette.dark})`;
+            profilePreviewSwatch.style.borderColor = palette.shadow;
+        }
+        if (profilePreviewLabel) {
+            profilePreviewLabel.textContent = profileColor;
+        }
+    };
+
     const renderDrawing = (quote) => {
+        // Para composiciones modulares, usar el SVG del diseñador directamente
+        if (quote.isComposite && quote.designerSvg) {
+            if (drawingWrap) drawingWrap.innerHTML = quote.designerSvg;
+            if (drawingSvgInput) drawingSvgInput.value = quote.designerSvg;
+            updateProfilePreview(quote.profileColorHex, quote.profileColor);
+            return quote.designerSvg;
+        }
+
         const PD = 16;
         const frame = {
             outerX: 90, outerY: 48,
@@ -902,14 +922,7 @@ if (form) {
         drawingWrap.innerHTML = svg;
         drawingSvgInput.value = svg.trim();
 
-        if (profilePreviewSwatch) {
-            const palette = getProfilePalette(quote.profileColorHex);
-            profilePreviewSwatch.style.background = `linear-gradient(135deg, ${palette.light}, ${palette.base} 60%, ${palette.dark})`;
-            profilePreviewSwatch.style.borderColor = palette.shadow;
-        }
-        if (profilePreviewLabel) {
-            profilePreviewLabel.textContent = quote.profileColor;
-        }
+        updateProfilePreview(quote.profileColorHex, quote.profileColor);
 
         return svg.trim();
     };
@@ -1394,12 +1407,14 @@ if (form) {
             var h = parseInt(fields.heightMm?.value || '1200', 10);
             if (window.DesignerWidget) window.DesignerWidget.applyPreset('escaparate', w, h);
             saveDesignerToCurrentItem();
+            syncState();
         });
         document.getElementById('dwPresetFijoPF')?.addEventListener('click', function () {
             var w = parseInt(fields.widthMm?.value || '1500', 10);
             var h = parseInt(fields.heightMm?.value || '1200', 10);
             if (window.DesignerWidget) window.DesignerWidget.applyPreset('fijo_puerta_fijo', w, h);
             saveDesignerToCurrentItem();
+            syncState();
         });
     }
 
