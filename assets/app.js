@@ -1437,6 +1437,12 @@ if (form) {
             if (window.DesignerWidget) window.DesignerWidget.applyPreset('escaparate_completo', w, h);
             saveDesignerToCurrentItem();
         });
+        document.getElementById('dwPresetEscaparateVitrina')?.addEventListener('click', function () {
+            var w = parseInt(fields.widthMm?.value || '6500', 10);
+            var h = parseInt(fields.heightMm?.value || '2200', 10);
+            if (window.DesignerWidget) window.DesignerWidget.applyPreset('escaparate_vitrina', w, h);
+            saveDesignerToCurrentItem();
+        });
     }
 
     function saveDesignerToCurrentItem() {
