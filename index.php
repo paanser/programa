@@ -289,8 +289,55 @@ if ($configExists) {
 
     <!-- ── DISEÑADOR DE PANELES (siempre visible) ── -->
     <div class="designer-section">
+        <!-- Pestañas: Paneles clásico / Escaparate -->
+        <div class="dw-tabs">
+            <button type="button" class="dw-tab dw-tab--active" id="tabPaneles" data-tab="paneles">Composición de paneles</button>
+            <button type="button" class="dw-tab" id="tabEscaparate" data-tab="escaparate">Escaparate comercial</button>
+        </div>
+        <style>
+            .dw-tabs { display:flex; gap:.25rem; padding:.7rem 1rem .3rem; border-bottom:2px solid #e8edf2; background:#f8fafc; }
+            .dw-tab { background:none; border:1.5px solid transparent; border-radius:6px 6px 0 0; padding:.35rem .9rem; font-size:.82rem; font-weight:600; cursor:pointer; color:#5a6a78; transition:background .13s,color .13s; }
+            .dw-tab:hover { background:#eef2f7; color:#1a3a58; }
+            .dw-tab--active { background:#fff; border-color:#dde2e8; border-bottom-color:#fff; color:#1a3a58; margin-bottom:-2px; }
+            .dw-tab-panel { display:none; }
+            .dw-tab-panel--active { display:block; }
+
+            /* Escaparate inline */
+            .esc-inline { padding:1rem 1rem .5rem; }
+            .esc-inline__top { display:grid; grid-template-columns:1fr 1fr; gap:.7rem 1rem; margin-bottom:.8rem; align-items:end; }
+            .esc-inline__dim { display:grid; grid-template-columns:1fr 1fr 1fr; gap:.4rem; }
+            .esc-inline__dim label, .esc-inline__presets-label { font-size:.78rem; color:#3a4a58; display:flex; flex-direction:column; gap:.15rem; }
+            .esc-inline__dim input { padding:.28rem .4rem; border:1px solid #dde2e8; border-radius:5px; font-size:.82rem; background:#fafbfc; width:100%; }
+            .esc-inline__presets { display:flex; flex-wrap:wrap; gap:.3rem; }
+            .esc-preset-pill { padding:.25rem .6rem; background:#eef2f7; border:1px solid #dde2e8; border-radius:20px; font-size:.73rem; cursor:pointer; color:#2a3a50; transition:background .12s; white-space:nowrap; }
+            .esc-preset-pill:hover { background:#d8eaf8; border-color:#3a80c0; }
+            .esc-inline__body { display:grid; grid-template-columns:260px 1fr; gap:1rem; }
+            @media (max-width:800px) { .esc-inline__body { grid-template-columns:1fr; } .esc-inline__top { grid-template-columns:1fr; } }
+            .esc-inline__modules { display:flex; flex-direction:column; gap:.4rem; }
+            .esc-module-row { background:#f8fafc; border:1px solid #e2e8ee; border-radius:7px; padding:.5rem .6rem; border-left-width:4px; }
+            .esc-module-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:.4rem; }
+            .esc-module-badge { font-size:.7rem; font-weight:600; padding:.12rem .4rem; border-radius:4px; border:1px solid; }
+            .esc-module-controls { display:flex; gap:.2rem; }
+            .esc-btn-icon { background:none; border:1px solid #dde2e8; border-radius:4px; width:22px; height:22px; cursor:pointer; font-size:.75rem; color:#4a5a68; display:flex; align-items:center; justify-content:center; padding:0; }
+            .esc-btn-icon:hover:not(:disabled) { background:#e8f0f8; }
+            .esc-btn-icon:disabled { opacity:.35; cursor:default; }
+            .esc-btn-del:hover:not(:disabled) { background:#fdecea; border-color:#e07060; color:#c0392b; }
+            .esc-module-fields { display:grid; grid-template-columns:1fr 1fr; gap:.3rem; }
+            .esc-module-fields .esc-field:first-child { grid-column:1/-1; }
+            .esc-field { font-size:.76rem; color:#3a4a58; display:flex; flex-direction:column; gap:.12rem; }
+            .esc-field input, .esc-field select { padding:.25rem .38rem; border:1px solid #dde2e8; border-radius:5px; font-size:.78rem; background:#fafbfc; }
+            .esc-add-btn { width:100%; padding:.42rem; background:#eaf3fc; border:1.5px dashed #3a80c0; border-radius:6px; color:#1a60a0; font-size:.8rem; font-weight:600; cursor:pointer; margin-top:.3rem; }
+            .esc-add-btn:hover { background:#d8eaf8; }
+            .esc-canvas-wrap { background:#f0f2f5; border-radius:7px; overflow-x:auto; padding:.5rem; }
+            .esc-canvas-wrap svg { max-width:100%; height:auto; display:block; }
+            .esc-width-bar { background:#f0f4f8; border-radius:5px; padding:.35rem .6rem; margin-top:.5rem; font-size:.76rem; color:#3a4a58; display:flex; justify-content:space-between; }
+            .esc-width-bar.warn { background:#fff3e0; color:#a05000; }
+        </style>
+
+        <!-- ─── PANEL: DISEÑADOR CLÁSICO ─── -->
+        <div class="dw-tab-panel dw-tab-panel--active" id="tabPanelPaneles">
         <div class="designer-section__toolbar">
-            <h3>Composición de paneles</h3>
+            <h3 style="display:none">Composición de paneles</h3>
             <div class="designer-section__actions">
                 <button type="button" class="secondary-button" id="dwPresetEscaparate" style="font-size:0.82rem">🏬 Escaparate (puerta + fijo)</button>
                 <button type="button" class="secondary-button" id="dwPresetEscaparateVitrina" style="font-size:0.82rem">🏪 Escaparate vitrina (puerta estrecha + gran fijo)</button>
@@ -406,7 +453,60 @@ if ($configExists) {
             <!-- CANVAS -->
             <div class="designer-embed__canvas" id="dw-canvasWrap"></div>
         </div>
-    </div>
+        </div><!-- /dw-tab-panel tabPanelPaneles -->
+
+        <!-- ─── PANEL: ESCAPARATE COMERCIAL ─── -->
+        <div class="dw-tab-panel" id="tabPanelEscaparate">
+            <div class="esc-inline">
+                <!-- Dimensiones + Presets -->
+                <div class="esc-inline__top">
+                    <div>
+                        <div class="esc-inline__dim">
+                            <label>Ancho total (mm)
+                                <input type="number" id="esc-facadeW" value="6500" min="200" max="30000" step="1">
+                            </label>
+                            <label>Alto total (mm)
+                                <input type="number" id="esc-facadeH" value="2200" min="200" max="6000" step="1">
+                            </label>
+                            <label>Tacha inferior (mm)
+                                <input type="number" id="esc-tachaH" value="0" min="0" max="1000" step="10" placeholder="0=sin tacha">
+                            </label>
+                        </div>
+                        <div class="esc-width-bar" id="esc-widthBar">
+                            <span>Suma módulos</span><strong id="esc-widthSum">—</strong>
+                        </div>
+                    </div>
+                    <div>
+                        <p style="font-size:.76rem;color:#5a6a78;margin:0 0 .4rem">Presets rápidos:</p>
+                        <div class="esc-inline__presets">
+                            <button type="button" class="esc-preset-pill" data-esc-preset="puerta">[ P ]</button>
+                            <button type="button" class="esc-preset-pill" data-esc-preset="puerta_fijo">[ P ][ F ]</button>
+                            <button type="button" class="esc-preset-pill" data-esc-preset="fijo_puerta">[ F ][ P ]</button>
+                            <button type="button" class="esc-preset-pill" data-esc-preset="fijo_puerta_fijo">[ F ][ P ][ F ]</button>
+                            <button type="button" class="esc-preset-pill" data-esc-preset="puerta_tacha">[ P ] + tacha</button>
+                            <button type="button" class="esc-preset-pill" data-esc-preset="escaparate_vitrina">Escaparate vitrina</button>
+                            <button type="button" class="esc-preset-pill" data-esc-preset="escaparate_completo">Escaparate completo</button>
+                            <button type="button" class="esc-preset-pill" data-esc-preset="corredera_fijo">[ C ][ F ]</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lista módulos + Canvas -->
+                <div class="esc-inline__body">
+                    <!-- Módulos -->
+                    <div>
+                        <p style="font-size:.76rem;font-weight:600;color:#2a3a50;margin:0 0 .4rem">Módulos <span id="esc-badge" style="font-weight:400;color:#7a8a98"></span></p>
+                        <div class="esc-inline__modules" id="esc-moduleList"></div>
+                        <button type="button" class="esc-add-btn" id="esc-btnAdd">+ Añadir módulo</button>
+                    </div>
+                    <!-- Vista SVG -->
+                    <div class="esc-canvas-wrap" id="esc-canvasWrap"></div>
+                </div>
+            </div>
+            <input type="hidden" id="esc-stateJson" name="escaparate_state_json">
+        </div><!-- /dw-tab-panel tabPanelEscaparate -->
+
+    </div><!-- /designer-section -->
     </section>
 
     <section class="panel preview-panel">
@@ -503,6 +603,61 @@ window.APP_UI_TEXT = <?= json_encode([
 </script>
 <script src="assets/s28-engine.js"></script>
 <script src="assets/designer-widget.js"></script>
+<script src="assets/escaparate-widget.js"></script>
 <script src="assets/app.js"></script>
+<script>
+// ── PESTAÑAS Paneles / Escaparate ──────────────────────────────────────────
+(function () {
+    var tabs    = document.querySelectorAll('.dw-tab');
+    var panels  = document.querySelectorAll('.dw-tab-panel');
+
+    tabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+            var target = tab.dataset.tab;
+            tabs.forEach(function (t) { t.classList.remove('dw-tab--active'); });
+            panels.forEach(function (p) { p.classList.remove('dw-tab-panel--active'); });
+            tab.classList.add('dw-tab--active');
+            var panel = document.getElementById('tabPanel' + target.charAt(0).toUpperCase() + target.slice(1));
+            if (panel) panel.classList.add('dw-tab-panel--active');
+        });
+    });
+
+    // ── INIT ESCAPARATE WIDGET ─────────────────────────────────────────────
+    if (window.EscaparateWidget) {
+        window.EscaparateWidget.init({
+            canvasWrap:  'esc-canvasWrap',
+            moduleList:  'esc-moduleList',
+            btnAddModule:'esc-btnAdd',
+            facadeW:     'esc-facadeW',
+            facadeH:     'esc-facadeH',
+            tachaH:      'esc-tachaH',
+            hiddenJson:  'esc-stateJson',
+            preset:      'escaparate_vitrina',
+            onChanged: function (svg, state) {
+                var badge = document.getElementById('esc-badge');
+                if (badge) badge.textContent = state.modules.length + ' módulo' + (state.modules.length !== 1 ? 's' : '');
+                var sumEl = document.getElementById('esc-widthSum');
+                var barEl = document.getElementById('esc-widthBar');
+                if (sumEl && state.modules) {
+                    var sum = state.modules.reduce(function (s, m) { return s + (m.width || 0); }, 0);
+                    if (barEl) {
+                        var diff = Math.abs(sum - state.totalWidth);
+                        barEl.className = 'esc-width-bar' + (diff > 10 ? ' warn' : '');
+                        sumEl.textContent = diff > 10
+                            ? sum + ' mm ≠ ' + state.totalWidth + ' mm (total)'
+                            : sum + ' mm ✓';
+                    }
+                }
+            },
+        });
+
+        document.querySelectorAll('[data-esc-preset]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                window.EscaparateWidget.applyPreset(btn.dataset.escPreset);
+            });
+        });
+    }
+})();
+</script>
 </body>
 </html>
