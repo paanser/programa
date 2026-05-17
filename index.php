@@ -9,10 +9,11 @@ $carpentryOptions = get_carpentry_options();
 $glassOptions = get_glass_options();
 $glassPriceCatalog = get_default_glass_price_catalog();
 $systemOptions = [
-    'corredera' => tr('sliding', $lang),
-    'abatible' => tr('casement', $lang),
-    'fijo' => tr('fixed', $lang),
+    'corredera'      => tr('sliding', $lang),
+    'abatible'       => tr('casement', $lang),
+    'fijo'           => tr('fixed', $lang),
     'oscilobatiente' => tr('tilt_turn', $lang),
+    'puerta'         => 'Puerta',
 ];
 $openingOptions = [
     'izquierda' => tr('left', $lang),

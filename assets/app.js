@@ -547,24 +547,23 @@ if (form) {
         }
 
         var panelTypes = [];
-        var compositeLabel = systemTypeLabel;
+        var compositeLabel = '';
         var isComposite = false;
         var compAlMl = 0, compGlassM2 = 0;
 
         if (dwState && dwState.tree && dwState.tree.split) {
             var panels = flattenTreePanels(dwState.tree);
             panelTypes = panels.map(function (p) { return p.node.system || 'fijo'; });
-            var uniqueTypes = [];
-            panelTypes.forEach(function (t) { if (uniqueTypes.indexOf(t) === -1) uniqueTypes.push(t); });
-            if (uniqueTypes.length > 1) {
+            // Composite = cualquier layout con más de un panel (independientemente de si son del mismo tipo)
+            if (panels.length > 1) {
                 isComposite = true;
                 var typeNames = { fijo: 'Fijo', puerta: 'Puerta', practicable: 'Practicable', oscilobatiente: 'Oscilo', corredera: 'Corredera', abatible: 'Abatible', tubo: 'Tubo' };
                 compositeLabel = panelTypes.map(function (t) { return typeNames[t] || t; }).join(' + ');
 
-                // Frame compartido (perimetro total)
+                // Marco perimetral compartido
                 var frameMl = (widthM * 2) + (heightM * 2);
 
-                // Calcular por panel
+                // Calcular aluminio y vidrio por panel
                 panels.forEach(function (panel) {
                     var sys = panel.node.system || 'fijo';
                     var pW = Math.max(100, widthMm * panel.w);
@@ -753,6 +752,7 @@ if (form) {
 
         leavesGeo.forEach((leaf, index) => {
             const isCasement = quote.systemType === 'abatible' || quote.systemType === 'oscilobatiente';
+            const isPuerta   = quote.systemType === 'puerta';
             const SD = quote.systemType === 'corredera' ? 10 : 8;
             const GI = SD + 5;
             const gx = leaf.x + GI, gy = leaf.y + GI;
@@ -766,6 +766,25 @@ if (form) {
                     <line x1="${fx2}" y1="${fy2}" x2="${fx2 + fw2}" y2="${fy2 + fh2}" stroke="#6aaecc" stroke-width="0.55" opacity="0.5"/>
                     <line x1="${fx2 + fw2}" y1="${fy2}" x2="${fx2}" y2="${fy2 + fh2}" stroke="#6aaecc" stroke-width="0.55" opacity="0.5"/>
                 `;
+            } else if (isPuerta) {
+                // Puerta: hoja abatible con arco de apertura + franja inferior (umbral)
+                const der = quote.openingType === 'derecha';
+                const hingeX = der ? leaf.x + 12 : leaf.x + leaf.width - 12;
+                const swingR = Math.min(leaf.width - 24, leaf.height * 0.55);
+                const endX   = der ? hingeX + swingR : hingeX - swingR;
+                const baseY  = leaf.y + leaf.height - 10;
+                leavesMarkup += `
+                    <rect x="${leaf.x}" y="${leaf.y}" width="${leaf.width}" height="${leaf.height}" fill="${profFill}" stroke="${fStroke}" stroke-width="1.4"/>
+                    <rect x="${leaf.x + 8}" y="${leaf.y + 8}" width="${leaf.width - 16}" height="${leaf.height - 16}" fill="none" stroke="${fStroke}" stroke-width="0.5"/>
+                    <rect x="${leaf.x + 8}" y="${leaf.y + 8}" width="${leaf.width - 16}" height="${leaf.height - 28}" fill="url(#cad-glass)" stroke="#3a88bb" stroke-width="0.7"/>
+                    <rect x="${leaf.x + 5}" y="${baseY}" width="${leaf.width - 10}" height="8" fill="${profFill}" stroke="${fStroke}" stroke-width="0.8"/>
+                    <line x1="${hingeX}" y1="${leaf.y + 8}" x2="${hingeX}" y2="${leaf.y + leaf.height - 8}" stroke="#333" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M ${hingeX} ${leaf.y + 24} A ${swingR} ${swingR} 0 0 ${der ? 1 : 0} ${endX} ${leaf.y + 24}" fill="none" stroke="#555" stroke-width="1" stroke-dasharray="5,3"/>
+                    <line x1="${hingeX}" y1="${leaf.y + 24}" x2="${endX}" y2="${leaf.y + 24}" stroke="#333" stroke-width="1.2"/>
+                `;
+                const hx = der ? leaf.x + leaf.width - 14 : leaf.x + 8;
+                const hy = leaf.y + leaf.height / 2 - 16;
+                leavesMarkup += `<rect x="${hx}" y="${hy}" width="6" height="32" rx="2" fill="#b0b8c0" stroke="#555" stroke-width="0.7"/>`;
             } else {
                 leavesMarkup += `
                     <rect x="${leaf.x}" y="${leaf.y}" width="${leaf.width}" height="${leaf.height}" fill="${profFill}" stroke="${fStroke}" stroke-width="1.1"/>
@@ -1129,7 +1148,15 @@ if (form) {
         }
 
         const quote = calculateQuote();
-        quote.drawingSvg = renderDrawing(quote);
+        // Para composiciones multi-panel, usar el SVG del diseñador como dibujo técnico.
+        // El dibujo estándar (renderDrawing) solo aplica a elementos simples de una sola hoja.
+        if (quote.isComposite && quote.designerSvg) {
+            quote.drawingSvg = quote.designerSvg;
+            drawingWrap.innerHTML = quote.designerSvg;
+            drawingSvgInput.value = quote.designerSvg;
+        } else {
+            quote.drawingSvg = renderDrawing(quote);
+        }
         upsertSelectedItem(quote);
         renderGlassSummary(quote);
         renderItemsList();
@@ -1344,6 +1371,9 @@ if (form) {
             onSvgChange: function (svgStr, tree) {
                 if (designerSvgInput) designerSvgInput.value = svgStr;
                 if (designerTreeJson) designerTreeJson.value = JSON.stringify(tree);
+                // Preview en tiempo real: actualizar panel derecho cuando el diseñador cambia.
+                // dwReady evita llamadas durante la inicialización inicial.
+                if (dwReady) syncState();
             },
             facadeW_val: w,
             facadeH_val: h,

@@ -416,6 +416,40 @@ p {
     margin-top: 0.85rem;
 }
 
+.panel-breakdown {
+    margin-top: 0.75rem;
+    overflow-x: auto;
+}
+
+.panel-breakdown__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    color: var(--text);
+}
+
+.panel-breakdown__table th {
+    background: rgba(61, 73, 84, 0.07);
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.6rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(61, 73, 84, 0.14);
+}
+
+.panel-breakdown__table td {
+    padding: 0.32rem 0.6rem;
+    border-bottom: 1px solid rgba(61, 73, 84, 0.07);
+    vertical-align: middle;
+}
+
+.panel-breakdown__table tr:last-child td {
+    border-bottom: none;
+}
+
 .quote-detail-items {
     display: grid;
     gap: 1rem;

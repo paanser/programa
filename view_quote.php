@@ -184,6 +184,27 @@ try {
                             <?= $itemSvg ?>
                         </div>
                         <?php endif; ?>
+                        <?php
+                        // Panel breakdown para composiciones (escaparate, fijo+puerta+fijo, etc.)
+                        $panels = $item['panels'] ?? [];
+                        if (is_array($panels) && count($panels) > 1): ?>
+                        <div class="panel-breakdown">
+                            <table class="panel-breakdown__table">
+                                <thead><tr><th>Panel</th><th>Sistema</th><th>Ancho</th><th>Alto</th><th>Superficie</th></tr></thead>
+                                <tbody>
+                                <?php foreach ($panels as $pi => $p): ?>
+                                    <tr>
+                                        <td><?= h((string)($p['label'] ?? ('P' . ($pi + 1)))) ?></td>
+                                        <td><?= h(humanize_system_type((string)($p['system'] ?? 'fijo'), $lang)) ?></td>
+                                        <td><?= (int)($p['width_mm'] ?? 0) ?> mm</td>
+                                        <td><?= (int)($p['height_mm'] ?? 0) ?> mm</td>
+                                        <td><?= number_format((float)(($p['width_mm'] ?? 0) * ($p['height_mm'] ?? 0)) / 1000000, 3, ',', '.') ?> m²</td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <?php endif; ?>
                     </article>
                 <?php endforeach; ?>
             </div>

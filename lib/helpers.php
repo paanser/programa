@@ -376,14 +376,23 @@ function humanize_carpentry_model(string $value): string
 function humanize_system_type(string $value, ?string $lang = null): string
 {
     $map = [
-        'corredera' => 'sliding',
-        'abatible' => 'casement',
-        'fijo' => 'fixed',
+        'corredera'      => 'sliding',
+        'abatible'       => 'casement',
+        'fijo'           => 'fixed',
         'oscilobatiente' => 'tilt_turn',
-        'multiple' => 'multiple_system',
+        'multiple'       => 'multiple_system',
+        'puerta'         => 'Puerta',
+        'practicable'    => 'Practicable',
+        'tubo'           => 'Perfil/Tubo',
     ];
 
-    return isset($map[$value]) ? tr($map[$value], $lang) : trim(str_replace('_', ' ', $value));
+    if (isset($map[$value])) {
+        // Algunos valores son ya strings directos, no claves de traducción
+        $raw = $map[$value];
+        return ctype_lower($raw[0] ?? '') ? tr($raw, $lang) : $raw;
+    }
+
+    return trim(str_replace('_', ' ', $value));
 }
 
 function humanize_opening_type(string $value, ?string $lang = null): string

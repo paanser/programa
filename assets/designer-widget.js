@@ -98,7 +98,7 @@ window.DesignerWidget = (function () {
     }
 
     // ── SVG ───────────────────────────────────────────────
-    const SVG_W = 960, SVG_H = 560, MARGIN = 52;
+    const SVG_W = 980, SVG_H = 580, MARGIN = 58;
     function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
     function buildSVG() {
@@ -113,24 +113,37 @@ window.DesignerWidget = (function () {
 
         s += `<defs>
           <pattern id="dwglass" patternUnits="userSpaceOnUse" width="14" height="14">
-            <line x1="0" y1="14" x2="14" y2="0" stroke="#9ab8cc" stroke-width="0.65" opacity="0.55"/>
+            <rect width="14" height="14" fill="#d8eef8"/>
+            <line x1="0" y1="14" x2="14" y2="0" stroke="#7aabcb" stroke-width="0.6" opacity="0.5"/>
           </pattern>
           <pattern id="dwtube" patternUnits="userSpaceOnUse" width="1" height="8">
             <line x1="0" y1="2" x2="1" y2="2" stroke="#7a8590" stroke-width="0.8"/>
             <line x1="0" y1="5" x2="1" y2="5" stroke="#9aa5ad" stroke-width="0.6"/>
           </pattern>
-        </defs>`;
+          <linearGradient id="dwframe-grad" x1="0" y1="0" x2="1" y2="1" gradientUnits="objectBoundingBox">
+            <stop offset="0%" stop-color="#5a6470"/>
+            <stop offset="100%" stop-color="#2e353c"/>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="${SVG_W}" height="${SVG_H}" fill="#f4f6f8"/>
+        <rect x="2" y="2" width="${SVG_W - 4}" height="${SVG_H - 4}" fill="none" stroke="#c8d0d8" stroke-width="1.2" rx="2"/>`;
 
-        // Marco exterior (trapezoidal o rectangular)
+        // Marco exterior (trapezoidal o rectangular) con aspecto CAD de perfil de aluminio
         const slopePx = state.shape === 'trapezoidal' ? Math.tan((state.slopeDeg || 0) * Math.PI / 180) * H : 0;
         if (state.shape === 'trapezoidal' && slopePx !== 0) {
             const tlx = ox - FR + slopePx, tly = oy - FR;
             const trx = ox + W - FR + slopePx, try_ = oy - FR;
             const brx = ox + W + FR, bry = oy + H + FR;
             const blx = ox - FR, bly = oy + H + FR;
-            s += `<polygon points="${tlx},${tly} ${trx},${try_} ${brx},${bry} ${blx},${bly}" fill="#3a4750"/>`;
+            s += `<polygon points="${tlx},${tly} ${trx},${try_} ${brx},${bry} ${blx},${bly}" fill="url(#dwframe-grad)"/>`;
+            // Línea interior de perfil
+            const inset = FR * 0.38;
+            s += `<polygon points="${tlx+inset},${tly+inset} ${trx-inset},${try_+inset} ${brx-inset},${bry-inset} ${blx+inset},${bly-inset}" fill="none" stroke="#8a9aa8" stroke-width="0.6" opacity="0.5"/>`;
         } else {
-            s += `<rect x="${ox - FR}" y="${oy - FR}" width="${W + FR*2}" height="${H + FR*2}" fill="#3a4750" rx="4"/>`;
+            s += `<rect x="${ox - FR}" y="${oy - FR}" width="${W + FR*2}" height="${H + FR*2}" fill="url(#dwframe-grad)" rx="3"/>`;
+            // Línea interior de perfil (representación sección)
+            const inset = FR * 0.38;
+            s += `<rect x="${ox - FR + inset}" y="${oy - FR + inset}" width="${W + FR*2 - inset*2}" height="${H + FR*2 - inset*2}" fill="none" stroke="#8a9aa8" stroke-width="0.65" rx="2" opacity="0.55"/>`;
         }
 
         const leafs = leaves(state.tree);
@@ -150,12 +163,12 @@ window.DesignerWidget = (function () {
 
             // Espacio "vacío" (marco) encima del panel
             if (tp > 0.005) {
-                s += `<rect x="${panelLeft}" y="${cellTopPx}" width="${panelW}" height="${tp * cellH}" fill="#3a4750"/>`;
+                s += `<rect x="${panelLeft}" y="${cellTopPx}" width="${panelW}" height="${tp * cellH}" fill="url(#dwframe-grad)"/>`;
             }
             // Espacio "vacío" (marco) debajo del panel
             const bottomGap = 1 - tp - safeHp;
             if (bottomGap > 0.005) {
-                s += `<rect x="${panelLeft}" y="${panelTopPx + panelH}" width="${panelW}" height="${bottomGap * cellH}" fill="#3a4750"/>`;
+                s += `<rect x="${panelLeft}" y="${panelTopPx + panelH}" width="${panelW}" height="${bottomGap * cellH}" fill="url(#dwframe-grad)"/>`;
             }
 
             const px = panelLeft, py = panelTopPx;
@@ -165,7 +178,7 @@ window.DesignerWidget = (function () {
             const panW = Math.round(fw * w);
             const panH = Math.round(fh * h * safeHp);
 
-            s += `<rect x="${px}" y="${py}" width="${pw}" height="${ph}" fill="#3a4750"/>`;
+            s += `<rect x="${px}" y="${py}" width="${pw}" height="${ph}" fill="url(#dwframe-grad)"/>`;
 
             const gi = FR * 0.55;
             const gx = px + gi, gy = py + gi, gw = pw - gi*2, gh = ph - gi*2;
@@ -198,13 +211,72 @@ window.DesignerWidget = (function () {
             }
         }
 
-        // Cotas exteriores
-        const dy = oy - 30;
-        s += dimLine(ox, dy + 8, ox + W, dy + 8, true);
-        s += `<text x="${ox + W/2}" y="${dy + 3}" text-anchor="middle" font-size="11" font-family="system-ui,sans-serif" fill="#2a3840">${fw} mm</text>`;
-        const dx = ox - 30;
-        s += dimLine(dx + 8, oy, dx + 8, oy + H, false);
-        s += `<text x="${dx}" y="${oy + H/2}" text-anchor="middle" dominant-baseline="middle" font-size="11" font-family="system-ui,sans-serif" fill="#2a3840" transform="rotate(-90 ${dx} ${oy + H/2})">${fh} mm</text>`;
+        // ── COTAS EXTERIORES ──────────────────────────────
+        const dimY = oy - 32;
+        s += dimLine(ox, dimY + 8, ox + W, dimY + 8, true);
+        s += `<text x="${ox + W/2}" y="${dimY + 3}" text-anchor="middle" font-size="11" font-family="system-ui,sans-serif" font-weight="600" fill="#2a3840">${fw} mm</text>`;
+        const dimX = ox - 34;
+        s += dimLine(dimX + 8, oy, dimX + 8, oy + H, false);
+        s += `<text x="${dimX}" y="${oy + H/2}" text-anchor="middle" dominant-baseline="middle" font-size="11" font-family="system-ui,sans-serif" font-weight="600" fill="#2a3840" transform="rotate(-90 ${dimX} ${oy + H/2})">${fh} mm</text>`;
+
+        // ── COTAS POR PANEL (subdimensiones) ─────────────
+        // Recoger posiciones X únicas de los paneles para cotas de anchura
+        const xBreaks = new Set([0, 1]);
+        const yBreaks = new Set([0, 1]);
+        for (const { x, y, w, h } of leafs) {
+            xBreaks.add(parseFloat(x.toFixed(6)));
+            xBreaks.add(parseFloat((x + w).toFixed(6)));
+            yBreaks.add(parseFloat(y.toFixed(6)));
+            yBreaks.add(parseFloat((y + h).toFixed(6)));
+        }
+        const xArr = [...xBreaks].sort((a, b) => a - b);
+        const yArr = [...yBreaks].sort((a, b) => a - b);
+
+        // Sub-cotas horizontales (anchuras de cada columna de paneles)
+        if (xArr.length > 2) {
+            const subDy = oy + H + 18;
+            for (let i = 0; i < xArr.length - 1; i++) {
+                const x1 = ox + xArr[i] * W;
+                const x2 = ox + xArr[i + 1] * W;
+                const subW = Math.round(fw * (xArr[i + 1] - xArr[i]));
+                s += `<line x1="${x1}" y1="${subDy - 4}" x2="${x1}" y2="${subDy + 4}" stroke="#5a7080" stroke-width="0.8"/>`;
+                if (i === xArr.length - 2) {
+                    s += `<line x1="${x2}" y1="${subDy - 4}" x2="${x2}" y2="${subDy + 4}" stroke="#5a7080" stroke-width="0.8"/>`;
+                }
+                s += `<line x1="${x1 + 2}" y1="${subDy}" x2="${x2 - 2}" y2="${subDy}" stroke="#5a7080" stroke-width="0.7"/>`;
+                s += `<text x="${(x1 + x2) / 2}" y="${subDy + 11}" text-anchor="middle" font-size="9" font-family="system-ui,sans-serif" fill="#4a6070">${subW}</text>`;
+            }
+        }
+
+        // Sub-cotas verticales (alturas de cada fila de paneles)
+        if (yArr.length > 2) {
+            const subDx = ox + W + 18;
+            for (let i = 0; i < yArr.length - 1; i++) {
+                const y1 = oy + yArr[i] * H;
+                const y2 = oy + yArr[i + 1] * H;
+                const subH = Math.round(fh * (yArr[i + 1] - yArr[i]));
+                s += `<line x1="${subDx - 4}" y1="${y1}" x2="${subDx + 4}" y2="${y1}" stroke="#5a7080" stroke-width="0.8"/>`;
+                if (i === yArr.length - 2) {
+                    s += `<line x1="${subDx - 4}" y1="${y2}" x2="${subDx + 4}" y2="${y2}" stroke="#5a7080" stroke-width="0.8"/>`;
+                }
+                s += `<line x1="${subDx}" y1="${y1 + 2}" x2="${subDx}" y2="${y2 - 2}" stroke="#5a7080" stroke-width="0.7"/>`;
+                s += `<text x="${subDx + 11}" y="${(y1 + y2) / 2 + 3}" text-anchor="start" font-size="9" font-family="system-ui,sans-serif" fill="#4a6070">${subH}</text>`;
+            }
+        }
+
+        // ── TITLEBLOCK / FICHA TÉCNICA ────────────────────
+        const TB_Y = SVG_H - 38, TB_H = 34, TB_X = 4, TB_W = SVG_W - 8;
+        const panelCount = leafs.length;
+        const systemsList = [...new Set(leafs.map(l => (SYS[l.node.system] || SYS.fijo).name))].join(' · ');
+        s += `<rect x="${TB_X}" y="${TB_Y}" width="${TB_W}" height="${TB_H}" fill="#f0f2f5" stroke="#c0c8d0" stroke-width="0.8"/>`;
+        s += `<line x1="${TB_X + 130}" y1="${TB_Y}" x2="${TB_X + 130}" y2="${TB_Y + TB_H}" stroke="#c0c8d0" stroke-width="0.6"/>`;
+        s += `<line x1="${TB_X + 300}" y1="${TB_Y}" x2="${TB_X + 300}" y2="${TB_Y + TB_H}" stroke="#c0c8d0" stroke-width="0.6"/>`;
+        s += `<text x="${TB_X + 6}" y="${TB_Y + 12}" font-size="8" font-family="system-ui,sans-serif" fill="#6a7a88" letter-spacing="0.05em">MEDIDA TOTAL</text>`;
+        s += `<text x="${TB_X + 6}" y="${TB_Y + 26}" font-size="10.5" font-family="system-ui,sans-serif" font-weight="700" fill="#1a2730">${fw} × ${fh} mm</text>`;
+        s += `<text x="${TB_X + 136}" y="${TB_Y + 12}" font-size="8" font-family="system-ui,sans-serif" fill="#6a7a88" letter-spacing="0.05em">SISTEMAS · ${panelCount} PANEL${panelCount > 1 ? 'ES' : ''}</text>`;
+        s += `<text x="${TB_X + 136}" y="${TB_Y + 26}" font-size="9.5" font-family="system-ui,sans-serif" font-weight="600" fill="#1a2730">${esc(systemsList)}</text>`;
+        s += `<text x="${TB_X + 306}" y="${TB_Y + 12}" font-size="8" font-family="system-ui,sans-serif" fill="#6a7a88" letter-spacing="0.05em">FORMA</text>`;
+        s += `<text x="${TB_X + 306}" y="${TB_Y + 26}" font-size="9.5" font-family="system-ui,sans-serif" font-weight="600" fill="#1a2730">${state.shape === 'trapezoidal' ? `Trapezoidal ${state.slopeDeg || 0}°` : 'Rectangular'}</text>`;
 
         s += `</svg>`;
         return s;
@@ -212,11 +284,11 @@ window.DesignerWidget = (function () {
 
     function dimLine(x1, y1, x2, y2, horiz) {
         const tick = horiz
-            ? `<line x1="${x1}" y1="${y1-5}" x2="${x1}" y2="${y1+5}" stroke="#4a5a68" stroke-width="1"/>
-               <line x1="${x2}" y1="${y1-5}" x2="${x2}" y2="${y1+5}" stroke="#4a5a68" stroke-width="1"/>`
-            : `<line x1="${x1-5}" y1="${y1}" x2="${x1+5}" y2="${y1}" stroke="#4a5a68" stroke-width="1"/>
-               <line x1="${x1-5}" y1="${y2}" x2="${x1+5}" y2="${y2}" stroke="#4a5a68" stroke-width="1"/>`;
-        return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#4a5a68" stroke-width="1"/>${tick}`;
+            ? `<line x1="${x1}" y1="${y1-6}" x2="${x1}" y2="${y1+6}" stroke="#3a5060" stroke-width="1.1"/>
+               <line x1="${x2}" y1="${y1-6}" x2="${x2}" y2="${y1+6}" stroke="#3a5060" stroke-width="1.1"/>`
+            : `<line x1="${x1-6}" y1="${y1}" x2="${x1+6}" y2="${y1}" stroke="#3a5060" stroke-width="1.1"/>
+               <line x1="${x1-6}" y1="${y2}" x2="${x1+6}" y2="${y2}" stroke="#3a5060" stroke-width="1.1"/>`;
+        return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#3a5060" stroke-width="0.9"/>${tick}`;
     }
 
     function sysIndicator(sys, op, x, y, w, h, col) {
