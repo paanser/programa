@@ -13,6 +13,7 @@ $systemOptions = [
     'abatible' => tr('casement', $lang),
     'fijo' => tr('fixed', $lang),
     'oscilobatiente' => tr('tilt_turn', $lang),
+    'composicion' => 'Composición',
 ];
 $openingOptions = [
     'izquierda' => tr('left', $lang),
@@ -285,10 +286,10 @@ if ($configExists) {
             </div>
         </form>
 
-    <!-- ── DISEÑADOR DE PANELES (siempre visible) ── -->
-    <div class="designer-section">
+    <!-- ── DISEÑADOR DE MÓDULOS (visible en modo Composición) ── -->
+    <div class="designer-section" style="display:none">
         <div class="designer-section__toolbar">
-            <h3>Composición de paneles</h3>
+            <h3>Composición</h3>
             <div class="designer-section__actions">
                 <button type="button" class="secondary-button" id="dwPresetEscaparate" style="font-size:0.82rem">🏬 Escaparate (puerta + fijo)</button>
                 <button type="button" class="secondary-button" id="dwPresetEscaparateVitrina" style="font-size:0.82rem">🏪 Escaparate vitrina (puerta estrecha + gran fijo)</button>
@@ -302,7 +303,7 @@ if ($configExists) {
             </div>
         </div>
         <div class="designer-embed__hint">
-            <span>Diseña la distribución de paneles. La serie de carpintería se toma del campo de arriba. Cada panel puede tener un tipo distinto (fijo, puerta, practicable...).</span>
+            <span>Diseña la composición de módulos. La serie de carpintería se toma del campo de arriba. Cada módulo puede tener un tipo distinto (fijo, puerta, practicable...).</span>
         </div>
         <div class="designer-embed__body">
             <!-- CONTROLES -->
@@ -332,7 +333,7 @@ if ($configExists) {
                     </div>
                 </div>
                 <div class="form-section">
-                    <h3>Dividir panel</h3>
+                    <h3>Dividir módulo</h3>
                     <div class="btn-group">
                         <button type="button" id="dw-btnSplitV" class="secondary-button split-btn">
                             <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="16" height="16" rx="2"/><line x1="9" y1="1" x2="9" y2="17"/></svg>
@@ -353,8 +354,8 @@ if ($configExists) {
                     </div>
                 </div>
                 <div class="form-section">
-                    <h3>Panel seleccionado</h3>
-                    <p class="field-hint" id="dw-panelInfo" style="margin-bottom:0.5rem">Haz clic en un panel</p>
+                    <h3>Módulo seleccionado</h3>
+                    <p class="field-hint" id="dw-panelInfo" style="margin-bottom:0.5rem">Haz clic en un módulo</p>
                     <div id="dw-leafControls">
                         <label style="font-size:0.82rem">Sistema
                             <select id="dw-panelSystem">
@@ -393,7 +394,7 @@ if ($configExists) {
                     </div>
                 </div>
                 <div class="form-section">
-                    <h3>Paneles</h3>
+                    <h3>Módulos</h3>
                     <div id="dw-panelList" class="panel-list"></div>
                 </div>
                 <div class="form-section">
@@ -448,9 +449,9 @@ window.addEventListener('error', function (event) {
 window.addEventListener('DOMContentLoaded', function () {
     window.setTimeout(function () {
         if (!window.APP_PREVIEW_READY) {
-            window.reportAppRuntimeIssue('La vista previa no ha llegado a iniciarse. Revisa si el navegador esta bloqueando JavaScript o si assets/app.js no se ha cargado.');
+            window.reportAppRuntimeIssue('La vista previa no ha llegado a iniciarse. Revisa si el navegador está bloqueando JavaScript o si assets/app.js no se ha cargado.');
         }
-    }, 1200);
+    }, 3000);
 });
 window.APP_UI_TEXT = <?= json_encode([
     'glassSummary' => tr('glass_summary', $lang),

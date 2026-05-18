@@ -281,6 +281,18 @@ if (form) {
 
     const updateSystemDetailsUI = () => {
         const systemType = fields.systemType?.value || 'corredera';
+
+        const designerSec = document.querySelector('.designer-section');
+        if (designerSec) {
+            const showDesigner = systemType === 'composicion';
+            designerSec.style.display = showDesigner ? '' : 'none';
+            if (showDesigner && typeof initDesigner === 'function' && !dwReady) {
+                initDesigner(null);
+            }
+        }
+
+        if (systemType === 'composicion') return;
+
         let leaves = Math.max(1, integerValue(fields.leaves, 2));
 
         if (systemType === 'fijo') {
@@ -550,24 +562,24 @@ if (form) {
         }
 
         var panelTypes = [];
-        var compositeLabel = systemTypeLabel;
+        var compositeLabel = fields.systemType?.selectedOptions?.[0]?.textContent?.trim() || systemType;
         var isComposite = false;
         var compAlMl = 0, compGlassM2 = 0;
+        var typeNames = { fijo: 'Fijo', puerta: 'Puerta', practicable: 'Practicable', oscilobatiente: 'Oscilo', corredera: 'Corredera', abatible: 'Abatible', tubo: 'Tubo' };
 
-        if (dwState && dwState.tree && dwState.tree.split) {
+        var useDesignerTree = dwState && dwState.tree && (dwState.tree.split || systemType === 'composicion');
+        if (useDesignerTree) {
             var panels = flattenTreePanels(dwState.tree);
             panelTypes = panels.map(function (p) { return p.node.system || 'fijo'; });
             var uniqueTypes = [];
             panelTypes.forEach(function (t) { if (uniqueTypes.indexOf(t) === -1) uniqueTypes.push(t); });
-            if (uniqueTypes.length > 1) {
+
+            if (systemType === 'composicion' || uniqueTypes.length > 1) {
                 isComposite = true;
-                var typeNames = { fijo: 'Fijo', puerta: 'Puerta', practicable: 'Practicable', oscilobatiente: 'Oscilo', corredera: 'Corredera', abatible: 'Abatible', tubo: 'Tubo' };
                 compositeLabel = panelTypes.map(function (t) { return typeNames[t] || t; }).join(' + ');
 
-                // Frame compartido (perimetro total)
                 var frameMl = (widthM * 2) + (heightM * 2);
 
-                // Calcular por panel
                 panels.forEach(function (panel) {
                     var sys = panel.node.system || 'fijo';
                     var pW = Math.max(100, widthMm * panel.w);
@@ -621,13 +633,13 @@ if (form) {
             isComposite: isComposite,
             compositeLabel: compositeLabel,
             panels: isComposite ? (function getPanelData(t, w, h) {
-                if (!t || !t.split) return [];
+                if (!t) return [];
                 return flattenTreePanels(t).map(function (p) {
                     var pw = Math.round(w * p.w);
                     var ph = Math.round(h * p.h * ((p.node.heightPct || 100) / 100));
                     return { system: p.node.system || 'fijo', label: p.node.label || '', widthMm: pw, heightMm: ph };
                 });
-            })(dwState.tree, widthMm, heightMm) : [],
+            })(dwState ? dwState.tree : null, widthMm, heightMm) : [],
             systemTypeLabel: fields.systemType?.selectedOptions?.[0]?.textContent?.trim() || systemType,
             openingType: fields.openingType?.value || 'izquierda',
             openingTypeLabel: fields.openingType?.selectedOptions?.[0]?.textContent?.trim() || '',
@@ -717,6 +729,24 @@ if (form) {
     };
 
     const renderDrawing = (quote) => {
+        if (quote.systemType === 'composicion') {
+            const dwSvgEl = document.getElementById('designerSvg');
+            const dwSvg = dwSvgEl?.value?.trim() || '';
+            if (profilePreviewSwatch) {
+                const palette = getProfilePalette(quote.profileColorHex);
+                profilePreviewSwatch.style.background = `linear-gradient(135deg, ${palette.light}, ${palette.base} 60%, ${palette.dark})`;
+                profilePreviewSwatch.style.borderColor = palette.shadow;
+            }
+            if (profilePreviewLabel) profilePreviewLabel.textContent = quote.profileColor;
+            if (dwSvg) {
+                drawingWrap.innerHTML = dwSvg;
+                drawingSvgInput.value = dwSvg;
+                return dwSvg;
+            }
+            drawingWrap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:180px;color:#888;font-size:0.88rem;text-align:center;padding:1rem">Diseña la composición de módulos<br>en el panel de la izquierda</div>';
+            return '';
+        }
+
         const PD = 16;
         const frame = {
             outerX: 90, outerY: 48,
@@ -1304,7 +1334,7 @@ if (form) {
         throw error;
     }
 
-    // ── DISEÑADOR DE PANELES (siempre visible) ──
+    // ── DISEÑADOR DE MÓDULOS (visible en modo Composición) ──
     var designerSvgInput = document.getElementById('designerSvg');
     var designerTreeJson = document.getElementById('designerTreeJson');
     var dwApplySvg       = document.getElementById('dwApplySvg');
@@ -1372,13 +1402,14 @@ if (form) {
     }
 
     if (dwSection && window.DesignerWidget) {
-        // Inicializar inmediatamente (no esperar toggle)
-        var initialTree = null;
-        if (quoteItems.length > 0) {
-            var firstItem = getSelectedItem() || quoteItems[0];
-            if (firstItem) initialTree = firstItem.designerTree;
+        if (fields.systemType?.value === 'composicion') {
+            var initialTree = null;
+            if (quoteItems.length > 0) {
+                var firstItem = getSelectedItem() || quoteItems[0];
+                if (firstItem) initialTree = firstItem.designerTree;
+            }
+            initDesigner(initialTree);
         }
-        initDesigner(initialTree);
 
         dwShapeSelect?.addEventListener('change', function () {
             if (dwSlopeRow) dwSlopeRow.style.display = dwShapeSelect.value === 'trapezoidal' ? '' : 'none';
