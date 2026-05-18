@@ -9,10 +9,12 @@ $carpentryOptions = get_carpentry_options();
 $glassOptions = get_glass_options();
 $glassPriceCatalog = get_default_glass_price_catalog();
 $systemOptions = [
-    'corredera' => tr('sliding', $lang),
-    'abatible' => tr('casement', $lang),
-    'fijo' => tr('fixed', $lang),
+    'corredera'      => tr('sliding', $lang),
+    'abatible'       => tr('casement', $lang),
+    'fijo'           => tr('fixed', $lang),
     'oscilobatiente' => tr('tilt_turn', $lang),
+    'puerta'         => tr('door', $lang),
+    'escaparate'     => tr('storefront', $lang),
 ];
 $openingOptions = [
     'izquierda' => tr('left', $lang),
@@ -191,6 +193,25 @@ if ($configExists) {
                 <label><?= h(tr('leaves', $lang)) ?>
                     <input type="number" name="leaves" id="leaves" min="1" max="6" value="2" required>
                 </label>
+            </div>
+
+            <!-- ── MODO ESCAPARATE ── -->
+            <div id="escaparatePanel" class="escaparate-panel is-hidden">
+                <h3>Módulos del escaparate</h3>
+                <p class="field-hint">Añade módulos para componer el escaparate. El dibujo se actualiza automáticamente.</p>
+                <div class="module-add-row">
+                    <button type="button" id="addModFijo"      class="mod-add-btn">+ Fijo</button>
+                    <button type="button" id="addModPuerta"    class="mod-add-btn">+ Puerta</button>
+                    <button type="button" id="addModCorredera" class="mod-add-btn">+ Corredera</button>
+                    <button type="button" id="addModTacha"     class="mod-add-btn">+ Tacha superior</button>
+                </div>
+                <p class="field-hint" style="margin-top:0.6rem">Composiciones habituales:</p>
+                <div class="module-preset-row">
+                    <button type="button" class="secondary-button" id="esc-presetBasico"   style="font-size:0.82rem">Puerta + Fijo</button>
+                    <button type="button" class="secondary-button" id="esc-presetFPF"      style="font-size:0.82rem">Fijo + Puerta + Fijo</button>
+                    <button type="button" class="secondary-button" id="esc-presetCompleto" style="font-size:0.82rem">Escaparate completo</button>
+                    <button type="button" class="secondary-button" id="esc-presetVitrina"  style="font-size:0.82rem">Vitrina (puerta estrecha)</button>
+                </div>
             </div>
 
             <h3><?= h(tr('glass', $lang)) ?></h3>

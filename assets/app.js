@@ -300,6 +300,33 @@ if (form) {
             fields.tiltTurnConfig.classList.toggle('is-hidden', systemType !== 'oscilobatiente');
         }
 
+        // ── MODO ESCAPARATE / PUERTA ──
+        const isEscaparate = systemType === 'escaparate';
+        const isPuerta = systemType === 'puerta';
+
+        const escaparatePanel = document.getElementById('escaparatePanel');
+        if (escaparatePanel) {
+            escaparatePanel.classList.toggle('is-hidden', !isEscaparate);
+        }
+
+        const leavesLabel = fields.leaves?.closest('label');
+        if (leavesLabel) leavesLabel.style.display = isEscaparate ? 'none' : '';
+        const openingLabel = fields.openingType?.closest('label');
+        if (openingLabel) openingLabel.style.display = isEscaparate ? 'none' : '';
+
+        if (isPuerta && fields.leaves) {
+            fields.leaves.value = '1';
+        }
+
+        if (isEscaparate && window.DesignerWidget && dwReady) {
+            var st = window.DesignerWidget.getState();
+            if (!st.tree || !st.tree.split) {
+                var w = parseInt(fields.widthMm?.value || '3000', 10);
+                var h = parseInt(fields.heightMm?.value || '2400', 10);
+                window.DesignerWidget.applyPreset('escaparate', w, h);
+            }
+        }
+
         if (!fields.tiltTurnLeaf) {
             return;
         }
@@ -559,7 +586,7 @@ if (form) {
             panelTypes = panels.map(function (p) { return p.node.system || 'fijo'; });
             var uniqueTypes = [];
             panelTypes.forEach(function (t) { if (uniqueTypes.indexOf(t) === -1) uniqueTypes.push(t); });
-            if (uniqueTypes.length > 1) {
+            if (systemType === 'escaparate' || uniqueTypes.length > 1) {
                 isComposite = true;
                 var typeNames = { fijo: 'Fijo', puerta: 'Puerta', practicable: 'Practicable', oscilobatiente: 'Oscilo', corredera: 'Corredera', abatible: 'Abatible', tubo: 'Tubo' };
                 compositeLabel = panelTypes.map(function (t) { return typeNames[t] || t; }).join(' + ');
@@ -717,6 +744,15 @@ if (form) {
     };
 
     const renderDrawing = (quote) => {
+        if (quote.systemType === 'escaparate') {
+            var dsvg = document.getElementById('designerSvg')?.value || '';
+            if (dsvg && drawingWrap) {
+                drawingWrap.innerHTML = dsvg;
+                drawingSvgInput.value = dsvg;
+            }
+            return dsvg;
+        }
+
         const PD = 16;
         const frame = {
             outerX: 90, outerY: 48,
@@ -1347,6 +1383,10 @@ if (form) {
             onSvgChange: function (svgStr, tree) {
                 if (designerSvgInput) designerSvgInput.value = svgStr;
                 if (designerTreeJson) designerTreeJson.value = JSON.stringify(tree);
+                if (fields.systemType?.value === 'escaparate') {
+                    if (drawingWrap) drawingWrap.innerHTML = svgStr;
+                    if (drawingSvgInput) drawingSvgInput.value = svgStr;
+                }
             },
             facadeW_val: w,
             facadeH_val: h,
@@ -1438,6 +1478,49 @@ if (form) {
             saveDesignerToCurrentItem();
         });
         document.getElementById('dwPresetEscaparateVitrina')?.addEventListener('click', function () {
+            var w = parseInt(fields.widthMm?.value || '6500', 10);
+            var h = parseInt(fields.heightMm?.value || '2200', 10);
+            if (window.DesignerWidget) window.DesignerWidget.applyPreset('escaparate_vitrina', w, h);
+            saveDesignerToCurrentItem();
+        });
+
+        // ── BOTONES DEL PANEL ESCAPARATE ──
+        document.getElementById('addModFijo')?.addEventListener('click', function () {
+            if (window.DesignerWidget) window.DesignerWidget.addRight('fijo', 'Fijo');
+            saveDesignerToCurrentItem();
+        });
+        document.getElementById('addModPuerta')?.addEventListener('click', function () {
+            if (window.DesignerWidget) window.DesignerWidget.addRight('puerta', 'Puerta', 'izq');
+            saveDesignerToCurrentItem();
+        });
+        document.getElementById('addModCorredera')?.addEventListener('click', function () {
+            if (window.DesignerWidget) window.DesignerWidget.addRight('corredera', 'Corredera', 'der');
+            saveDesignerToCurrentItem();
+        });
+        document.getElementById('addModTacha')?.addEventListener('click', function () {
+            if (window.DesignerWidget) window.DesignerWidget.addTop('fijo', 'Tacha', 0.15);
+            saveDesignerToCurrentItem();
+        });
+
+        document.getElementById('esc-presetBasico')?.addEventListener('click', function () {
+            var w = parseInt(fields.widthMm?.value || '3000', 10);
+            var h = parseInt(fields.heightMm?.value || '2400', 10);
+            if (window.DesignerWidget) window.DesignerWidget.applyPreset('escaparate', w, h);
+            saveDesignerToCurrentItem();
+        });
+        document.getElementById('esc-presetFPF')?.addEventListener('click', function () {
+            var w = parseInt(fields.widthMm?.value || '3000', 10);
+            var h = parseInt(fields.heightMm?.value || '2400', 10);
+            if (window.DesignerWidget) window.DesignerWidget.applyPreset('fijo_puerta_fijo', w, h);
+            saveDesignerToCurrentItem();
+        });
+        document.getElementById('esc-presetCompleto')?.addEventListener('click', function () {
+            var w = parseInt(fields.widthMm?.value || '4000', 10);
+            var h = parseInt(fields.heightMm?.value || '2500', 10);
+            if (window.DesignerWidget) window.DesignerWidget.applyPreset('escaparate_completo', w, h);
+            saveDesignerToCurrentItem();
+        });
+        document.getElementById('esc-presetVitrina')?.addEventListener('click', function () {
             var w = parseInt(fields.widthMm?.value || '6500', 10);
             var h = parseInt(fields.heightMm?.value || '2200', 10);
             if (window.DesignerWidget) window.DesignerWidget.applyPreset('escaparate_vitrina', w, h);

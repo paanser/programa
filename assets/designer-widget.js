@@ -97,6 +97,33 @@ window.DesignerWidget = (function () {
         render();
     }
 
+    function countLeaves(node) {
+        if (!node) return 0;
+        if (!node.split) return 1;
+        return countLeaves(node.split.a) + countLeaves(node.split.b);
+    }
+
+    function addRight(systemType, label, opening) {
+        var newLeaf = mkLeaf(systemType || 'fijo', label || (SYS[systemType] ? SYS[systemType].name : ''), opening || 'izq');
+        var n = countLeaves(state.tree);
+        var ratio = n / (n + 1);
+        var oldTree = state.tree;
+        state.tree = { id: uid(), split: { dir: 'v', ratio: ratio, a: oldTree, b: newLeaf },
+                       system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
+        state.sel = newLeaf.id;
+        render();
+    }
+
+    function addTop(systemType, label, topRatio) {
+        var newLeaf = mkLeaf(systemType || 'fijo', label || 'Tacha', null);
+        var ratio = topRatio || 0.15;
+        var oldTree = state.tree;
+        state.tree = { id: uid(), split: { dir: 'h', ratio: ratio, a: newLeaf, b: oldTree },
+                       system: null, label: null, opening: null, heightPct: 100, topPct: 0 };
+        state.sel = newLeaf.id;
+        render();
+    }
+
     // ── SVG ───────────────────────────────────────────────
     const SVG_W = 960, SVG_H = 560, MARGIN = 52;
     function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -546,5 +573,5 @@ window.DesignerWidget = (function () {
 
     function getState() { return { facadeW: state.facadeW, facadeH: state.facadeH, tree: state.tree }; }
 
-    return { init, loadState, setDimensions, getState, applyPreset, deepCloneTree, RAL_COLORS, SYS };
+    return { init, loadState, setDimensions, getState, applyPreset, deepCloneTree, addRight, addTop, RAL_COLORS, SYS };
 })();

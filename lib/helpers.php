@@ -167,6 +167,8 @@ function tr(string $key, ?string $lang = null): string
             'sliding' => 'Corredera',
             'casement' => 'Abatible',
             'tilt_turn' => 'Oscilobatiente',
+            'door' => 'Puerta',
+            'storefront' => 'Escaparate',
             'left' => 'Izquierda',
             'right' => 'Derecha',
             'center' => 'Central',
@@ -312,6 +314,8 @@ function tr(string $key, ?string $lang = null): string
             'sliding' => 'Corredissa',
             'casement' => 'Abatible',
             'tilt_turn' => 'Oscilobatent',
+            'door' => 'Porta',
+            'storefront' => 'Aparador',
             'left' => 'Esquerra',
             'right' => 'Dreta',
             'center' => 'Central',
@@ -380,6 +384,8 @@ function humanize_system_type(string $value, ?string $lang = null): string
         'abatible' => 'casement',
         'fijo' => 'fixed',
         'oscilobatiente' => 'tilt_turn',
+        'puerta' => 'door',
+        'escaparate' => 'storefront',
         'multiple' => 'multiple_system',
     ];
 
