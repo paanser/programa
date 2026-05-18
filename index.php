@@ -13,6 +13,7 @@ $systemOptions = [
     'abatible' => tr('casement', $lang),
     'fijo' => tr('fixed', $lang),
     'oscilobatiente' => tr('tilt_turn', $lang),
+    'escaparate' => 'Escaparate',
 ];
 $openingOptions = [
     'izquierda' => tr('left', $lang),
@@ -285,8 +286,8 @@ if ($configExists) {
             </div>
         </form>
 
-    <!-- ── DISEÑADOR DE PANELES (siempre visible) ── -->
-    <div class="designer-section">
+    <!-- ── DISEÑADOR DE PANELES (solo para sistema Escaparate) ── -->
+    <div class="designer-section is-hidden" id="designerSection">
         <div class="designer-section__toolbar">
             <h3>Composición de paneles</h3>
             <div class="designer-section__actions">

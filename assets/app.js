@@ -281,6 +281,15 @@ if (form) {
 
     const updateSystemDetailsUI = () => {
         const systemType = fields.systemType?.value || 'corredera';
+        const isEscaparate = systemType === 'escaparate';
+
+        if (dwSection) {
+            dwSection.classList.toggle('is-hidden', !isEscaparate);
+        }
+        if (isEscaparate && !dwReady && window.DesignerWidget) {
+            initDesigner(null);
+        }
+
         let leaves = Math.max(1, integerValue(fields.leaves, 2));
 
         if (systemType === 'fijo') {
@@ -554,7 +563,7 @@ if (form) {
         var isComposite = false;
         var compAlMl = 0, compGlassM2 = 0;
 
-        if (dwState && dwState.tree && dwState.tree.split) {
+        if (systemType === 'escaparate' && dwState && dwState.tree && dwState.tree.split) {
             var panels = flattenTreePanels(dwState.tree);
             panelTypes = panels.map(function (p) { return p.node.system || 'fijo'; });
             var uniqueTypes = [];
@@ -1132,7 +1141,14 @@ if (form) {
         }
 
         const quote = calculateQuote();
-        quote.drawingSvg = renderDrawing(quote);
+        if (quote.systemType === 'escaparate') {
+            const dsvg = designerSvgInput?.value || '';
+            if (dsvg && drawingWrap) { drawingWrap.innerHTML = dsvg; }
+            if (drawingSvgInput) { drawingSvgInput.value = dsvg; }
+            quote.drawingSvg = dsvg;
+        } else {
+            quote.drawingSvg = renderDrawing(quote);
+        }
         upsertSelectedItem(quote);
         renderGlassSummary(quote);
         renderItemsList();
@@ -1356,6 +1372,7 @@ if (form) {
     }
 
     function reloadDesignerTree(item) {
+        if (fields.systemType?.value !== 'escaparate') { return; }
         if (!window.DesignerWidget || !dwReady) {
             if (dwSection) {
                 initDesigner(item ? item.designerTree : null);
@@ -1372,13 +1389,15 @@ if (form) {
     }
 
     if (dwSection && window.DesignerWidget) {
-        // Inicializar inmediatamente (no esperar toggle)
-        var initialTree = null;
-        if (quoteItems.length > 0) {
-            var firstItem = getSelectedItem() || quoteItems[0];
-            if (firstItem) initialTree = firstItem.designerTree;
+        // Solo inicializar si el sistema activo ya es Escaparate
+        if (fields.systemType?.value === 'escaparate') {
+            var initialTree = null;
+            if (quoteItems.length > 0) {
+                var firstItem = getSelectedItem() || quoteItems[0];
+                if (firstItem) initialTree = firstItem.designerTree;
+            }
+            initDesigner(initialTree);
         }
-        initDesigner(initialTree);
 
         dwShapeSelect?.addEventListener('change', function () {
             if (dwSlopeRow) dwSlopeRow.style.display = dwShapeSelect.value === 'trapezoidal' ? '' : 'none';
